@@ -1,0 +1,23 @@
+{
+    "name": "World of Example",
+    "authors": [
+        "E. X. Ample"
+    ],
+    "game_url": "https://example.com",
+    "objectives": [
+        {
+            "type": "key-items",
+            "path": "key-items.json"
+        }
+    ],
+    "display": [
+        {
+            "type": "Grid",
+            "columns": 2,
+            "objectives": [
+                "cave-key",
+                "sword-of-might"
+            ]
+        }
+    ]
+}

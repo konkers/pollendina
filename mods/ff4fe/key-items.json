@@ -1,0 +1,70 @@
+[
+    {
+        "id": "crystal",
+        "name": "Crystal"
+    },
+    {
+        "id": "hook",
+        "name": "Hook"
+    },
+    {
+        "id": "darkness-crystal",
+        "name": "Darkness Crystal"
+    },
+    {
+        "id": "earth-crystal",
+        "name": "Earth Crystal"
+    },
+    {
+        "id": "twin-harp",
+        "name": "TwinHarp"
+    },
+    {
+        "id": "package",
+        "name": "Package"
+    },
+    {
+        "id": "sand-ruby",
+        "name": "SandRuby"
+    },
+    {
+        "id": "baron-key",
+        "name": "Baron Key"
+    },
+    {
+        "id": "magma-key",
+        "name": "Magma Key"
+    },
+    {
+        "id": "tower-key",
+        "name": "Tower Key"
+    },
+    {
+        "id": "luca-key",
+        "name": "Luca Key"
+    },
+    {
+        "id": "adamant",
+        "name": "Adamant"
+    },
+    {
+        "id": "legend-sword",
+        "name": "Legend Sword"
+    },
+    {
+        "id": "pan",
+        "name": "Pan"
+    },
+    {
+        "id": "spoon",
+        "name": "Spoon"
+    },
+    {
+        "id": "rat-tail",
+        "name": "Rat Tail"
+    },
+    {
+        "id": "pink-tail",
+        "name": "Pink Tail"
+    }
+]

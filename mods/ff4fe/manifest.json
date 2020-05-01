@@ -1,0 +1,48 @@
+{
+    "name": "Final Fantasy IV: Free Enterprise",
+    "authors": [
+        "Konkers"
+    ],
+    "game_url": "https://ff4fe.com/",
+    "auto_track": "auto_track.lua",
+    "objectives": [
+        {
+            "type": "key-items",
+            "path": "key-items.json"
+        },
+        {
+            "type": "misc",
+            "path": "misc.json"
+        }
+    ],
+    "display": [
+        {
+            "type": "Grid",
+            "columns": 4,
+            "objectives": [
+                "crystal",
+                "pass",
+                "hook",
+                "darkness-crystal",
+                "earth-crystal",
+                "twin-harp",
+                "package",
+                "sand-ruby",
+                "baron-key",
+                "magma-key",
+                "tower-key",
+                "luca-key",
+                "adamant",
+                "legend-sword",
+                "pan",
+                "spoon",
+                "rat-tail",
+                "pink-tail"
+            ]
+        },
+        {
+            "type": "Count",
+            "objective_type": "key-items"
+        }
+    ]
+}
