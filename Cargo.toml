@@ -19,5 +19,5 @@ palette = "0.5.0"
 rlua = "0.17.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-usb2snes = {path = "../usb2snes-rs"}
+usb2snes = "0.1.0"
 match-macro = { git = "https://github.com/Finnerale/druid-enum-helpers"}
