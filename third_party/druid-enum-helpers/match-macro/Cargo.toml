@@ -1,0 +1,12 @@
+[package]
+name = "match-macro"
+version = "0.1.0"
+authors = ["Leopold Luley <git@leopoldluley.de>"]
+edition = "2018"
+
+[dependencies]
+proc-macro-hack = "0.5.15"
+druid = { git = "https://github.com/xi-editor/druid" }
+
+[dependencies.match-macro-impl]
+path = "../match-macro-impl"

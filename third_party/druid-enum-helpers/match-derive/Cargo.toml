@@ -1,0 +1,10 @@
+[package]
+name = "match-derive"
+version = "0.1.0"
+authors = ["Leopold Luley <git@leopoldluley.de>"]
+edition = "2018"
+
+[lib]
+proc-macro = true
+
+[dependencies]
