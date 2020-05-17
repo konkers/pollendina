@@ -206,7 +206,7 @@ impl AppDelegate<DisplayState> for Engine {
     fn command(
         &mut self,
         _ctx: &mut DelegateCtx,
-        _target: &Target,
+        _target: Target,
         cmd: &Command,
         data: &mut DisplayState,
         _env: &Env,

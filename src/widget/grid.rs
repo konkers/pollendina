@@ -229,7 +229,7 @@ impl Widget<DisplayViewGrid> for Grid {
             );
             let child_size = child.layout(ctx, &child_bc, child_data, env);
             let rect = Rect::from_origin_size(Point::new(x, y), child_size);
-            child.set_layout_rect(rect);
+            child.set_layout_rect(ctx, child_data, env, rect);
             paint_rect = paint_rect.union(child.paint_rect());
 
             x += child_size.width;

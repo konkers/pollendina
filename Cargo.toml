@@ -9,8 +9,8 @@ edition = "2018"
 [dependencies]
 async-std = { version = "1.5", features = ["attributes", "unstable"] }
 byteorder = "1.3.4"
-#druid = { git = "https://github.com/xi-editor/druid.git", version = "0.6.0", features = ["image"] }
-druid = { version = "0.5.0", features = ["image"] }
+druid = { git = "https://github.com/xi-editor/druid.git", version = "0.6.0", features = ["image"] }
+#druid = { version = "0.5.0", features = ["image"] }
 failure = "0.1.8"
 futures ="0.3"
 image = {version = "0.23.4"}
@@ -20,4 +20,4 @@ rlua = "0.17.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 usb2snes = "0.1.0"
-match-macro = { git = "https://github.com/Finnerale/druid-enum-helpers"}
+match-macro = { path = "./third_party/druid-enum-helpers/match-macro"}
