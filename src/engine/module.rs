@@ -12,12 +12,20 @@ pub struct ObjectiveInfoLoc {
     path: String,
 }
 
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(tag = "type")]
+pub enum Param {
+    TextBox { name: String },
+}
+
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
 pub struct Manifest {
     pub name: String,
     pub authors: Vec<String>,
     pub game_url: String,
     pub auto_track: Option<String>,
+    #[serde(default)]
+    pub params: Vec<Param>,
     pub objectives: Vec<ObjectiveInfoLoc>,
     pub display: Vec<DisplayViewInfo>,
 }

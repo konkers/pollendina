@@ -2,13 +2,15 @@ use async_std::task;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use druid::{AppDelegate, Command, Data, DelegateCtx, Env, ExtEventSink, Lens, Selector, Target};
+use druid::{
+    AppDelegate, Command, Data, DelegateCtx, Env, ExtEventSink, Lens, Selector, Target, WindowId,
+};
 use failure::Error;
 
 mod auto_tracker;
 pub mod module;
 
-pub use module::{DisplayViewInfo, Module};
+pub use module::{DisplayViewInfo, Module, Param};
 
 pub use auto_tracker::AutoTrackerState;
 use auto_tracker::{AutoTracker, AutoTrackerController};
@@ -54,12 +56,25 @@ pub enum DisplayView {
     Count(DisplayViewCount),
 }
 
+#[derive(Clone, Data, PartialEq)]
+pub enum ModuleParamValue {
+    TextBox(String),
+}
+
+#[derive(Clone, Data, Lens, PartialEq)]
+pub struct ModuleParam {
+    name: String,
+    value: ModuleParamValue,
+}
+
 // DisplayState is owned by the UI and should contain all the information
 // it needs to function.
 #[derive(Clone, Data, Lens)]
 pub struct DisplayState {
     pub views: Arc<Vec<DisplayView>>,
+    pub params: Arc<Vec<ModuleParam>>,
     pub auto_tracker_state: AutoTrackerState,
+    pub config_win: Arc<Option<WindowId>>,
 }
 
 pub struct Engine {
@@ -116,10 +131,19 @@ impl Engine {
             };
             views.push(view);
         }
+        let mut params = Vec::new();
+        for p in &self.module.manifest.params {
+            let (name, value) = match p {
+                Param::TextBox { name } => (name.clone(), ModuleParamValue::TextBox("".into())),
+            };
+            params.push(ModuleParam { name, value });
+        }
 
         let mut state = DisplayState {
             views: Arc::new(views),
+            params: Arc::new(params),
             auto_tracker_state: AutoTrackerState::Idle,
+            config_win: Arc::new(None),
         };
         self.update_display_state(&mut state);
 

@@ -4,6 +4,12 @@
         "Konkers"
     ],
     "game_url": "https://ff4fe.com/",
+    "params": [
+        {
+            "name": "flags",
+            "type": "TextBox"
+        }
+    ],
     "auto_track": "auto_track.lua",
     "objectives": [
         {

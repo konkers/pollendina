@@ -4,6 +4,12 @@
         "E. X. Ample"
     ],
     "game_url": "https://example.com",
+    "params": [
+        {
+            "name": "flags",
+            "type": "TextBox"
+        }
+    ],
     "objectives": [
         {
             "type": "key-items",
