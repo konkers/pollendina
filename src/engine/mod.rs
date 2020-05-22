@@ -24,6 +24,7 @@ pub(crate) const ENGINE_STOP_AUTO_TRACKING: Selector = Selector::new("engine:sto
 
 #[derive(Clone, Copy, Data, Debug, PartialEq)]
 pub enum ObjectiveState {
+    Disabled,
     Locked,
     GlitchLocked,
     Unlocked,
@@ -186,6 +187,7 @@ impl Engine {
         for o in objectives {
             if let Some(state) = self.objectives.get(&o) {
                 found += match state {
+                    ObjectiveState::Disabled => 0,
                     ObjectiveState::Locked => 0,
                     ObjectiveState::GlitchLocked => 0,
                     ObjectiveState::Unlocked => 1,
@@ -240,6 +242,7 @@ impl AppDelegate<DisplayState> for Engine {
                 let id = cmd.get_object::<String>().expect("api violation");
                 if let Some(o) = self.objectives.get_mut(id) {
                     let new_state = match *o {
+                        ObjectiveState::Disabled => ObjectiveState::Disabled,
                         ObjectiveState::Locked => ObjectiveState::Unlocked,
                         ObjectiveState::GlitchLocked => ObjectiveState::Unlocked,
                         ObjectiveState::Unlocked => ObjectiveState::Complete,
