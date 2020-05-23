@@ -291,3 +291,15 @@ impl AppDelegate<DisplayState> for Engine {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn load_fe_module() -> Result<(), Error> {
+        // While we are bootstrapping everything we'll be using the FE module for
+        // tests.  Eventually the unique cases should be extracted into `test_data/mod`
+        Module::open("mods/ff4fe/manifest.json")?;
+        Ok(())
+    }
+}

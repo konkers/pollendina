@@ -3,22 +3,30 @@
     "authors": [
         "Konkers"
     ],
-    "game_url": "https://ff4fe.com/",
+    "game-url": "https://ff4fe.com/",
     "params": [
         {
             "name": "flags",
             "type": "TextBox"
         }
     ],
-    "auto_track": "auto_track.lua",
+    "auto-track": "auto_track.lua",
     "objectives": [
         {
             "type": "key-items",
             "path": "key-items.json"
         },
         {
+            "type": "location",
+            "path": "locations.json"
+        },
+        {
             "type": "misc",
             "path": "misc.json"
+        },
+        {
+            "type": "pseudo",
+            "path": "pseudo.json"
         }
     ],
     "display": [

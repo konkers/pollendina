@@ -22,12 +22,26 @@ pub enum Param {
 pub struct Manifest {
     pub name: String,
     pub authors: Vec<String>,
+    #[serde(default, rename = "game-url")]
     pub game_url: String,
+    #[serde(default, rename = "auto-track")]
     pub auto_track: Option<String>,
     #[serde(default)]
     pub params: Vec<Param>,
     pub objectives: Vec<ObjectiveInfoLoc>,
     pub display: Vec<DisplayViewInfo>,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct ObjectiveCheck {
+    #[serde(default, rename = "type")]
+    pub ty: String,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default, rename = "enabled-by")]
+    pub enabled_by: Option<String>,
+    #[serde(default, rename = "unlocked-by")]
+    pub unlocked_by: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -37,9 +51,7 @@ pub struct ObjectiveInfo {
     pub ty: String,
     pub name: String,
     #[serde(default)]
-    pub children: Vec<String>,
-    #[serde(default)]
-    pub deps: Vec<String>,
+    pub checks: Vec<ObjectiveCheck>,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
@@ -140,8 +152,7 @@ mod tests {
                 id: "test".to_string(),
                 ty: "".to_string(),
                 name: "Test Objective".to_string(),
-                children: vec![],
-                deps: vec![],
+                checks: vec![],
             },
         )
         .expect("decoding error");
@@ -150,17 +161,20 @@ mod tests {
         test_json_object(
             r#"{
     "id": "test",
-    "type": "key-item",
+    "type": "location",
     "name": "Test Objective",
-    "children": ["child1", "child2"],
-    "deps": ["dep1", "dep2"]
+    "checks": [{"type": "key-item"}]
 }"#,
             &ObjectiveInfo {
                 id: "test".to_string(),
-                ty: "key-item".to_string(),
+                ty: "location".to_string(),
                 name: "Test Objective".to_string(),
-                children: vec!["child1".to_string(), "child2".to_string()],
-                deps: vec!["dep1".to_string(), "dep2".to_string()],
+                checks: vec![ObjectiveCheck {
+                    ty: "key-item".to_string(),
+                    name: "".to_string(),
+                    enabled_by: None,
+                    unlocked_by: None,
+                }],
             },
         )
         .expect("decoding error");

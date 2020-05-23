@@ -1,0 +1,650 @@
+[
+    {
+        "id": "intro",
+        "name": "Intro at Baron",
+        "checks": [
+            {
+                "type": "key-item"
+            },
+            {
+                "type": "char"
+            },
+            {
+                "type": "char"
+            }
+        ]
+    },
+    {
+        "id": "baron",
+        "name": "Baron",
+        "checks": [
+            {
+                "type": "item-shop"
+            },
+            {
+                "type": "weapon-shop",
+                "unlocked-by": "baron-key"
+            },
+            {
+                "type": "armor-shop",
+                "unlocked-by": "baron-key"
+            },
+            {
+                "type": "boss",
+                "name": "Baron Guards"
+            },
+            {
+                "type": "boss",
+                "name": "Yang"
+            },
+            {
+                "type": "char"
+            },
+            {
+                "type": "key-item"
+            }
+        ]
+    },
+    {
+        "id": "baron-castle",
+        "name": "Baron Castle",
+        "checks": [
+            {
+                "type": "boss",
+                "name": "Baigan",
+                "unlocked-by": "baron-key"
+            },
+            {
+                "type": "boss",
+                "name": "Kainazzo",
+                "unlocked-by": "baron-key"
+            },
+            {
+                "type": "char"
+            },
+            {
+                "type": "key-item"
+            },
+            {
+                "type": "boss",
+                "name": "Odin",
+                "unlocked-by": "baron-key"
+            },
+            {
+                "type": "key-item",
+                "enabled-by": "flag-k-summon"
+            }
+        ]
+    },
+    {
+        "id": "mist-cave",
+        "name": "Mist Cave",
+        "checks": [
+            {
+                "type": "boss",
+                "name": "D. Mist"
+            }
+        ]
+    },
+    {
+        "id": "mist",
+        "name": "Town of Mist",
+        "checks": [
+            {
+                "type": "weapon-shop"
+            },
+            {
+                "type": "armor-shop"
+            },
+            {
+                "type": "key-item",
+                "enabled-by": "flag-n-key",
+                "unlocked-by": "d-mist"
+            },
+            {
+                "type": "boss",
+                "name": "Baron Soldiers",
+                "unlocked-by": "package"
+            },
+            {
+                "type": "char",
+                "unlocked-by": "package"
+            }
+        ]
+    },
+    {
+        "id": "kaipo",
+        "name": "Kaipo",
+        "checks": [
+            {
+                "type": "item-shop"
+            },
+            {
+                "type": "weapon-shop"
+            },
+            {
+                "type": "armor-shop"
+            },
+            {
+                "type": "char",
+                "unlocked-by": "sand-ruby"
+            }
+        ]
+    },
+    {
+        "id": "watery-pass",
+        "name": "Watery Pass",
+        "checks": [
+            {
+                "type": "char",
+                "enabled-by": "!flag-n-chars"
+            },
+            {
+                "type": "boss",
+                "name": "Octomamm"
+            }
+        ]
+    },
+    {
+        "id": "damcyan",
+        "name": "Damcyan Castle",
+        "checks": [
+            {
+                "type": "char",
+                "enabled-by": "!flag-n-chars"
+            }
+        ]
+    },
+    {
+        "id": "antlion-lair",
+        "name": "Antlion's Lair",
+        "checks": [
+            {
+                "type": "boss",
+                "name": "Antlion"
+            },
+            {
+                "type": "key-item"
+            }
+        ]
+    },
+    {
+        "id": "mt-hobs",
+        "name": "Mt. Hobs",
+        "checks": [
+            {
+                "type": "boss",
+                "name": "MomBomb"
+            },
+            {
+                "type": "char"
+            }
+        ]
+    },
+    {
+        "id": "fabul",
+        "name": "Fabul",
+        "checks": [
+            {
+                "type": "item-shop"
+            },
+            {
+                "type": "weapon-shop"
+            },
+            {
+                "type": "armor-shop"
+            },
+            {
+                "type": "boss",
+                "name": "Fabul Gauntlet"
+            },
+            {
+                "type": "key-item"
+            },
+            {
+                "type": "key-item",
+                "unlocked-by": "underground"
+            },
+            {
+                "type": "key-item",
+                "unlocked-by": "underground && pan"
+            }
+        ]
+    },
+    {
+        "id": "toroia",
+        "name": "Toroia",
+        "checks": [
+            {
+                "type": "item-shop"
+            },
+            {
+                "type": "weapon-shop"
+            },
+            {
+                "type": "armor-shop"
+            },
+            {
+                "type": "key-item",
+                "enabled-by": "!flag-n-key"
+            }
+        ]
+    },
+    {
+        "id": "magnes",
+        "name": "Cave Magnes",
+        "checks": [
+            {
+                "type": "boss",
+                "name": "Dark Elf",
+                "unlocked-by": "twin-harp"
+            },
+            {
+                "type": "key-item",
+                "unlocked-by": "twin-harp"
+            }
+        ]
+    },
+    {
+        "id": "zot",
+        "name": "Tower of Zot",
+        "checks": [
+            {
+                "type": "boss",
+                "name": "Magus Sisters"
+            },
+            {
+                "type": "char",
+                "unlocked-by": "earth-crystal"
+            },
+            {
+                "type": "char",
+                "unlocked-by": "earth-crystal"
+            },
+            {
+                "type": "boss",
+                "name": "Valvalis",
+                "unlocked-by": "earth-crystal"
+            },
+            {
+                "type": "key-item",
+                "unlocked-by": "earth-crystal"
+            }
+        ]
+    },
+    {
+        "id": "silvera",
+        "name": "Silvera",
+        "checks": [
+            {
+                "type": "item-shop"
+            },
+            {
+                "type": "weapon-shop"
+            },
+            {
+                "type": "armor-shop"
+            }
+        ]
+    },
+    {
+        "id": "adamant-grotto",
+        "name": "Adamant Grotto",
+        "checks": [
+            {
+                "type": "key-item",
+                "unlocked-by": "rat-tail && hook"
+            }
+        ]
+    },
+    {
+        "id": "mysidia",
+        "name": "Mysidia",
+        "checks": [
+            {
+                "type": "item-shop"
+            },
+            {
+                "type": "weapon-shop"
+            },
+            {
+                "type": "armor-shop"
+            },
+            {
+                "type": "char",
+                "enabled-by": "!flag-n-chars"
+            },
+            {
+                "type": "char",
+                "enabled-by": "!flag-n-chars"
+            }
+        ]
+    },
+    {
+        "id": "mt-ordeals",
+        "name": "Mt. Ordeals",
+        "checks": [
+            {
+                "type": "char",
+                "enabled-by": "!flag-n-chars"
+            },
+            {
+                "type": "boss",
+                "name": "Milon"
+            },
+            {
+                "type": "boss",
+                "name": "Milon Z"
+            },
+            {
+                "type": "key-item"
+            },
+            {
+                "type": "boss",
+                "name": "Dark Knight Cecil"
+            }
+        ]
+    },
+    {
+        "id": "agart",
+        "name": "Agart",
+        "checks": [
+            {
+                "type": "item-shop"
+            },
+            {
+                "type": "weapon-shop"
+            },
+            {
+                "type": "armor-shop"
+            }
+        ]
+    },
+    {
+        "id": "eblan-cave",
+        "name": "Eblan Cave",
+        "checks": [
+            {
+                "type": "item-shop",
+                "unlocked-by": "hook"
+            },
+            {
+                "type": "weapon-shop",
+                "unlocked-by": "hook"
+            },
+            {
+                "type": "armor-shop",
+                "unlocked-by": "hook"
+            },
+            {
+                "type": "char",
+                "unlocked-by": "hook"
+            },
+            {
+                "type": "boss",
+                "name": "King & Queen Eblan",
+                "unlocked-by": "hook"
+            },
+            {
+                "type": "boss",
+                "name": "Rubicante",
+                "unlocked-by": "hook"
+            }
+        ]
+    },
+    {
+        "id": "d-castle",
+        "name": "Dwarf Castle",
+        "checks": [
+            {
+                "type": "item-shop",
+                "unlocked-by": "underground"
+            },
+            {
+                "type": "weapon-shop",
+                "unlocked-by": "underground"
+            },
+            {
+                "type": "armor-shop",
+                "unlocked-by": "underground"
+            },
+            {
+                "type": "boss",
+                "name": "Calbrena",
+                "unlocked-by": "underground"
+            },
+            {
+                "type": "char",
+                "unlocked-by": "underground"
+            },
+            {
+                "type": "boss",
+                "name": "Calbrena",
+                "unlocked-by": "underground"
+            }
+        ]
+    },
+    {
+        "id": "tomra",
+        "name": "Tomra",
+        "checks": [
+            {
+                "type": "item-shop",
+                "unlocked-by": "underground"
+            },
+            {
+                "type": "weapon-shop",
+                "unlocked-by": "underground"
+            },
+            {
+                "type": "armor-shop",
+                "unlocked-by": "underground"
+            }
+        ]
+    },
+    {
+        "id": "sealed-cave",
+        "name": "Sealed Cave",
+        "checks": [
+            {
+                "type": "key-item",
+                "unlocked-by": "underground && luca-key"
+            },
+            {
+                "type": "boss",
+                "name": "evil-wall",
+                "unlocked-by": "underground && luca-key"
+            }
+        ]
+    },
+    {
+        "id": "feymarch",
+        "name": "Feymarch",
+        "checks": [
+            {
+                "type": "item-shop",
+                "unlocked-by": "underground"
+            },
+            {
+                "type": "weapon-shop",
+                "unlocked-by": "underground"
+            },
+            {
+                "type": "armor-shop",
+                "unlocked-by": "underground"
+            },
+            {
+                "type": "key-item",
+                "unlocked-by": "underground"
+            },
+            {
+                "type": "boss",
+                "name": "Asura",
+                "unlocked-by": "underground"
+            },
+            {
+                "type": "key-item",
+                "enabled-by": "flag-k-summon",
+                "unlocked-by": "underground"
+            },
+            {
+                "type": "boss",
+                "name": "Leviathan",
+                "unlocked-by": "underground"
+            },
+            {
+                "type": "key-item",
+                "enabled-by": "flag-k-summon",
+                "unlocked-by": "underground"
+            }
+        ]
+    },
+    {
+        "id": "sylph-cave",
+        "name": "Sylph Cave",
+        "checks": [
+            {
+                "type": "key-item",
+                "enabled-by": "flag-k-summon"
+            }
+        ]
+    },
+    {
+        "id": "kokkol",
+        "name": "Kokkol",
+        "checks": [
+            {
+                "type": "item-shop",
+                "unlocked-by": "underground && adamant && legend-sword"
+            }
+        ]
+    },
+    {
+        "id": "lower-babil",
+        "name": "Tower of Babil",
+        "checks": [
+            {
+                "type": "boss",
+                "name": "Dr. Lugae",
+                "unlocked-by": "underground"
+            },
+            {
+                "type": "key-item",
+                "unlocked-by": "underground"
+            },
+            {
+                "type": "boss",
+                "name": "Dark Imps",
+                "unlocked-by": "underground && tower-key"
+            },
+            {
+                "type": "key-item",
+                "unlocked-by": "underground && tower-key"
+            }
+        ]
+    },
+    {
+        "id": "hummingway",
+        "name": "Hummingway Cave",
+        "checks": [
+            {
+                "type": "item-shop",
+                "unlocked-by": "darkness-crystal"
+            }
+        ]
+    },
+    {
+        "id": "bahamut-cave",
+        "name": "Cave Bahamut",
+        "checks": [
+            {
+                "type": "boss",
+                "name": "Bahamut",
+                "unlocked-by": "darkness-crystal"
+            },
+            {
+                "type": "key-item",
+                "unlocked-by": "darkness-crystal"
+            }
+        ]
+    },
+    {
+        "id": "murasame-spot",
+        "name": "Murasame Spot",
+        "checks": [
+            {
+                "type": "boss",
+                "name": "Pale Dim",
+                "unlocked-by": "darkness-crystal"
+            },
+            {
+                "type": "key-item",
+                "unlocked-by": "darkness-crystal"
+            }
+        ]
+    },
+    {
+        "id": "crystal-sword-spot",
+        "name": "Crystal Sword Spot",
+        "checks": [
+            {
+                "type": "boss",
+                "name": "Wyvern",
+                "unlocked-by": "darkness-crystal"
+            },
+            {
+                "type": "key-item",
+                "unlocked-by": "darkness-crystal"
+            }
+        ]
+    },
+    {
+        "id": "white-spear-spot",
+        "name": "White Spear Spot",
+        "checks": [
+            {
+                "type": "boss",
+                "name": "Plague",
+                "unlocked-by": "darkness-crystal"
+            },
+            {
+                "type": "key-item",
+                "unlocked-by": "darkness-crystal"
+            }
+        ]
+    },
+    {
+        "id": "ribbon-spot",
+        "name": "Ribbon Spot",
+        "checks": [
+            {
+                "type": "boss",
+                "name": "D. Lunars",
+                "unlocked-by": "darkness-crystal"
+            },
+            {
+                "type": "key-item",
+                "unlocked-by": "darkness-crystal"
+            },
+            {
+                "type": "key-item",
+                "unlocked-by": "darkness-crystal"
+            }
+        ]
+    },
+    {
+        "id": "masamune-spot",
+        "name": "Masamune Spot",
+        "checks": [
+            {
+                "type": "boss",
+                "name": "Ogopogo",
+                "unlocked-by": "darkness-crystal"
+            },
+            {
+                "type": "key-item",
+                "unlocked-by": "darkness-crystal"
+            }
+        ]
+    }
+]
