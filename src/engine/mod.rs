@@ -276,11 +276,26 @@ impl Engine {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[derive(Clone)]
+    struct TestEventSink;
+    impl EventSink for TestEventSink {
+        fn submit_command<T: 'static + Send>(
+            &self,
+            sel: Selector,
+            obj: impl Into<Option<T>>,
+            target: impl Into<Option<Target>>,
+        ) -> Result<(), ExtEventError> {
+            Ok(())
+        }
+    }
+
     #[test]
     fn load_fe_module() -> Result<(), Error> {
         // While we are bootstrapping everything we'll be using the FE module for
         // tests.  Eventually the unique cases should be extracted into `test_data/mod`
-        Module::open("mods/ff4fe/manifest.json")?;
+        let module = Module::open("mods/ff4fe/manifest.json")?;
+        let engine = Engine::new(module, TestEventSink)?;
         Ok(())
     }
 }
