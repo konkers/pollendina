@@ -2,10 +2,8 @@ use async_std::task;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use druid::{
-    AppDelegate, Command, Data, DelegateCtx, Env, ExtEventSink, Lens, Selector, Target, WindowId,
-};
-use failure::Error;
+use druid::{Data, ExtEventError, Lens, Selector, Target, WindowId};
+use failure::{format_err, Error};
 
 mod auto_tracker;
 pub mod module;
@@ -15,12 +13,14 @@ pub use module::{DisplayViewInfo, Module, Param};
 pub use auto_tracker::AutoTrackerState;
 use auto_tracker::{AutoTracker, AutoTrackerController};
 
-pub(crate) const ENGINE_TOGGLE_STATE: Selector = Selector::new("engine:toggle_state");
-pub(crate) const ENGINE_UPDATE_STATE: Selector = Selector::new("engine:update_state");
-pub(crate) const ENGINE_UPDATE_AUTO_TRACKER_STATE: Selector =
-    Selector::new("engine:update_auto_tracker_state");
-pub(crate) const ENGINE_START_AUTO_TRACKING: Selector = Selector::new("engine:start_auto_tracking");
-pub(crate) const ENGINE_STOP_AUTO_TRACKING: Selector = Selector::new("engine:stop_auto_tracking");
+pub trait EventSink {
+    fn submit_command<T: 'static + Send>(
+        &self,
+        sel: Selector,
+        obj: impl Into<Option<T>>,
+        target: impl Into<Option<Target>>,
+    ) -> Result<(), ExtEventError>;
+}
 
 #[derive(Clone, Copy, Data, Debug, PartialEq)]
 pub enum ObjectiveState {
@@ -85,7 +85,10 @@ pub struct Engine {
 }
 
 impl Engine {
-    pub fn new(module: Module, event_sink: ExtEventSink) -> Result<Engine, Error> {
+    pub fn new<T: 'static + EventSink + Clone + Send>(
+        module: Module,
+        event_sink: T,
+    ) -> Result<Engine, Error> {
         let mut objectives = HashMap::new();
         for (id, _) in module.objectives.iter() {
             objectives.insert(id.clone(), ObjectiveState::Locked);
@@ -200,7 +203,7 @@ impl Engine {
         view.total = total as u32;
     }
 
-    fn update_display_state(&self, data: &mut DisplayState) {
+    pub fn update_display_state(&self, data: &mut DisplayState) {
         let views = Arc::make_mut(&mut data.views);
         let mut infos = self.module.manifest.display.iter();
         for view in views.iter_mut() {
@@ -226,68 +229,46 @@ impl Engine {
             }
         }
     }
-}
 
-impl AppDelegate<DisplayState> for Engine {
-    fn command(
-        &mut self,
-        _ctx: &mut DelegateCtx,
-        _target: Target,
-        cmd: &Command,
-        data: &mut DisplayState,
-        _env: &Env,
-    ) -> bool {
-        match cmd.selector {
-            ENGINE_TOGGLE_STATE => {
-                let id = cmd.get_object::<String>().expect("api violation");
-                if let Some(o) = self.objectives.get_mut(id) {
-                    let new_state = match *o {
-                        ObjectiveState::Disabled => ObjectiveState::Disabled,
-                        ObjectiveState::Locked => ObjectiveState::Unlocked,
-                        ObjectiveState::GlitchLocked => ObjectiveState::Unlocked,
-                        ObjectiveState::Unlocked => ObjectiveState::Complete,
-                        ObjectiveState::Complete => ObjectiveState::Locked,
-                    };
-                    *o = new_state;
-                } else {
-                    println!("ENGINE_TOGGLE_STATE: id {} not found", &id);
-                }
+    pub fn toggle_state(&mut self, id: &String) -> Result<(), Error> {
+        if let Some(o) = self.objectives.get_mut(id) {
+            let new_state = match *o {
+                ObjectiveState::Disabled => ObjectiveState::Disabled,
+                ObjectiveState::Locked => ObjectiveState::Unlocked,
+                ObjectiveState::GlitchLocked => ObjectiveState::Unlocked,
+                ObjectiveState::Unlocked => ObjectiveState::Complete,
+                ObjectiveState::Complete => ObjectiveState::Locked,
+            };
+            *o = new_state;
+            Ok(())
+        } else {
+            Err(format_err!("toggle_state: id {} not found", &id))
+        }
+    }
 
-                self.update_display_state(data);
-                true
-            }
-            ENGINE_START_AUTO_TRACKING => {
-                if let Some(tracker) = &mut self.auto_tracker {
-                    if let Err(e) = task::block_on(tracker.start()) {
-                        println!("could not send start tracker message: {}", e);
-                    }
-                }
-                true
-            }
-            ENGINE_STOP_AUTO_TRACKING => {
-                if let Some(tracker) = &mut self.auto_tracker {
-                    if let Err(e) = task::block_on(tracker.stop()) {
-                        println!("could not send stop tracker message: {}", e);
-                    }
-                }
-                true
-            }
-            ENGINE_UPDATE_AUTO_TRACKER_STATE => {
-                let state = cmd.get_object::<AutoTrackerState>().expect("api violation");
-                data.auto_tracker_state = state.clone();
-                true
-            }
-            ENGINE_UPDATE_STATE => {
-                let updates = cmd
-                    .get_object::<HashMap<String, ObjectiveState>>()
-                    .expect("api violation");
-                for (id, state) in updates {
-                    self.objectives.insert(id.clone(), state.clone());
-                }
-                self.update_display_state(data);
-                true
-            }
-            _ => true,
+    pub fn start_auto_tracking(&mut self) -> Result<(), Error> {
+        if let Some(tracker) = &mut self.auto_tracker {
+            println!("starting");
+            task::block_on(tracker.start())
+                .map_err(|e| format_err!("could not send start tracker message: {}", e))
+        } else {
+            println!("no auto tracker");
+            Err(format_err!("no auto tracker support in this module"))
+        }
+    }
+
+    pub fn stop_auto_tracking(&mut self) -> Result<(), Error> {
+        if let Some(tracker) = &mut self.auto_tracker {
+            task::block_on(tracker.stop())
+                .map_err(|e| format_err!("could not send stop tracker message: {}", e))
+        } else {
+            Err(format_err!("no auto tracker support in this module"))
+        }
+    }
+
+    pub fn update_state(&mut self, updates: &HashMap<String, ObjectiveState>) {
+        for (id, state) in updates {
+            self.objectives.insert(id.clone(), state.clone());
         }
     }
 }

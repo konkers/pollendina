@@ -1,11 +1,13 @@
 #![recursion_limit = "256"]
 
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use druid::widget::{Button, Flex, Label, List, Padding, TextBox};
 use druid::{
-    platform_menus, AppDelegate, AppLauncher, Command, Data, DelegateCtx, Env, LocalizedString,
-    MenuDesc, MenuItem, Selector, Target, Widget, WidgetExt, WindowDesc, WindowId,
+    platform_menus, AppDelegate, AppLauncher, Command, Data, DelegateCtx, Env, ExtEventError,
+    ExtEventSink, LocalizedString, MenuDesc, MenuItem, Selector, Target, Widget, WidgetExt,
+    WindowDesc, WindowId,
 };
 use failure::Error;
 use match_macro::match_widget;
@@ -15,15 +17,35 @@ mod engine;
 mod widget;
 
 use engine::{
-    AutoTrackerState, DisplayChild, DisplayState, DisplayView, DisplayViewCount, Engine, Module,
-    ModuleParam, ModuleParamValue, ENGINE_START_AUTO_TRACKING, ENGINE_STOP_AUTO_TRACKING,
-    ENGINE_TOGGLE_STATE,
+    AutoTrackerState, DisplayChild, DisplayState, DisplayView, DisplayViewCount, Engine, EventSink,
+    Module, ModuleParam, ModuleParamValue, ObjectiveState,
 };
 use widget::{Grid, Objective};
 
 pub(crate) const UI_OPEN_CONFIG: Selector = Selector::new("ui:open_config");
 pub(crate) const UI_CANCEL_CONFIG: Selector = Selector::new("ui:cancel_config");
 pub(crate) const UI_APPLY_CONFIG: Selector = Selector::new("ui:update_config");
+
+pub(crate) const ENGINE_TOGGLE_STATE: Selector = Selector::new("engine:toggle_state");
+pub(crate) const ENGINE_UPDATE_STATE: Selector = Selector::new("engine:update_state");
+pub(crate) const ENGINE_UPDATE_AUTO_TRACKER_STATE: Selector =
+    Selector::new("engine:update_auto_tracker_state");
+pub(crate) const ENGINE_START_AUTO_TRACKING: Selector = Selector::new("engine:start_auto_tracking");
+pub(crate) const ENGINE_STOP_AUTO_TRACKING: Selector = Selector::new("engine:stop_auto_tracking");
+
+#[derive(Clone)]
+struct ExtEventSinkProxy(ExtEventSink);
+
+impl EventSink for ExtEventSinkProxy {
+    fn submit_command<T: 'static + Send>(
+        &self,
+        sel: Selector,
+        obj: impl Into<Option<T>>,
+        target: impl Into<Option<Target>>,
+    ) -> Result<(), ExtEventError> {
+        self.0.submit_command(sel, obj, target)
+    }
+}
 
 struct Delegate {
     engine: Engine,
@@ -76,7 +98,34 @@ impl AppDelegate<DisplayState> for Delegate {
                 self.close_config_window(data, ctx);
                 false
             }
-            _ => self.engine.command(ctx, target, cmd, data, env),
+            ENGINE_TOGGLE_STATE => {
+                let id = cmd.get_object::<String>().expect("api violation");
+                self.engine.toggle_state(&id);
+                self.engine.update_display_state(data);
+                true
+            }
+            ENGINE_START_AUTO_TRACKING => {
+                self.engine.start_auto_tracking();
+                true
+            }
+            ENGINE_STOP_AUTO_TRACKING => {
+                self.engine.stop_auto_tracking();
+                true
+            }
+            ENGINE_UPDATE_AUTO_TRACKER_STATE => {
+                let state = cmd.get_object::<AutoTrackerState>().expect("api violation");
+                data.auto_tracker_state = state.clone();
+                true
+            }
+            ENGINE_UPDATE_STATE => {
+                let updates = cmd
+                    .get_object::<HashMap<String, ObjectiveState>>()
+                    .expect("api violation");
+                self.engine.update_state(updates);
+                self.engine.update_display_state(data);
+                true
+            }
+            _ => true,
         }
     }
     fn window_removed(
@@ -99,7 +148,7 @@ fn main() -> Result<(), Error> {
     let app = AppLauncher::with_window(main_window);
 
     let module = Module::open("mods/ff4fe/manifest.json")?;
-    let engine = Engine::new(module, app.get_external_handle())?;
+    let engine = Engine::new(module, ExtEventSinkProxy(app.get_external_handle()))?;
     let data = engine.new_display_state();
 
     //    let auto_tracker = AutoTracker::new(ki_info, app.get_external_handle());

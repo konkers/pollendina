@@ -9,7 +9,10 @@ use failure::{format_err, Error};
 use rlua::{self, Function, Lua, Table, UserData, UserDataMethods};
 use usb2snes::Connection;
 
-use crate::engine::{ObjectiveState, ENGINE_UPDATE_AUTO_TRACKER_STATE, ENGINE_UPDATE_STATE};
+use crate::{
+    engine::{EventSink, ObjectiveState},
+    ENGINE_UPDATE_AUTO_TRACKER_STATE, ENGINE_UPDATE_STATE,
+};
 
 #[derive(Clone, Debug)]
 struct ObjectiveStateData(ObjectiveState);
@@ -111,7 +114,10 @@ impl AutoTrackerController {
 }
 
 impl AutoTracker {
-    pub fn new(script: &String, event_sink: ExtEventSink) -> Result<AutoTrackerController, Error> {
+    pub fn new<T: 'static + EventSink + Send>(
+        script: &String,
+        event_sink: T,
+    ) -> Result<AutoTrackerController, Error> {
         let lua = Lua::new();
 
         lua.context(|ctx| -> Result<(), Error> {
@@ -172,7 +178,7 @@ impl AutoTracker {
         })
     }
 
-    async fn sample(&mut self, c: &mut Connection, sink: &ExtEventSink) -> Result<(), Error> {
+    async fn sample<T: EventSink>(&mut self, c: &mut Connection, sink: &T) -> Result<(), Error> {
         let watches = self.lua.context(|ctx| -> Result<_, Error> {
             let mut watches = Vec::new();
             let globals = ctx.globals();
@@ -228,7 +234,7 @@ impl AutoTracker {
             .map_err(|e| format_err!("Failed to send command: {}", e))
     }
 
-    async fn auto_track(&mut self, sink: ExtEventSink) -> Result<(), Error> {
+    async fn auto_track<T: EventSink>(&mut self, sink: T) -> Result<(), Error> {
         let mut ticker = interval(Duration::from_millis(500));
         let mut connection = None;
         loop {
@@ -265,7 +271,7 @@ impl AutoTracker {
         }
     }
 
-    fn start(mut self, sink: ExtEventSink) {
+    fn start<T: 'static + EventSink + Send>(mut self, sink: T) {
         thread::spawn(move || {
             task::block_on(self.auto_track(sink)).expect("oops");
         });
