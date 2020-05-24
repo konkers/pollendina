@@ -258,6 +258,9 @@ impl AutoTracker {
                                 self.state = AutoTrackerState::Idle;
                             }
                         }
+                    } else {
+                        // Control channel dropped.  We're done here.
+                        return Ok(());
                     }
                 },
                 _ = ticker.next().fuse() => {
