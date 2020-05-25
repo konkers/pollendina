@@ -4,10 +4,11 @@ use std::sync::Arc;
 
 use druid::{Data, ExtEventError, Lens, Selector, Target, WindowId};
 use failure::{format_err, Error};
+use petgraph::{algo::toposort, graph::DiGraph};
 
 mod auto_tracker;
-pub mod module;
 pub mod expression;
+pub mod module;
 
 pub use module::{DisplayViewInfo, Module, Param};
 
@@ -30,6 +31,16 @@ pub enum ObjectiveState {
     GlitchLocked,
     Unlocked,
     Complete,
+}
+
+impl ObjectiveState {
+    pub fn is_active(&self) -> bool {
+        *self == ObjectiveState::Unlocked || *self == ObjectiveState::Complete
+    }
+
+    pub fn is_complete(&self) -> bool {
+        *self == ObjectiveState::Complete
+    }
 }
 
 #[derive(Clone, Data)]
@@ -82,6 +93,7 @@ pub struct DisplayState {
 pub struct Engine {
     module: Module,
     objectives: HashMap<String, ObjectiveState>,
+    eval_order: Vec<String>,
     auto_tracker: Option<AutoTrackerController>,
 }
 
@@ -99,12 +111,70 @@ impl Engine {
             Some(script) => Some(AutoTracker::new(script, event_sink.clone())?),
             None => None,
         };
+        let eval_order = Self::calc_eval_order(&module)?;
 
         Ok(Engine {
             module,
             objectives,
+            eval_order,
             auto_tracker,
         })
+    }
+
+    pub fn calc_eval_order(module: &Module) -> Result<Vec<String>, Error> {
+        // `petgraph` requires indexes to be integers so we first enumerate our
+        // objectives and assign the integer indexes.  We keep maps from
+        // id -> index and index -> id so we can create the graph then
+        // return the topological sort order by id.
+        //
+        // We expect the node count to be fairly low so this conversion
+        // happening once at module load and updates requiring several
+        // HashMap lookups.  If this becomes a performance bottleneck,
+        // we can switch to storing everything in a Vec and converting
+        // ids to indexes at module load and keeping the that way.
+        let mut id_map = HashMap::new();
+        let mut index_map = HashMap::new();
+        let mut index = 0;
+
+        for (id, _) in &module.objectives {
+            id_map.insert(index, id.clone());
+            index_map.insert(id.clone(), index);
+            index += 1;
+        }
+
+        // Generate a list of edges a tuples of (node, dependant node).
+        // Dependencies come from the objective unlocked_by and
+        // enabled_by expressions.
+        let mut edges = Vec::new();
+        for (id, info) in &module.objectives {
+            let idx = index_map.get(id).unwrap();
+            for check in &info.checks {
+                let mut deps = check.enabled_by.deps();
+                deps.append(&mut check.unlocked_by.deps());
+                for dep in deps {
+                    if let Some(dep_idx) = index_map.get(&dep) {
+                        edges.push((*idx, *dep_idx));
+                    } else {
+                        println!("unknown id {}", dep);
+                    }
+                }
+            }
+        }
+
+        let graph = DiGraph::<u32, ()>::from_edges(&edges);
+
+        // A topological sort gives us a static traversal order allowing
+        // os to propagate objective state changes in a single pass.
+        let nodes = toposort(&graph, None)
+            .map_err(|e| format_err!("cycle detected in objective dependencies: {:?}", e))?;
+
+        // Convert the eval_order back into a Vec of String ids.
+        let mut eval_order = Vec::new();
+        for node_index in nodes {
+            eval_order.push(id_map.get(&(node_index.index() as u32)).unwrap().clone());
+        }
+
+        Ok(eval_order)
     }
 
     pub fn new_display_state(&self) -> DisplayState {
@@ -297,6 +367,7 @@ mod tests {
         // tests.  Eventually the unique cases should be extracted into `test_data/mod`
         let module = Module::open("mods/ff4fe/manifest.json")?;
         let engine = Engine::new(module, TestEventSink)?;
+
         Ok(())
     }
 }

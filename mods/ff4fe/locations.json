@@ -564,6 +564,7 @@
             },
             {
                 "type": "key-item",
+                "enabled-by": "flag-k-moon",
                 "unlocked-by": "darkness-crystal"
             }
         ]
@@ -579,6 +580,7 @@
             },
             {
                 "type": "key-item",
+                "enabled-by": "flag-k-moon",
                 "unlocked-by": "darkness-crystal"
             }
         ]
@@ -594,6 +596,7 @@
             },
             {
                 "type": "key-item",
+                "enabled-by": "flag-k-moon",
                 "unlocked-by": "darkness-crystal"
             }
         ]
@@ -609,6 +612,7 @@
             },
             {
                 "type": "key-item",
+                "enabled-by": "flag-k-moon",
                 "unlocked-by": "darkness-crystal"
             }
         ]
@@ -624,10 +628,12 @@
             },
             {
                 "type": "key-item",
+                "enabled-by": "flag-k-moon",
                 "unlocked-by": "darkness-crystal"
             },
             {
                 "type": "key-item",
+                "enabled-by": "flag-k-moon",
                 "unlocked-by": "darkness-crystal"
             }
         ]
@@ -643,6 +649,7 @@
             },
             {
                 "type": "key-item",
+                "enabled-by": "flag-k-moon",
                 "unlocked-by": "darkness-crystal"
             }
         ]

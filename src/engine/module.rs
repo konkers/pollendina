@@ -5,20 +5,22 @@ use std::path::Path;
 use failure::{format_err, Error};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, PartialEq, Serialize)]
+use super::expression::Expression;
+
+#[derive(Debug, Deserialize, PartialEq)]
 pub struct ObjectiveInfoLoc {
     #[serde(rename = "type")]
     ty: String,
     path: String,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(tag = "type")]
 pub enum Param {
     TextBox { name: String },
 }
 
-#[derive(Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 pub struct Manifest {
     pub name: String,
     pub authors: Vec<String>,
@@ -32,19 +34,19 @@ pub struct Manifest {
     pub display: Vec<DisplayViewInfo>,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq)]
 pub struct ObjectiveCheck {
     #[serde(default, rename = "type")]
     pub ty: String,
     #[serde(default)]
     pub name: String,
     #[serde(default, rename = "enabled-by")]
-    pub enabled_by: Option<String>,
+    pub enabled_by: Expression,
     #[serde(default, rename = "unlocked-by")]
-    pub unlocked_by: Option<String>,
+    pub unlocked_by: Expression,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq)]
 pub struct ObjectiveInfo {
     pub id: String,
     #[serde(default, rename = "type")]
@@ -54,7 +56,7 @@ pub struct ObjectiveInfo {
     pub checks: Vec<ObjectiveCheck>,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 #[serde(tag = "type")]
 pub enum DisplayViewInfo {
     Grid {
@@ -172,8 +174,8 @@ mod tests {
                 checks: vec![ObjectiveCheck {
                     ty: "key-item".to_string(),
                     name: "".to_string(),
-                    enabled_by: None,
-                    unlocked_by: None,
+                    enabled_by: Expression::True,
+                    unlocked_by: Expression::True,
                 }],
             },
         )

@@ -1,20 +1,32 @@
+use std::collections::HashMap;
+
 use failure::{format_err, Error};
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_while, take_while_m_n},
     combinator::{map, opt, recognize},
-    multi::{many0},
+    multi::many0,
     sequence::{pair, preceded},
     IResult,
 };
+use serde::{de, Deserialize, Deserializer};
+
+use super::ObjectiveState;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expression {
+    True,
     Objective(String),
     ObjectiveComplete(String),
     And(Box<Expression>, Box<Expression>),
     Or(Box<Expression>, Box<Expression>),
     Not(Box<Expression>),
+}
+
+impl Default for Expression {
+    fn default() -> Self {
+        Expression::True
+    }
 }
 
 fn is_lower_alphanum(c: char) -> bool {
@@ -98,7 +110,6 @@ fn and(input: &str) -> IResult<&str, Expression> {
 }
 
 fn or_expr(input: &str) -> IResult<&str, Expression> {
-
     let (input, a) = preceded(whitespace, and)(input)?;
     let (input, _) = preceded(whitespace, tag("||"))(input)?;
     let (input, b) = preceded(whitespace, or)(input)?;
@@ -119,6 +130,57 @@ impl Expression {
         parse_expression(input)
             .map(|v| v.1)
             .map_err(|e| format_err!("error parsing expression: {}", e))
+    }
+
+    // Return a `Vec` of objective ids upon which this expression depends.
+    pub fn deps(&self) -> Vec<String> {
+        match self {
+            Expression::True => vec![],
+            Expression::Objective(id) => vec![id.clone()],
+            Expression::ObjectiveComplete(id) => vec![id.clone()],
+            Expression::Not(obj) => obj.deps(),
+            Expression::And(a, b) => {
+                let mut d = a.deps();
+                d.append(&mut b.deps());
+                d
+            }
+            Expression::Or(a, b) => {
+                let mut d = a.deps();
+                d.append(&mut b.deps());
+                d
+            }
+        }
+    }
+
+    fn find_state<'a>(
+        id: &String,
+        state: &'a HashMap<String, ObjectiveState>,
+    ) -> Result<&'a ObjectiveState, Error> {
+        state.get(id).ok_or(format_err!("can't find id {}", id))
+    }
+
+    // Evaluate this expression based on `state`.
+    pub fn evaluate(&self, state: &HashMap<String, ObjectiveState>) -> Result<bool, Error> {
+        match self {
+            Expression::True => Ok(true),
+            Expression::Objective(id) => Self::find_state(id, state).map(|o| o.is_active()),
+            Expression::ObjectiveComplete(id) => {
+                Self::find_state(id, state).map(|o| o.is_complete())
+            }
+            Expression::Not(obj) => obj.evaluate(state).map(|v| !v),
+            Expression::And(a, b) => Ok(a.evaluate(state)? && b.evaluate(state)?),
+            Expression::Or(a, b) => Ok(a.evaluate(state)? || b.evaluate(state)?),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for Expression {
+    fn deserialize<D>(deserializer: D) -> Result<Expression, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = <String>::deserialize(deserializer)?;
+        Expression::parse(&s).map_err(de::Error::custom)
     }
 }
 
@@ -258,13 +320,39 @@ mod tests {
         );
 
         test_expressions(
-            &vec![
-                "complete(hook) || complete(magma-key)",
-            ],
+            &vec!["complete(hook) || complete(magma-key)"],
             Expression::Or(
                 Box::new(Expression::ObjectiveComplete("hook".into())),
                 Box::new(Expression::ObjectiveComplete("magma-key".into())),
             ),
+        );
+    }
+
+    #[test]
+    fn deps() {
+        assert_eq!(
+            Expression::parse("complete(hook) || complete(magma-key)")
+                .unwrap()
+                .deps(),
+            vec!["hook".to_string(), "magma-key".to_string()]
+        );
+
+        assert_eq!(
+            Expression::parse("complete(hook) || !complete(magma-key)")
+                .unwrap()
+                .deps(),
+            vec!["hook".to_string(), "magma-key".to_string()]
+        );
+
+        assert_eq!(
+            Expression::parse("tower-key && complete(magma-key) || !luca-key")
+                .unwrap()
+                .deps(),
+            vec![
+                "tower-key".to_string(),
+                "magma-key".to_string(),
+                "luca-key".to_string()
+            ]
         );
     }
 }

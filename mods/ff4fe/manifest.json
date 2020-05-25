@@ -13,7 +13,11 @@
     "auto-track": "auto_track.lua",
     "objectives": [
         {
-            "type": "key-items",
+            "type": "flag",
+            "path": "flags.json"
+        },
+        {
+            "type": "key-item",
             "path": "key-items.json"
         },
         {

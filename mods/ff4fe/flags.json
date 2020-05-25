@@ -1,0 +1,18 @@
+[
+    {
+        "id": "flag-k-moon",
+        "name": "Kmoon"
+    },
+    {
+        "id": "flag-k-summon",
+        "name": "Ksummon"
+    },
+    {
+        "id": "flag-n-chars",
+        "name": "Nchars"
+    },
+    {
+        "id": "flag-n-key",
+        "name": "Nkey"
+    }
+]
