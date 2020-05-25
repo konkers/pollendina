@@ -85,20 +85,8 @@ fn operand(input: &str) -> IResult<&str, Expression> {
     alt((parenthetical, not, objective_complete, objective))(input)
 }
 
-fn or_expr(input: &str) -> IResult<&str, Expression> {
-    let (input, a) = preceded(whitespace, operand)(input)?;
-    let (input, _) = preceded(whitespace, tag("||"))(input)?;
-    let (input, b) = preceded(whitespace, or)(input)?;
-
-    Ok((input, Expression::Or(Box::new(a), Box::new(b))))
-}
-
-fn or(input: &str) -> IResult<&str, Expression> {
-    alt((or_expr, operand))(input)
-}
-
 fn and_expr(input: &str) -> IResult<&str, Expression> {
-    let (input, a) = preceded(whitespace, or)(input)?;
+    let (input, a) = preceded(whitespace, operand)(input)?;
     let (input, _) = preceded(whitespace, tag("&&"))(input)?;
     let (input, b) = preceded(whitespace, and)(input)?;
 
@@ -106,11 +94,24 @@ fn and_expr(input: &str) -> IResult<&str, Expression> {
 }
 
 fn and(input: &str) -> IResult<&str, Expression> {
-    alt((and_expr, or))(input)
+    alt((and_expr, operand))(input)
+}
+
+fn or_expr(input: &str) -> IResult<&str, Expression> {
+
+    let (input, a) = preceded(whitespace, and)(input)?;
+    let (input, _) = preceded(whitespace, tag("||"))(input)?;
+    let (input, b) = preceded(whitespace, or)(input)?;
+
+    Ok((input, Expression::Or(Box::new(a), Box::new(b))))
+}
+
+fn or(input: &str) -> IResult<&str, Expression> {
+    alt((or_expr, and))(input)
 }
 
 fn parse_expression(input: &str) -> IResult<&str, Expression> {
-    and(input)
+    or(input)
 }
 
 impl Expression {
@@ -246,9 +247,9 @@ mod tests {
         );
 
         test_expressions(
-            &vec!["tower-key || magma-key && luca-key"],
-            Expression::And(
-                Box::new(Expression::Or(
+            &vec!["tower-key && magma-key || luca-key"],
+            Expression::Or(
+                Box::new(Expression::And(
                     Box::new(Expression::Objective("tower-key".into())),
                     Box::new(Expression::Objective("magma-key".into())),
                 )),
