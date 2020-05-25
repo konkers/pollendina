@@ -7,6 +7,7 @@ use failure::{format_err, Error};
 
 mod auto_tracker;
 pub mod module;
+pub mod expression;
 
 pub use module::{DisplayViewInfo, Module, Param};
 

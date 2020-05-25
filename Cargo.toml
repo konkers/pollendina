@@ -15,6 +15,7 @@ failure = "0.1.8"
 futures ="0.3"
 image = {version = "0.23.4"}
 lazy_static = "1.4.0"
+nom = "5.1.1"
 palette = "0.5.0"
 rlua = "0.17.0"
 serde = { version = "1.0", features = ["derive"] }
