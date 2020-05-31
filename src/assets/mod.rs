@@ -1,45 +1,14 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::Arc;
-
-use lazy_static::lazy_static;
+use std::thread_local;
 
 pub mod image;
 
-use self::image::{add_image_to_cache, ImageData};
+pub(crate) use self::image::{add_image_to_cache, ImageData};
 
-macro_rules! add_image {
-    ($c:ident, $id:expr) => {
-        add_image_to_cache(
-            &mut $c,
-            $id,
-            include_bytes!(concat!("../../assets/key-items/", $id, ".png")),
-        );
-    };
-}
-
-lazy_static! {
-    pub(crate) static ref IMAGES: AssetStore<ImageData> = {
-        let mut c = AssetStore::new();
-        add_image!(c, "adamant");
-        add_image!(c, "baron-key");
-        add_image!(c, "crystal");
-        add_image!(c, "darkness-crystal");
-        add_image!(c, "earth-crystal");
-        add_image!(c, "hook");
-        add_image!(c, "legend-sword");
-        add_image!(c, "luca-key");
-        add_image!(c, "magma-key");
-        add_image!(c, "package");
-        add_image!(c, "pan");
-        add_image!(c, "pass");
-        add_image!(c, "pink-tail");
-        add_image!(c, "rat-tail");
-        add_image!(c, "sand-ruby");
-        add_image!(c, "spoon");
-        add_image!(c, "tower-key");
-        add_image!(c, "twin-harp");
-        c
-    };
+thread_local! {
+    pub(crate) static IMAGES: RefCell<AssetStore<ImageData>> = RefCell::new(AssetStore::new());
 }
 
 pub(crate) struct AssetStore<T> {

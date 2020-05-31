@@ -1,5 +1,6 @@
 use async_std::task;
 use std::collections::HashMap;
+use std::fs;
 use std::sync::Arc;
 
 use druid::{Data, ExtEventError, Lens, Selector, Target, WindowId};
@@ -12,6 +13,7 @@ pub mod module;
 
 pub use module::{DisplayViewInfo, Module, Param};
 
+use crate::assets::{add_image_to_cache, IMAGES};
 pub use auto_tracker::AutoTrackerState;
 use auto_tracker::{AutoTracker, AutoTrackerController};
 
@@ -112,6 +114,19 @@ impl Engine {
             None => None,
         };
         let eval_order = Self::calc_eval_order(&module)?;
+
+        // Load all the assets into the asset store.
+        IMAGES.with(|images| -> Result<(), Error> {
+            let mut store = images.borrow_mut();
+            //let mut store =
+            //    Arc::get_mut(images).ok_or(format_err!("Can't get mutable images store"))?;
+            for asset in &module.assets {
+                let data = fs::read(&asset.path)?;
+                add_image_to_cache(&mut store, &asset.id, &data);
+            }
+
+            Ok(())
+        })?;
 
         Ok(Engine {
             module,

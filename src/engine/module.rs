@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::convert::AsRef;
-use std::path::Path;
+use std::fs;
+use std::io;
+use std::path::{Path, PathBuf};
 
 use failure::{format_err, Error};
 use serde::{Deserialize, Serialize};
@@ -68,24 +70,33 @@ pub enum DisplayViewInfo {
     },
 }
 
+#[derive(Debug)]
+pub struct AssetInfo {
+    pub path: PathBuf,
+    pub id: String,
+}
+
 pub struct Module {
     pub manifest: Manifest,
     pub objectives: HashMap<String, ObjectiveInfo>,
     pub auto_track: Option<String>,
+    pub assets: Vec<AssetInfo>,
 }
 
 impl Module {
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Module, Error> {
+        let path = path.as_ref().canonicalize()?;
+
         let manifest_str = std::fs::read_to_string(&path)
-            .map_err(|e| format_err!("Failed to open {}: {}", path.as_ref().display(), e))?;
+            .map_err(|e| format_err!("Failed to open {}: {}", path.display(), e))?;
         let manifest: Manifest = serde_json::from_str(&manifest_str)
-            .map_err(|e| format_err!("Failed to parse {}: {}", path.as_ref().display(), e))?;
+            .map_err(|e| format_err!("Failed to parse {}: {}", path.display(), e))?;
 
         let mut objectives = HashMap::new();
 
-        let base_path = path.as_ref().parent().ok_or(format_err!(
+        let base_path = path.parent().ok_or(format_err!(
             "Can't get parent directory of {}",
-            path.as_ref().display()
+            path.display()
         ))?;
 
         let auto_track = match &manifest.auto_track {
@@ -117,14 +128,65 @@ impl Module {
                 objectives.insert(obj.id.clone(), obj);
             }
         }
+        // Traverse `assets` directory looking for PNGs.
+        let assets_path = base_path.join("assets");
+        let mut assets = Vec::new();
+        Self::visit_asset_dir(&assets_path, &assets_path, &mut assets)?;
 
+        println!("assets:");
+        for a in &assets {
+            println!("{:?}", &a);
+        }
         // TODO(konkers): verify module integrity
         //  All id references should resolve (display and elsewhere)
         Ok(Module {
             manifest,
             objectives,
             auto_track,
+            assets,
         })
+    }
+
+    fn visit_asset_dir(
+        base_dir: &Path,
+        dir: &Path,
+        paths: &mut Vec<AssetInfo>,
+    ) -> Result<(), Error> {
+        if !dir.is_dir() {
+            return Err(format_err!("{} is not a directory.", dir.to_string_lossy()));
+        }
+
+        for entry in fs::read_dir(dir)? {
+            let entry = entry?;
+            let path = entry.path();
+            if path.is_dir() {
+                Self::visit_asset_dir(base_dir, &path, paths)?;
+            } else {
+                if let Some(extension) = path.extension() {
+                    if extension == "png" {
+                        // Create `id` by stripping off the asset directory prefix,
+                        // converting path separators to ':', and stripping the
+                        // .png extension.  This creates a platform agnostic id
+                        // based on the asset's path.
+                        let mut id = path
+                            .strip_prefix(&base_dir)?
+                            .iter()
+                            .map(|c| c.to_string_lossy().into_owned())
+                            .collect::<Vec<String>>()
+                            .join(":");
+                        // Trims extension and the '.' preceding it.
+                        id.truncate(id.len() - extension.len() - 1);
+
+                        paths.push(AssetInfo {
+                            path: path.to_path_buf(),
+                            id,
+                        });
+                    }
+                }
+            }
+        }
+
+        Ok(())
     }
 }
 

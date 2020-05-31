@@ -36,13 +36,17 @@ impl Objective {
     }
 
     fn update_image(&mut self, data: &DisplayChild) {
-        let id = match data.state {
-            ObjectiveState::Unlocked => data.id.clone(),
-            ObjectiveState::Complete => format!("{}:completed", &data.id),
-            _ => format!("{}:disabled", &data.id),
+        let postfix = match data.state {
+            ObjectiveState::Unlocked => "",
+            ObjectiveState::Complete => ":completed",
+            _ => ":disabled",
         };
 
-        self.image = IMAGES.get(&id);
+        let id = format!("objective:{}{}", &data.id, &postfix);
+
+        IMAGES.with(|images| {
+            self.image = images.borrow().get(&id);
+        });
     }
 }
 
