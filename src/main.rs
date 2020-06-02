@@ -179,7 +179,7 @@ fn count_widget() -> impl Widget<DisplayViewCount> {
 }
 
 fn map_widget() -> impl Widget<DisplayViewMap> {
-    DynFlex::column(|| Map::new()).lens(DisplayViewMap::maps)
+    DynFlex::column(|| Padding::new(8.0, Map::new())).lens(DisplayViewMap::maps)
 }
 
 fn flex_row_widget() -> impl Widget<DisplayViewFlex> {
@@ -230,7 +230,7 @@ fn ui_builder() -> impl Widget<DisplayState> {
     bot.add_child(Button::new("Config").on_click(|ctx, _data, _env| {
         ctx.submit_command(Command::new(UI_OPEN_CONFIG, 0), None);
     }));
-    root.add_child(bot);
+    root.add_child(Padding::new(8.0, bot));
     //root.debug_paint_layout()
     root
 }
