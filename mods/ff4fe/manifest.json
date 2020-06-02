@@ -33,6 +33,20 @@
             "path": "pseudo.json"
         }
     ],
+    "maps": [
+        {
+            "id": "overworld",
+            "path": "maps/overworld.json"
+        },
+        {
+            "id": "underground",
+            "path": "maps/underground.json"
+        },
+        {
+            "id": "moon",
+            "path": "maps/moon.json"
+        }
+    ],
     "display": [
         {
             "type": "Grid",
@@ -61,6 +75,15 @@
         {
             "type": "Count",
             "objective_type": "key-items"
+        },
+        {
+            "type": "Map",
+            "maps": [
+                "overworld",
+                "underground",
+                "moon"
+            ],
+            "flex": 1.0
         }
     ]
 }

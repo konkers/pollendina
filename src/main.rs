@@ -17,10 +17,10 @@ mod engine;
 mod widget;
 
 use engine::{
-    AutoTrackerState, DisplayChild, DisplayState, DisplayView, DisplayViewCount, Engine, EventSink,
-    Module, ModuleParam, ModuleParamValue, ObjectiveState,
+    AutoTrackerState, DisplayChild, DisplayState, DisplayView, DisplayViewCount, DisplayViewGrid,
+    DisplayViewMap, Engine, EventSink, Module, ModuleParam, ModuleParamValue, ObjectiveState,
 };
-use widget::{Grid, Objective};
+use widget::{DynFlex, DynFlexParams, Grid, Map, Objective};
 
 pub(crate) const UI_OPEN_CONFIG: Selector = Selector::new("ui:open_config");
 pub(crate) const UI_CANCEL_CONFIG: Selector = Selector::new("ui:cancel_config");
@@ -161,33 +161,40 @@ fn main() -> Result<(), Error> {
     Ok(())
 }
 
-fn ui_builder() -> impl Widget<DisplayState> {
-    let mut root = Flex::column();
-    root.add_child(
+fn grid_widget() -> impl Widget<DisplayViewGrid> {
+    Grid::new(|| {
         Padding::new(
-            8.0,
-            List::new(|| {
-                match_widget! { DisplayView,
-                        DisplayView::Grid(_) =>
-                    Grid::new(|| {
-                        Padding::new(
-                            2.0,
-                            Objective::new().on_click(|ctx, data: &mut DisplayChild, _env| {
-                                let cmd = Command::new(ENGINE_TOGGLE_STATE, data.id.clone());
-                                ctx.submit_command(cmd, None);
-                            }),
-                        )
-                    }),
-                    DisplayView::Count(_) => Label::new(|data: &DisplayViewCount, _env: &_| {
-                        format!("{} / {}", data.found, data.total)
-                    })
-
-                }
+            2.0,
+            Objective::new().on_click(|ctx, data: &mut DisplayChild, _env| {
+                let cmd = Command::new(ENGINE_TOGGLE_STATE, data.id.clone());
+                ctx.submit_command(cmd, None);
             }),
         )
+    })
+}
+
+fn count_widget() -> impl Widget<DisplayViewCount> {
+    Label::new(|data: &DisplayViewCount, _env: &_| format!("{} / {}", data.found, data.total))
+}
+
+fn map_widget() -> impl Widget<DisplayViewMap> {
+    DynFlex::column(|| Map::new()).lens(DisplayViewMap::maps)
+}
+
+fn ui_builder() -> impl Widget<DisplayState> {
+    let mut root = Flex::column();
+    root.add_flex_child(
+        DynFlex::column(|| {
+            match_widget! { DisplayView,
+                DisplayView::Grid(_) => grid_widget(),
+                DisplayView::Count(_) => count_widget(),
+                DisplayView::Map(_) => map_widget(),
+            }
+        })
         .lens(DisplayState::views),
+        1.0,
     );
-    root.add_flex_spacer(1.0);
+
     let mut bot = Flex::row();
     bot.add_child(
         Button::new(|data: &AutoTrackerState, _env: &_| {

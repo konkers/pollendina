@@ -1,0 +1,11 @@
+{
+    "id": "overworld",
+    "name": "Overworld",
+    "objectives": [
+        {
+            "id": "baron",
+            "x": 1578,
+            "y": 2284
+        }
+    ]
+}

@@ -5,6 +5,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 use failure::{format_err, Error};
+use path_slash::PathBufExt;
 use serde::{Deserialize, Serialize};
 
 use super::expression::Expression;
@@ -13,6 +14,12 @@ use super::expression::Expression;
 pub struct ObjectiveInfoLoc {
     #[serde(rename = "type")]
     ty: String,
+    path: String,
+}
+
+#[derive(Debug, Deserialize, PartialEq)]
+pub struct MapInfoLoc {
+    id: String,
     path: String,
 }
 
@@ -33,6 +40,8 @@ pub struct Manifest {
     #[serde(default)]
     pub params: Vec<Param>,
     pub objectives: Vec<ObjectiveInfoLoc>,
+    #[serde(default)]
+    pub maps: Vec<MapInfoLoc>,
     pub display: Vec<DisplayViewInfo>,
 }
 
@@ -58,15 +67,39 @@ pub struct ObjectiveInfo {
     pub checks: Vec<ObjectiveCheck>,
 }
 
+#[derive(Clone, Debug, Deserialize, PartialEq)]
+pub struct MapObjective {
+    pub id: String,
+    pub x: u64,
+    pub y: u64,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq)]
+pub struct MapInfo {
+    pub id: String,
+    pub name: String,
+    #[serde(default)]
+    pub objectives: Vec<MapObjective>,
+}
+
 #[derive(Debug, Deserialize, PartialEq)]
 #[serde(tag = "type")]
 pub enum DisplayViewInfo {
     Grid {
         columns: usize,
         objectives: Vec<String>,
+        #[serde(default)]
+        flex: f64,
     },
     Count {
         objective_type: String,
+        #[serde(default)]
+        flex: f64,
+    },
+    Map {
+        maps: Vec<String>,
+        #[serde(default)]
+        flex: f64,
     },
 }
 
@@ -79,6 +112,7 @@ pub struct AssetInfo {
 pub struct Module {
     pub manifest: Manifest,
     pub objectives: HashMap<String, ObjectiveInfo>,
+    pub maps: HashMap<String, MapInfo>,
     pub auto_track: Option<String>,
     pub assets: Vec<AssetInfo>,
 }
@@ -91,8 +125,6 @@ impl Module {
             .map_err(|e| format_err!("Failed to open {}: {}", path.display(), e))?;
         let manifest: Manifest = serde_json::from_str(&manifest_str)
             .map_err(|e| format_err!("Failed to parse {}: {}", path.display(), e))?;
-
-        let mut objectives = HashMap::new();
 
         let base_path = path.parent().ok_or(format_err!(
             "Can't get parent directory of {}",
@@ -109,8 +141,9 @@ impl Module {
             None => None,
         };
 
+        let mut objectives = HashMap::new();
         for loc in &manifest.objectives {
-            let obj_path = base_path.join(&loc.path);
+            let obj_path = base_path.join(PathBuf::from_slash(&loc.path));
             let obj_str = std::fs::read_to_string(&obj_path)
                 .map_err(|e| format_err!("Failed to open {}: {}", obj_path.display(), e))?;
             let objs: Vec<ObjectiveInfo> = serde_json::from_str(&obj_str)
@@ -128,20 +161,28 @@ impl Module {
                 objectives.insert(obj.id.clone(), obj);
             }
         }
+
+        let mut maps = HashMap::new();
+        for loc in &manifest.maps {
+            let map_path = base_path.join(PathBuf::from_slash(&loc.path));
+            let map_str = std::fs::read_to_string(&map_path)
+                .map_err(|e| format_err!("Failed to open {}: {}", map_path.display(), e))?;
+            let map: MapInfo = serde_json::from_str(&map_str)
+                .map_err(|e| format_err!("Failed to parse {}: {}", map_path.display(), e))?;
+            maps.insert(map.id.clone(), map);
+        }
+
         // Traverse `assets` directory looking for PNGs.
         let assets_path = base_path.join("assets");
         let mut assets = Vec::new();
         Self::visit_asset_dir(&assets_path, &assets_path, &mut assets)?;
 
-        println!("assets:");
-        for a in &assets {
-            println!("{:?}", &a);
-        }
         // TODO(konkers): verify module integrity
         //  All id references should resolve (display and elsewhere)
         Ok(Module {
             manifest,
             objectives,
+            maps,
             auto_track,
             assets,
         })

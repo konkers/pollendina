@@ -13,7 +13,9 @@ pub mod module;
 
 pub use module::{DisplayViewInfo, Module, Param};
 
-use crate::assets::{add_image_to_cache, IMAGES};
+use crate::assets::{add_image_to_cache, add_objective_to_cache, IMAGES};
+use crate::widget::dyn_flex::{DynFlexItem, DynFlexParams};
+
 pub use auto_tracker::AutoTrackerState;
 use auto_tracker::{AutoTracker, AutoTrackerController};
 
@@ -57,18 +59,58 @@ pub struct DisplayChild {
 pub struct DisplayViewGrid {
     pub columns: usize,
     pub children: Arc<Vec<DisplayChild>>,
+    pub flex: f64,
 }
 
 #[derive(Clone, Data, Lens)]
 pub struct DisplayViewCount {
     pub found: u32,
     pub total: u32,
+    pub flex: f64,
+}
+
+#[derive(Clone, Data, Lens)]
+pub struct MapObjective {
+    pub id: String,
+    pub x: u64,
+    pub y: u64,
+    pub state: ObjectiveState,
+}
+
+#[derive(Clone, Data, Lens)]
+pub struct MapInfo {
+    pub id: String,
+    pub objectives: Arc<Vec<MapObjective>>,
+}
+
+impl DynFlexItem for MapInfo {
+    fn flex_params(&self) -> DynFlexParams {
+        return 1.0.into();
+    }
+}
+
+#[derive(Clone, Data, Lens)]
+pub struct DisplayViewMap {
+    pub maps: Arc<Vec<MapInfo>>,
+    pub flex: f64,
 }
 
 #[derive(Clone, Data)]
 pub enum DisplayView {
     Grid(DisplayViewGrid),
     Count(DisplayViewCount),
+    Map(DisplayViewMap),
+}
+
+impl DynFlexItem for DisplayView {
+    fn flex_params(&self) -> DynFlexParams {
+        match self {
+            DisplayView::Grid(g) => g.flex,
+            DisplayView::Count(c) => c.flex,
+            DisplayView::Map(m) => m.flex,
+        }
+        .into()
+    }
 }
 
 #[derive(Clone, Data, PartialEq)]
@@ -118,11 +160,13 @@ impl Engine {
         // Load all the assets into the asset store.
         IMAGES.with(|images| -> Result<(), Error> {
             let mut store = images.borrow_mut();
-            //let mut store =
-            //    Arc::get_mut(images).ok_or(format_err!("Can't get mutable images store"))?;
             for asset in &module.assets {
                 let data = fs::read(&asset.path)?;
-                add_image_to_cache(&mut store, &asset.id, &data);
+                if asset.id.starts_with("objective:") {
+                    add_objective_to_cache(&mut store, &asset.id, &data);
+                } else {
+                    add_image_to_cache(&mut store, &asset.id, &data);
+                }
             }
 
             Ok(())
@@ -200,6 +244,7 @@ impl Engine {
                 DisplayViewInfo::Grid {
                     columns,
                     objectives,
+                    flex,
                 } => {
                     let mut children = Vec::new();
                     for objective in objectives {
@@ -213,11 +258,45 @@ impl Engine {
                     DisplayView::Grid(DisplayViewGrid {
                         columns: *columns,
                         children: Arc::new(children),
+                        flex: *flex,
                     })
                 }
                 DisplayViewInfo::Count {
                     objective_type: _objective_type,
-                } => DisplayView::Count(DisplayViewCount { found: 0, total: 0 }),
+                    flex,
+                } => DisplayView::Count(DisplayViewCount {
+                    found: 0,
+                    total: 0,
+                    flex: *flex,
+                }),
+                DisplayViewInfo::Map {
+                    maps: map_ids,
+                    flex,
+                } => {
+                    let mut maps = Vec::new();
+                    for id in map_ids {
+                        let obj_info = self.module.maps.get(id).unwrap();
+                        let mut objectives = Vec::new();
+
+                        for info in &obj_info.objectives {
+                            objectives.push(MapObjective {
+                                id: info.id.clone(),
+                                x: info.x,
+                                y: info.y,
+                                state: ObjectiveState::Locked,
+                            });
+                        }
+
+                        maps.push(MapInfo {
+                            id: id.clone(),
+                            objectives: Arc::new(objectives),
+                        });
+                    }
+                    DisplayView::Map(DisplayViewMap {
+                        maps: Arc::new(maps),
+                        flex: *flex,
+                    })
+                }
             };
             views.push(view);
         }
@@ -289,6 +368,18 @@ impl Engine {
         view.total = total as u32;
     }
 
+    fn update_map_state(&self, view: &mut DisplayViewMap) {
+        let maps = Arc::make_mut(&mut view.maps);
+        for map in maps {
+            let objectives = Arc::make_mut(&mut map.objectives);
+            for mut o in objectives.iter_mut() {
+                if let Some(state) = self.objectives.get(&o.id) {
+                    o.state = *state;
+                }
+            }
+        }
+    }
+
     pub fn update_display_state(&self, data: &mut DisplayState) {
         let views = Arc::make_mut(&mut data.views);
         let mut infos = self.module.manifest.display.iter();
@@ -302,14 +393,23 @@ impl Engine {
                 DisplayViewInfo::Grid {
                     columns,
                     objectives,
+                    flex: _flex,
                 } => {
                     if let DisplayView::Grid(g) = view {
                         self.update_grid_state(g, columns, objectives);
                     }
                 }
-                DisplayViewInfo::Count { objective_type } => {
+                DisplayViewInfo::Count {
+                    objective_type,
+                    flex: _flex,
+                } => {
                     if let DisplayView::Count(c) = view {
                         self.update_count_state(c, objective_type);
+                    }
+                }
+                DisplayViewInfo::Map { maps, flex } => {
+                    if let DisplayView::Map(m) = view {
+                        self.update_map_state(m);
                     }
                 }
             }
