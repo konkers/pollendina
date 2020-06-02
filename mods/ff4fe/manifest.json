@@ -47,60 +47,58 @@
             "path": "maps/moon.json"
         }
     ],
-    "display": [
-        {
-            "type": "FlexRow",
-            "flex": 1.0,
-            "children": [
-                {
-                    "type": "FlexCol",
-                    "children": [
-                        {
-                            "type": "Grid",
-                            "columns": 4,
-                            "objectives": [
-                                "crystal",
-                                "pass",
-                                "hook",
-                                "darkness-crystal",
-                                "earth-crystal",
-                                "twin-harp",
-                                "package",
-                                "sand-ruby",
-                                "baron-key",
-                                "magma-key",
-                                "tower-key",
-                                "luca-key",
-                                "adamant",
-                                "legend-sword",
-                                "pan",
-                                "spoon",
-                                "rat-tail",
-                                "pink-tail"
-                            ]
-                        },
-                        {
-                            "type": "Count",
-                            "objective_type": "key-items"
-                        }
-                    ]
-                },
-                {
-                    "type": "FlexCol",
-                    "flex": 1.0,
-                    "children": [
-                        {
-                            "type": "Map",
-                            "maps": [
-                                "overworld",
-                                "underground",
-                                "moon"
-                            ],
-                            "flex": 1.0
-                        }
-                    ]
-                }
-            ]
-        }
-    ]
+    "layout": {
+        "type": "FlexRow",
+        "flex": 1.0,
+        "children": [
+            {
+                "type": "FlexCol",
+                "children": [
+                    {
+                        "type": "Grid",
+                        "columns": 4,
+                        "objectives": [
+                            "crystal",
+                            "pass",
+                            "hook",
+                            "darkness-crystal",
+                            "earth-crystal",
+                            "twin-harp",
+                            "package",
+                            "sand-ruby",
+                            "baron-key",
+                            "magma-key",
+                            "tower-key",
+                            "luca-key",
+                            "adamant",
+                            "legend-sword",
+                            "pan",
+                            "spoon",
+                            "rat-tail",
+                            "pink-tail"
+                        ]
+                    },
+                    {
+                        "type": "Count",
+                        "objective_type": "key-items"
+                    }
+                ]
+            },
+            {
+                "type": "FlexCol",
+                "flex": 1.0,
+                "children": [
+                    {
+                        "type": "Map",
+                        "maps": [
+                            "overworld",
+                            "underground",
+                            "moon"
+                        ],
+                        "flex": 1.0
+                    }
+                ]
+            }
+        ]
+    }
 }

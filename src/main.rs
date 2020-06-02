@@ -201,10 +201,7 @@ fn display_widget() -> impl Widget<DisplayView> {
 }
 fn ui_builder() -> impl Widget<DisplayState> {
     let mut root = Flex::column();
-    root.add_flex_child(
-        DynFlex::column(|| display_widget()).lens(DisplayState::views),
-        1.0,
-    );
+    root.add_flex_child(display_widget().lens(DisplayState::layout), 1.0);
 
     let mut bot = Flex::row();
     bot.add_child(

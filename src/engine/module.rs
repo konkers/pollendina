@@ -42,7 +42,7 @@ pub struct Manifest {
     pub objectives: Vec<ObjectiveInfoLoc>,
     #[serde(default)]
     pub maps: Vec<MapInfoLoc>,
-    pub display: Vec<DisplayViewInfo>,
+    pub layout: DisplayViewInfo,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]

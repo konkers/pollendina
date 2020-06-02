@@ -138,7 +138,7 @@ pub struct ModuleParam {
 // it needs to function.
 #[derive(Clone, Data, Lens)]
 pub struct DisplayState {
-    pub views: Arc<Vec<DisplayView>>,
+    pub layout: DisplayView,
     pub params: Arc<Vec<ModuleParam>>,
     pub auto_tracker_state: AutoTrackerState,
     pub config_win: Arc<Option<WindowId>>,
@@ -246,80 +246,80 @@ impl Engine {
         Ok(eval_order)
     }
 
+    fn new_view(&self, info: &DisplayViewInfo) -> DisplayView {
+        match info {
+            DisplayViewInfo::Grid {
+                columns,
+                objectives,
+                flex,
+            } => {
+                let mut children = Vec::new();
+                for objective in objectives {
+                    // All objectives start in the Locked state.  The normal
+                    // app lifecycle will take care of keeping them up to date.
+                    children.push(DisplayChild {
+                        id: objective.clone(),
+                        state: ObjectiveState::Locked,
+                    });
+                }
+                DisplayView::Grid(DisplayViewGrid {
+                    columns: *columns,
+                    children: Arc::new(children),
+                    flex: *flex,
+                })
+            }
+            DisplayViewInfo::Count {
+                objective_type: _objective_type,
+                flex,
+            } => DisplayView::Count(DisplayViewCount {
+                found: 0,
+                total: 0,
+                flex: *flex,
+            }),
+            DisplayViewInfo::Map {
+                maps: map_ids,
+                flex,
+            } => {
+                let mut maps = Vec::new();
+                for id in map_ids {
+                    let obj_info = self.module.maps.get(id).unwrap();
+                    let mut objectives = Vec::new();
+
+                    for info in &obj_info.objectives {
+                        objectives.push(MapObjective {
+                            id: info.id.clone(),
+                            x: info.x,
+                            y: info.y,
+                            state: ObjectiveState::Locked,
+                        });
+                    }
+
+                    maps.push(MapInfo {
+                        id: id.clone(),
+                        objectives: Arc::new(objectives),
+                    });
+                }
+                DisplayView::Map(DisplayViewMap {
+                    maps: Arc::new(maps),
+                    flex: *flex,
+                })
+            }
+            DisplayViewInfo::FlexRow { children, flex } => DisplayView::FlexRow(DisplayViewFlex {
+                children: Arc::new(self.new_sub_layout(children)),
+                flex: *flex,
+            }),
+            DisplayViewInfo::FlexCol { children, flex } => DisplayView::FlexCol(DisplayViewFlex {
+                children: Arc::new(self.new_sub_layout(children)),
+                flex: *flex,
+            }),
+        }
+    }
+
     fn new_sub_layout(&self, infos: &Vec<DisplayViewInfo>) -> Vec<DisplayView> {
         let mut views = Vec::new();
 
         for info in infos {
-            let view = match info {
-                DisplayViewInfo::Grid {
-                    columns,
-                    objectives,
-                    flex,
-                } => {
-                    let mut children = Vec::new();
-                    for objective in objectives {
-                        // All objectives start in the Locked state.  The normal
-                        // app lifecycle will take care of keeping them up to date.
-                        children.push(DisplayChild {
-                            id: objective.clone(),
-                            state: ObjectiveState::Locked,
-                        });
-                    }
-                    DisplayView::Grid(DisplayViewGrid {
-                        columns: *columns,
-                        children: Arc::new(children),
-                        flex: *flex,
-                    })
-                }
-                DisplayViewInfo::Count {
-                    objective_type: _objective_type,
-                    flex,
-                } => DisplayView::Count(DisplayViewCount {
-                    found: 0,
-                    total: 0,
-                    flex: *flex,
-                }),
-                DisplayViewInfo::Map {
-                    maps: map_ids,
-                    flex,
-                } => {
-                    let mut maps = Vec::new();
-                    for id in map_ids {
-                        let obj_info = self.module.maps.get(id).unwrap();
-                        let mut objectives = Vec::new();
-
-                        for info in &obj_info.objectives {
-                            objectives.push(MapObjective {
-                                id: info.id.clone(),
-                                x: info.x,
-                                y: info.y,
-                                state: ObjectiveState::Locked,
-                            });
-                        }
-
-                        maps.push(MapInfo {
-                            id: id.clone(),
-                            objectives: Arc::new(objectives),
-                        });
-                    }
-                    DisplayView::Map(DisplayViewMap {
-                        maps: Arc::new(maps),
-                        flex: *flex,
-                    })
-                }
-                DisplayViewInfo::FlexRow { children, flex } => {
-                    DisplayView::FlexRow(DisplayViewFlex {
-                        children: Arc::new(self.new_sub_layout(children)),
-                        flex: *flex,
-                    })
-                }
-                DisplayViewInfo::FlexCol { children, flex } => {
-                    DisplayView::FlexCol(DisplayViewFlex {
-                        children: Arc::new(self.new_sub_layout(children)),
-                        flex: *flex,
-                    })
-                }
-            };
+            let view = self.new_view(&info);
             views.push(view);
         }
 
@@ -327,7 +327,7 @@ impl Engine {
     }
 
     pub fn new_display_state(&self) -> DisplayState {
-        let views = self.new_sub_layout(&self.module.manifest.display);
+        let layout = self.new_view(&self.module.manifest.layout);
         let mut params = Vec::new();
         for p in &self.module.manifest.params {
             let (name, value) = match p {
@@ -337,7 +337,7 @@ impl Engine {
         }
 
         let mut state = DisplayState {
-            views: Arc::new(views),
+            layout: layout,
             params: Arc::new(params),
             auto_tracker_state: AutoTrackerState::Idle,
             config_win: Arc::new(None),
@@ -408,6 +408,52 @@ impl Engine {
         }
     }
 
+    fn update_view(&self, view: &mut DisplayView, info: &DisplayViewInfo) {
+        match info {
+            DisplayViewInfo::Grid {
+                columns,
+                objectives,
+                flex: _flex,
+            } => {
+                if let DisplayView::Grid(g) = view {
+                    self.update_grid_state(g, columns, objectives);
+                }
+            }
+            DisplayViewInfo::Count {
+                objective_type,
+                flex: _flex,
+            } => {
+                if let DisplayView::Count(c) = view {
+                    self.update_count_state(c, objective_type);
+                }
+            }
+            DisplayViewInfo::Map {
+                maps: _maps,
+                flex: _flex,
+            } => {
+                if let DisplayView::Map(m) = view {
+                    self.update_map_state(m);
+                }
+            }
+            DisplayViewInfo::FlexRow {
+                children: children_info,
+                flex: _flex,
+            } => {
+                if let DisplayView::FlexRow(f) = view {
+                    self.update_sub_layout(&mut f.children, &children_info)
+                }
+            }
+            DisplayViewInfo::FlexCol {
+                children: children_info,
+                flex: _flex,
+            } => {
+                if let DisplayView::FlexCol(f) = view {
+                    self.update_sub_layout(&mut f.children, &children_info)
+                }
+            }
+        }
+    }
+
     fn update_sub_layout(&self, views: &mut Arc<Vec<DisplayView>>, infos: &Vec<DisplayViewInfo>) {
         let views = Arc::make_mut(views);
         let mut infos = infos.iter();
@@ -417,55 +463,12 @@ impl Engine {
                 Some(i) => i,
                 None => return,
             };
-
-            match info {
-                DisplayViewInfo::Grid {
-                    columns,
-                    objectives,
-                    flex: _flex,
-                } => {
-                    if let DisplayView::Grid(g) = view {
-                        self.update_grid_state(g, columns, objectives);
-                    }
-                }
-                DisplayViewInfo::Count {
-                    objective_type,
-                    flex: _flex,
-                } => {
-                    if let DisplayView::Count(c) = view {
-                        self.update_count_state(c, objective_type);
-                    }
-                }
-                DisplayViewInfo::Map {
-                    maps: _maps,
-                    flex: _flex,
-                } => {
-                    if let DisplayView::Map(m) = view {
-                        self.update_map_state(m);
-                    }
-                }
-                DisplayViewInfo::FlexRow {
-                    children: children_info,
-                    flex: _flex,
-                } => {
-                    if let DisplayView::FlexRow(f) = view {
-                        self.update_sub_layout(&mut f.children, &children_info)
-                    }
-                }
-                DisplayViewInfo::FlexCol {
-                    children: children_info,
-                    flex: _flex,
-                } => {
-                    if let DisplayView::FlexCol(f) = view {
-                        self.update_sub_layout(&mut f.children, &children_info)
-                    }
-                }
-            }
+            self.update_view(view, info);
         }
     }
 
     pub fn update_display_state(&self, data: &mut DisplayState) {
-        self.update_sub_layout(&mut data.views, &self.module.manifest.display);
+        self.update_view(&mut data.layout, &self.module.manifest.layout);
     }
 
     pub fn toggle_state(&mut self, id: &String) -> Result<(), Error> {
