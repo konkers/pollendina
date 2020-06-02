@@ -95,11 +95,19 @@ pub struct DisplayViewMap {
     pub flex: f64,
 }
 
+#[derive(Clone, Data, Lens)]
+pub struct DisplayViewFlex {
+    pub children: Arc<Vec<DisplayView>>,
+    pub flex: f64,
+}
+
 #[derive(Clone, Data)]
 pub enum DisplayView {
     Grid(DisplayViewGrid),
     Count(DisplayViewCount),
     Map(DisplayViewMap),
+    FlexRow(DisplayViewFlex),
+    FlexCol(DisplayViewFlex),
 }
 
 impl DynFlexItem for DisplayView {
@@ -108,6 +116,8 @@ impl DynFlexItem for DisplayView {
             DisplayView::Grid(g) => g.flex,
             DisplayView::Count(c) => c.flex,
             DisplayView::Map(m) => m.flex,
+            DisplayView::FlexRow(f) => f.flex,
+            DisplayView::FlexCol(f) => f.flex,
         }
         .into()
     }
@@ -236,10 +246,10 @@ impl Engine {
         Ok(eval_order)
     }
 
-    pub fn new_display_state(&self) -> DisplayState {
+    fn new_sub_layout(&self, infos: &Vec<DisplayViewInfo>) -> Vec<DisplayView> {
         let mut views = Vec::new();
 
-        for info in &self.module.manifest.display {
+        for info in infos {
             let view = match info {
                 DisplayViewInfo::Grid {
                     columns,
@@ -297,9 +307,27 @@ impl Engine {
                         flex: *flex,
                     })
                 }
+                DisplayViewInfo::FlexRow { children, flex } => {
+                    DisplayView::FlexRow(DisplayViewFlex {
+                        children: Arc::new(self.new_sub_layout(children)),
+                        flex: *flex,
+                    })
+                }
+                DisplayViewInfo::FlexCol { children, flex } => {
+                    DisplayView::FlexCol(DisplayViewFlex {
+                        children: Arc::new(self.new_sub_layout(children)),
+                        flex: *flex,
+                    })
+                }
             };
             views.push(view);
         }
+
+        views
+    }
+
+    pub fn new_display_state(&self) -> DisplayState {
+        let views = self.new_sub_layout(&self.module.manifest.display);
         let mut params = Vec::new();
         for p in &self.module.manifest.params {
             let (name, value) = match p {
@@ -380,9 +408,10 @@ impl Engine {
         }
     }
 
-    pub fn update_display_state(&self, data: &mut DisplayState) {
-        let views = Arc::make_mut(&mut data.views);
-        let mut infos = self.module.manifest.display.iter();
+    fn update_sub_layout(&self, views: &mut Arc<Vec<DisplayView>>, infos: &Vec<DisplayViewInfo>) {
+        let views = Arc::make_mut(views);
+        let mut infos = infos.iter();
+
         for view in views.iter_mut() {
             let info = match infos.next() {
                 Some(i) => i,
@@ -407,13 +436,36 @@ impl Engine {
                         self.update_count_state(c, objective_type);
                     }
                 }
-                DisplayViewInfo::Map { maps, flex } => {
+                DisplayViewInfo::Map {
+                    maps: _maps,
+                    flex: _flex,
+                } => {
                     if let DisplayView::Map(m) = view {
                         self.update_map_state(m);
                     }
                 }
+                DisplayViewInfo::FlexRow {
+                    children: children_info,
+                    flex: _flex,
+                } => {
+                    if let DisplayView::FlexRow(f) = view {
+                        self.update_sub_layout(&mut f.children, &children_info)
+                    }
+                }
+                DisplayViewInfo::FlexCol {
+                    children: children_info,
+                    flex: _flex,
+                } => {
+                    if let DisplayView::FlexCol(f) = view {
+                        self.update_sub_layout(&mut f.children, &children_info)
+                    }
+                }
             }
         }
+    }
+
+    pub fn update_display_state(&self, data: &mut DisplayState) {
+        self.update_sub_layout(&mut data.views, &self.module.manifest.display);
     }
 
     pub fn toggle_state(&mut self, id: &String) -> Result<(), Error> {

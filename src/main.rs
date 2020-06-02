@@ -6,7 +6,7 @@ use std::sync::Arc;
 use druid::widget::{Button, Flex, Label, List, Padding, TextBox};
 use druid::{
     platform_menus, AppDelegate, AppLauncher, Command, Data, DelegateCtx, Env, ExtEventError,
-    ExtEventSink, LocalizedString, MenuDesc, MenuItem, Selector, Target, Widget, WidgetExt,
+    ExtEventSink, Lens, LocalizedString, MenuDesc, MenuItem, Selector, Target, Widget, WidgetExt,
     WindowDesc, WindowId,
 };
 use failure::Error;
@@ -17,8 +17,9 @@ mod engine;
 mod widget;
 
 use engine::{
-    AutoTrackerState, DisplayChild, DisplayState, DisplayView, DisplayViewCount, DisplayViewGrid,
-    DisplayViewMap, Engine, EventSink, Module, ModuleParam, ModuleParamValue, ObjectiveState,
+    AutoTrackerState, DisplayChild, DisplayState, DisplayView, DisplayViewCount, DisplayViewFlex,
+    DisplayViewGrid, DisplayViewMap, Engine, EventSink, Module, ModuleParam, ModuleParamValue,
+    ObjectiveState,
 };
 use widget::{DynFlex, DynFlexParams, Grid, Map, Objective};
 
@@ -181,17 +182,27 @@ fn map_widget() -> impl Widget<DisplayViewMap> {
     DynFlex::column(|| Map::new()).lens(DisplayViewMap::maps)
 }
 
+fn flex_row_widget() -> impl Widget<DisplayViewFlex> {
+    DynFlex::row(|| display_widget()).lens(DisplayViewFlex::children)
+}
+
+fn flex_col_widget() -> impl Widget<DisplayViewFlex> {
+    DynFlex::column(|| display_widget()).lens(DisplayViewFlex::children)
+}
+
+fn display_widget() -> impl Widget<DisplayView> {
+    match_widget! { DisplayView,
+        DisplayView::Grid(_) => grid_widget(),
+        DisplayView::Count(_) => count_widget(),
+        DisplayView::Map(_) => map_widget(),
+        DisplayView::FlexRow(_) => flex_row_widget(),
+        DisplayView::FlexCol(_) => flex_col_widget(),
+    }
+}
 fn ui_builder() -> impl Widget<DisplayState> {
     let mut root = Flex::column();
     root.add_flex_child(
-        DynFlex::column(|| {
-            match_widget! { DisplayView,
-                DisplayView::Grid(_) => grid_widget(),
-                DisplayView::Count(_) => count_widget(),
-                DisplayView::Map(_) => map_widget(),
-            }
-        })
-        .lens(DisplayState::views),
+        DynFlex::column(|| display_widget()).lens(DisplayState::views),
         1.0,
     );
 

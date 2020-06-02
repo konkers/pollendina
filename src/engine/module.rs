@@ -101,6 +101,16 @@ pub enum DisplayViewInfo {
         #[serde(default)]
         flex: f64,
     },
+    FlexRow {
+        children: Vec<DisplayViewInfo>,
+        #[serde(default)]
+        flex: f64,
+    },
+    FlexCol {
+        children: Vec<DisplayViewInfo>,
+        #[serde(default)]
+        flex: f64,
+    },
 }
 
 #[derive(Debug)]
