@@ -154,7 +154,6 @@ impl AutoTracker {
                     entry.set("callback", callback)?;
                     watches.set(watches.len()? + 1, entry)?;
 
-                    println!("{:?}", watches);
                     Ok(())
                 })?,
             )?;
