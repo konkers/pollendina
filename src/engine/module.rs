@@ -78,6 +78,8 @@ pub struct MapObjective {
 pub struct MapInfo {
     pub id: String,
     pub name: String,
+    #[serde(rename = "objective-radius")]
+    pub objective_radius: f64,
     #[serde(default)]
     pub objectives: Vec<MapObjective>,
 }

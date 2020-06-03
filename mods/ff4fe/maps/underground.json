@@ -1,5 +1,42 @@
 {
     "id": "underground",
     "name": "Underground",
-    "objectives": []
+    "objective-radius": 20.0,
+    "objectives": [
+        {
+            "id": "d-castle",
+            "x": 798,
+            "y": 656
+        },
+        {
+            "id": "tomra",
+            "x": 506,
+            "y": 998
+        },
+        {
+            "id": "sealed-cave",
+            "x": 370,
+            "y": 876
+        },
+        {
+            "id": "feymarch",
+            "x": 220,
+            "y": 692
+        },
+        {
+            "id": "sylph-cave",
+            "x": 108,
+            "y": 116
+        },
+        {
+            "id": "kokkol",
+            "x": 834,
+            "y": 988
+        },
+        {
+            "id": "lower-babil",
+            "x": 392,
+            "y": 124
+        }
+    ]
 }

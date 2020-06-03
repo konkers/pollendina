@@ -1,5 +1,42 @@
 {
     "id": "moon",
     "name": "Moon",
-    "objectives": []
+    "objective-radius": 20.0,
+    "objectives": [
+        {
+            "id": "hummingway",
+            "x": 418,
+            "y": 906
+        },
+        {
+            "id": "bahamut-cave",
+            "x": 866,
+            "y": 650
+        },
+        {
+            "id": "murasame-spot",
+            "x": 76,
+            "y": 226
+        },
+        {
+            "id": "crystal-sword-spot",
+            "x": 408,
+            "y": 108
+        },
+        {
+            "id": "white-spear-spot",
+            "x": 690,
+            "y": 384
+        },
+        {
+            "id": "ribbon-spot",
+            "x": 882,
+            "y": 384
+        },
+        {
+            "id": "masamune-spot",
+            "x": 582,
+            "y": 646
+        }
+    ]
 }

@@ -72,14 +72,15 @@ pub struct DisplayViewCount {
 #[derive(Clone, Data, Lens)]
 pub struct MapObjective {
     pub id: String,
-    pub x: u64,
-    pub y: u64,
+    pub x: f64,
+    pub y: f64,
     pub state: ObjectiveState,
 }
 
 #[derive(Clone, Data, Lens)]
 pub struct MapInfo {
     pub id: String,
+    pub objective_radius: f64,
     pub objectives: Arc<Vec<MapObjective>>,
 }
 
@@ -288,14 +289,15 @@ impl Engine {
                     for info in &obj_info.objectives {
                         objectives.push(MapObjective {
                             id: info.id.clone(),
-                            x: info.x,
-                            y: info.y,
+                            x: info.x as f64,
+                            y: info.y as f64,
                             state: ObjectiveState::Locked,
                         });
                     }
 
                     maps.push(MapInfo {
                         id: id.clone(),
+                        objective_radius: obj_info.objective_radius,
                         objectives: Arc::new(objectives),
                     });
                 }

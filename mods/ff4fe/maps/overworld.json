@@ -1,11 +1,102 @@
 {
     "id": "overworld",
     "name": "Overworld",
+    "objective-radius": 16.0,
     "objectives": [
         {
             "id": "baron",
-            "x": 1578,
-            "y": 2284
+            "x": 407,
+            "y": 586
+        },
+        {
+            "id": "baron-castle",
+            "x": 401,
+            "y": 554
+        },
+        {
+            "id": "mist-cave",
+            "x": 299,
+            "y": 466
+        },
+        {
+            "id": "mist",
+            "x": 380,
+            "y": 414
+        },
+        {
+            "id": "kaipo",
+            "x": 495,
+            "y": 355
+        },
+        {
+            "id": "watery-pass",
+            "x": 546,
+            "y": 270
+        },
+        {
+            "id": "damcyan",
+            "x": 469,
+            "y": 169
+        },
+        {
+            "id": "antlion-lair",
+            "x": 538,
+            "y": 162
+        },
+        {
+            "id": "mt-hobs",
+            "x": 620,
+            "y": 125
+        },
+        {
+            "id": "fabul",
+            "x": 852,
+            "y": 168
+        },
+        {
+            "id": "toroia",
+            "x": 134,
+            "y": 280
+        },
+        {
+            "id": "magnes",
+            "x": 290,
+            "y": 150
+        },
+        {
+            "id": "zot",
+            "x": 134,
+            "y": 248
+        },
+        {
+            "id": "silvera",
+            "x": 834,
+            "y": 458
+        },
+        {
+            "id": "adamant-grotto",
+            "x": 870,
+            "y": 482
+        },
+        {
+            "id": "mysidia",
+            "x": 612,
+            "y": 734
+        },
+        {
+            "id": "mt-ordeals",
+            "x": 864,
+            "y": 734
+        },
+        {
+            "id": "agart",
+            "x": 412,
+            "y": 800
+        },
+        {
+            "id": "eblan-cave",
+            "x": 90,
+            "y": 864
         }
     ]
 }
