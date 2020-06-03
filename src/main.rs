@@ -23,25 +23,29 @@ use engine::{
 };
 use widget::{DynFlex, Grid, Map, Objective};
 
-pub(crate) const UI_OPEN_CONFIG: Selector = Selector::new("ui:open_config");
-pub(crate) const UI_CANCEL_CONFIG: Selector = Selector::new("ui:cancel_config");
-pub(crate) const UI_APPLY_CONFIG: Selector = Selector::new("ui:update_config");
+pub(crate) const UI_OPEN_CONFIG: Selector<()> = Selector::new("ui:open_config");
+pub(crate) const UI_CANCEL_CONFIG: Selector<()> = Selector::new("ui:cancel_config");
+pub(crate) const UI_APPLY_CONFIG: Selector<()> = Selector::new("ui:update_config");
 
-pub(crate) const ENGINE_TOGGLE_STATE: Selector = Selector::new("engine:toggle_state");
-pub(crate) const ENGINE_UPDATE_STATE: Selector = Selector::new("engine:update_state");
-pub(crate) const ENGINE_UPDATE_AUTO_TRACKER_STATE: Selector =
+pub(crate) const ENGINE_TOGGLE_STATE: Selector<String> = Selector::new("engine:toggle_state");
+pub(crate) const ENGINE_UPDATE_STATE: Selector<HashMap<String, ObjectiveState>> =
+    Selector::new("engine:update_state");
+
+pub(crate) const ENGINE_UPDATE_AUTO_TRACKER_STATE: Selector<AutoTrackerState> =
     Selector::new("engine:update_auto_tracker_state");
-pub(crate) const ENGINE_START_AUTO_TRACKING: Selector = Selector::new("engine:start_auto_tracking");
-pub(crate) const ENGINE_STOP_AUTO_TRACKING: Selector = Selector::new("engine:stop_auto_tracking");
+pub(crate) const ENGINE_START_AUTO_TRACKING: Selector<()> =
+    Selector::new("engine:start_auto_tracking");
+pub(crate) const ENGINE_STOP_AUTO_TRACKING: Selector<()> =
+    Selector::new("engine:stop_auto_tracking");
 
 #[derive(Clone)]
 struct ExtEventSinkProxy(ExtEventSink);
 
 impl EventSink for ExtEventSinkProxy {
-    fn submit_command<T: 'static + Send>(
+    fn submit_command<T: 'static + Send + Sync>(
         &self,
-        sel: Selector,
-        obj: impl Into<Option<T>>,
+        sel: Selector<T>,
+        obj: impl Into<Box<T>>,
         target: impl Into<Option<Target>>,
     ) -> Result<(), ExtEventError> {
         self.0.submit_command(sel, obj, target)
@@ -56,7 +60,7 @@ impl Delegate {
     fn close_config_window(&self, data: &mut DisplayState, ctx: &mut DelegateCtx) {
         match *data.config_win {
             Some(id) => {
-                let command = Command::new(druid::commands::CLOSE_WINDOW, id);
+                let command = Command::new(druid::commands::CLOSE_WINDOW, ());
                 ctx.submit_command(command, id);
             }
             None => println!("tried closing config window when not open"),
@@ -73,70 +77,57 @@ impl AppDelegate<DisplayState> for Delegate {
         data: &mut DisplayState,
         _env: &Env,
     ) -> bool {
-        match cmd.selector {
-            UI_OPEN_CONFIG => {
-                match *data.config_win {
-                    Some(id) => {
-                        let command = Command::new(druid::commands::SHOW_WINDOW, id);
-                        ctx.submit_command(command, id);
-                    }
-                    None => {
-                        let window = WindowDesc::new(config_ui_builder).menu(app_menu());
-                        let win_id = window.id;
-                        ctx.new_window(window);
-                        *Arc::make_mut(&mut data.config_win) = Some(win_id);
-                    }
-                };
-                false
-            }
-            UI_CANCEL_CONFIG => {
-                println!("canceling config changes");
-                self.close_config_window(data, ctx);
-                false
-            }
-            UI_APPLY_CONFIG => {
-                println!("applying config changes");
-                self.close_config_window(data, ctx);
-                false
-            }
-            ENGINE_TOGGLE_STATE => {
-                let id = cmd.get_object::<String>().expect("api violation");
-                if let Err(e) = self.engine.toggle_state(&id) {
-                    println!("error toggling state: {}", e);
-                } else {
-                    self.engine.update_display_state(data);
+        if cmd.is(UI_OPEN_CONFIG) {
+            match *data.config_win {
+                Some(id) => {
+                    let command = Command::new(druid::commands::SHOW_WINDOW, ());
+                    ctx.submit_command(command, id);
                 }
-                true
-            }
-            ENGINE_START_AUTO_TRACKING => {
-                if let Err(e) = self.engine.start_auto_tracking() {
-                    println!("error starting auto tracking: {}", e);
+                None => {
+                    let window = WindowDesc::new(config_ui_builder).menu(app_menu());
+                    let win_id = window.id;
+                    ctx.new_window(window);
+                    *Arc::make_mut(&mut data.config_win) = Some(win_id);
                 }
-                true
+            };
+            false
+        } else if cmd.is(UI_CANCEL_CONFIG) {
+            println!("canceling config changes");
+            self.close_config_window(data, ctx);
+            false
+        } else if cmd.is(UI_APPLY_CONFIG) {
+            println!("applying config changes");
+            self.close_config_window(data, ctx);
+            false
+        } else if let Some(id) = cmd.get(ENGINE_TOGGLE_STATE) {
+            if let Err(e) = self.engine.toggle_state(&id) {
+                println!("error toggling state: {}", e);
+            } else {
+                self.engine.update_display_state(data);
             }
-            ENGINE_STOP_AUTO_TRACKING => {
-                if let Err(e) = self.engine.stop_auto_tracking() {
-                    println!("error stopping auto tracking: {}", e);
-                }
-                true
+            true
+        } else if cmd.is(ENGINE_START_AUTO_TRACKING) {
+            if let Err(e) = self.engine.start_auto_tracking() {
+                println!("error starting auto tracking: {}", e);
             }
-            ENGINE_UPDATE_AUTO_TRACKER_STATE => {
-                let state = cmd.get_object::<AutoTrackerState>().expect("api violation");
-                data.auto_tracker_state = state.clone();
-                true
+            true
+        } else if cmd.is(ENGINE_STOP_AUTO_TRACKING) {
+            if let Err(e) = self.engine.stop_auto_tracking() {
+                println!("error stopping auto tracking: {}", e);
             }
-            ENGINE_UPDATE_STATE => {
-                let updates = cmd
-                    .get_object::<HashMap<String, ObjectiveState>>()
-                    .expect("api violation");
-                if let Err(e) = self.engine.update_state(updates) {
-                    println!("error updating state: {}", e);
-                } else {
-                    self.engine.update_display_state(data);
-                }
-                true
+            true
+        } else if let Some(state) = cmd.get(ENGINE_UPDATE_AUTO_TRACKER_STATE) {
+            data.auto_tracker_state = state.clone();
+            true
+        } else if let Some(updates) = cmd.get(ENGINE_UPDATE_STATE) {
+            if let Err(e) = self.engine.update_state(updates) {
+                println!("error updating state: {}", e);
+            } else {
+                self.engine.update_display_state(data);
             }
-            _ => true,
+            true
+        } else {
+            true
         }
     }
     fn window_removed(
@@ -224,9 +215,9 @@ fn ui_builder() -> impl Widget<DisplayState> {
         })
         .on_click(|ctx, data: &mut AutoTrackerState, _env| {
             let cmd = if *data == AutoTrackerState::Idle {
-                Command::new(ENGINE_START_AUTO_TRACKING, 0)
+                Command::new(ENGINE_START_AUTO_TRACKING, ())
             } else {
-                Command::new(ENGINE_STOP_AUTO_TRACKING, 0)
+                Command::new(ENGINE_STOP_AUTO_TRACKING, ())
             };
             ctx.submit_command(cmd, None);
         })
@@ -238,7 +229,7 @@ fn ui_builder() -> impl Widget<DisplayState> {
     );
     bot.add_flex_spacer(1.0);
     bot.add_child(Button::new("Config").on_click(|ctx, _data, _env| {
-        ctx.submit_command(Command::new(UI_OPEN_CONFIG, 0), None);
+        ctx.submit_command(Command::new(UI_OPEN_CONFIG, ()), None);
     }));
     root.add_child(Padding::new(8.0, bot));
     //root.debug_paint_layout()
@@ -273,13 +264,13 @@ fn config_ui_builder() -> impl Widget<DisplayState> {
             .with_flex_spacer(1.0)
             .with_child(
                 Button::new("Ok").on_click(|ctx, _data: &mut DisplayState, _env| {
-                    let cmd = Command::new(UI_APPLY_CONFIG, 0);
+                    let cmd = Command::new(UI_APPLY_CONFIG, ());
                     ctx.submit_command(cmd, None);
                 }),
             )
             .with_child(
                 Button::new("Cancel").on_click(|ctx, _data: &mut DisplayState, _env| {
-                    let cmd = Command::new(UI_CANCEL_CONFIG, 0);
+                    let cmd = Command::new(UI_CANCEL_CONFIG, ());
                     ctx.submit_command(cmd, None);
                 }),
             ),

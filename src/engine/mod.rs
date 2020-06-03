@@ -20,10 +20,10 @@ pub use auto_tracker::AutoTrackerState;
 use auto_tracker::{AutoTracker, AutoTrackerController};
 
 pub trait EventSink {
-    fn submit_command<T: 'static + Send>(
+    fn submit_command<T: 'static + Send + Sync>(
         &self,
-        sel: Selector,
-        obj: impl Into<Option<T>>,
+        sel: Selector<T>,
+        obj: impl Into<Box<T>>,
         target: impl Into<Option<Target>>,
     ) -> Result<(), ExtEventError>;
 }
@@ -580,10 +580,10 @@ mod tests {
     #[derive(Clone)]
     struct TestEventSink;
     impl EventSink for TestEventSink {
-        fn submit_command<T: 'static + Send>(
+        fn submit_command<T: 'static + Send + Sync>(
             &self,
-            _sel: Selector,
-            _obj: impl Into<Option<T>>,
+            _sel: Selector<T>,
+            _obj: impl Into<Box<T>>,
             _target: impl Into<Option<Target>>,
         ) -> Result<(), ExtEventError> {
             Ok(())

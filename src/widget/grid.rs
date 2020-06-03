@@ -169,7 +169,7 @@ impl Widget<DisplayViewGrid> for Grid {
         let mut children = self.children.iter_mut();
         data.children.for_each(|child_data, _| {
             if let Some(child) = children.next() {
-                child.paint_with_offset(ctx, child_data, env);
+                child.paint(ctx, child_data, env);
             }
         });
     }

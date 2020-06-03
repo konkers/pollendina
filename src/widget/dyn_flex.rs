@@ -445,7 +445,7 @@ impl<C: Data + DynFlexItem, T: ListIter<C>> Widget<T> for DynFlex<C> {
         let mut children = self.children.iter_mut();
         data.for_each(|child_data, _| {
             if let Some(child) = children.next() {
-                child.widget.paint_with_offset(ctx, child_data, env);
+                child.widget.paint(ctx, child_data, env);
             }
         });
     }
