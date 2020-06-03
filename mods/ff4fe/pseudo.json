@@ -2,6 +2,11 @@
     {
         "id": "underground",
         "name": "Underground Access",
-        "enabled-by": "complete(hook) || complete(magma-key)"
+        "checks": [
+            {
+                "type": "pseudo",
+                "unlocked-by": "complete(hook) || complete(magma-key)"
+            }
+        ]
     }
 ]

@@ -60,10 +60,12 @@
                 "unlocked-by": "baron-key"
             },
             {
-                "type": "char"
+                "type": "char",
+                "unlocked-by": "baron-key"
             },
             {
-                "type": "key-item"
+                "type": "key-item",
+                "unlocked-by": "baron-key"
             },
             {
                 "type": "boss",
@@ -72,7 +74,8 @@
             },
             {
                 "type": "key-item",
-                "enabled-by": "flag-k-summon"
+                "enabled-by": "flag-k-summon",
+                "unlocked-by": "baron-key"
             }
         ]
     },

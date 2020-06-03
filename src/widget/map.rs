@@ -111,21 +111,31 @@ impl Widget<MapInfo> for Map {
             let bg_color = Color::rgb8(0x00, 0x00, 0x00);
             let outline_color = Color::rgb8(0xff, 0xff, 0xff);
 
+            let unlocked_color = Color::rgb8(0x00, 0xff, 0x00);
+            let glitch_locked_color = Color::rgb8(0xff, 0xff, 0x00);
+            let locked_color = Color::rgb8(0x44, 0x44, 0x44);
+
             let inner_radius = data.objective_radius * 0.6 * self.scale;
             let bg_radius = data.objective_radius * self.scale;
             let outline_radius = data.objective_radius * 0.8 * self.scale;
             let outline_width = data.objective_radius * 0.2 * self.scale;
 
             for objective in &*data.objectives {
+                let inner_color = match objective.state {
+                    ObjectiveState::Disabled => continue,
+                    ObjectiveState::Complete => continue,
+                    ObjectiveState::Locked => &locked_color,
+                    ObjectiveState::GlitchLocked => &glitch_locked_color,
+                    ObjectiveState::Unlocked => &unlocked_color,
+                };
+
                 let pos = (objective.x * self.scale, objective.y * self.scale);
                 let inner_circle = Circle::new(pos, inner_radius);
                 let bg_circle = Circle::new(pos, bg_radius);
                 let outline_circle = Circle::new(pos, outline_radius);
 
-                let inner_color = Color::rgb8(0x00, 0xff, 0x00);
-
                 ctx.fill(bg_circle, &bg_color);
-                ctx.fill(inner_circle, &inner_color);
+                ctx.fill(inner_circle, inner_color);
                 ctx.stroke(outline_circle, &outline_color, outline_width);
             }
         }

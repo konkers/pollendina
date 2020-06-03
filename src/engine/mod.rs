@@ -159,7 +159,7 @@ impl Engine {
     ) -> Result<Engine, Error> {
         let mut objectives = HashMap::new();
         for (id, _) in module.objectives.iter() {
-            objectives.insert(id.clone(), ObjectiveState::Locked);
+            objectives.insert(id.clone(), ObjectiveState::Disabled);
         }
 
         let auto_tracker = match &module.auto_track {
@@ -183,12 +183,16 @@ impl Engine {
             Ok(())
         })?;
 
-        Ok(Engine {
+        let mut engine = Engine {
             module,
             objectives,
             eval_order,
             auto_tracker,
-        })
+        };
+
+        engine.eval_objectives()?;
+
+        Ok(engine)
     }
 
     pub fn calc_eval_order(module: &Module) -> Result<Vec<String>, Error> {
@@ -245,6 +249,59 @@ impl Engine {
         }
 
         Ok(eval_order)
+    }
+
+    fn eval_objectives(&mut self) -> Result<(), Error> {
+        for id in &self.eval_order {
+            let info = self
+                .module
+                .objectives
+                .get(id)
+                .ok_or(format_err!("Can't get info for objective '{}'", id))?;
+
+            let mut state = *self
+                .objectives
+                .get(id)
+                .ok_or(format_err!("can't get objective state for '{}`", id))?;
+
+            if info.checks.len() == 0 {
+                print!("{}: {:?} ", id, state);
+                // Enable objectives that have no checks.
+                if state == ObjectiveState::Disabled {
+                    state = ObjectiveState::Locked;
+                }
+                println!("-> {:?} ", state);
+            } else {
+                println!("{}: {:?}", id, state);
+                let mut any_unlocked = false;
+                for check in &info.checks {
+                    let unlocked = check.unlocked_by.evaluate(&self.objectives)?;
+                    let enabled = check.enabled_by.evaluate(&self.objectives)?;
+                    any_unlocked |= unlocked;
+
+                    // Order here is important.  We want to be able to unlock and
+                    // enable an objective in the same pass.
+                    if state == ObjectiveState::Disabled && enabled {
+                        state = ObjectiveState::Locked;
+                    }
+                    if state == ObjectiveState::Locked && unlocked {
+                        state = ObjectiveState::Unlocked;
+                    }
+                    println!("  {} {} {:?}", unlocked, enabled, state);
+                }
+                // If any all of the checks are locked AND the state is
+                // unlocked, re-lock it.
+                if state == ObjectiveState::Unlocked && !any_unlocked {
+                    state = ObjectiveState::Locked;
+                }
+            }
+
+            *self
+                .objectives
+                .get_mut(id)
+                .ok_or(format_err!("can't get objective state for '{}`", id))? = state;
+        }
+        Ok(())
     }
 
     fn new_view(&self, info: &DisplayViewInfo) -> DisplayView {
@@ -474,6 +531,7 @@ impl Engine {
     }
 
     pub fn toggle_state(&mut self, id: &String) -> Result<(), Error> {
+        println!("toggle_state {}", id);
         if let Some(o) = self.objectives.get_mut(id) {
             let new_state = match *o {
                 ObjectiveState::Disabled => ObjectiveState::Disabled,
@@ -483,6 +541,7 @@ impl Engine {
                 ObjectiveState::Complete => ObjectiveState::Locked,
             };
             *o = new_state;
+            self.eval_objectives()?;
             Ok(())
         } else {
             Err(format_err!("toggle_state: id {} not found", &id))
@@ -509,10 +568,12 @@ impl Engine {
         }
     }
 
-    pub fn update_state(&mut self, updates: &HashMap<String, ObjectiveState>) {
+    pub fn update_state(&mut self, updates: &HashMap<String, ObjectiveState>) -> Result<(), Error> {
         for (id, state) in updates {
             self.objectives.insert(id.clone(), state.clone());
+            self.eval_objectives()?;
         }
+        Ok(())
     }
 }
 
