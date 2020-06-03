@@ -6,8 +6,8 @@ use std::sync::Arc;
 use druid::widget::{Button, Flex, Label, List, Padding, TextBox};
 use druid::{
     platform_menus, AppDelegate, AppLauncher, Command, Data, DelegateCtx, Env, ExtEventError,
-    ExtEventSink, Lens, LocalizedString, MenuDesc, MenuItem, Selector, Target, Widget, WidgetExt,
-    WindowDesc, WindowId,
+    ExtEventSink, LocalizedString, MenuDesc, Selector, Target, Widget, WidgetExt, WindowDesc,
+    WindowId,
 };
 use failure::Error;
 use match_macro::match_widget;
@@ -21,7 +21,7 @@ use engine::{
     DisplayViewGrid, DisplayViewMap, Engine, EventSink, Module, ModuleParam, ModuleParamValue,
     ObjectiveState,
 };
-use widget::{DynFlex, DynFlexParams, Grid, Map, Objective};
+use widget::{DynFlex, Grid, Map, Objective};
 
 pub(crate) const UI_OPEN_CONFIG: Selector = Selector::new("ui:open_config");
 pub(crate) const UI_CANCEL_CONFIG: Selector = Selector::new("ui:cancel_config");
@@ -68,10 +68,10 @@ impl AppDelegate<DisplayState> for Delegate {
     fn command(
         &mut self,
         ctx: &mut DelegateCtx,
-        target: Target,
+        _target: Target,
         cmd: &Command,
         data: &mut DisplayState,
-        env: &Env,
+        _env: &Env,
     ) -> bool {
         match cmd.selector {
             UI_OPEN_CONFIG => {
@@ -101,16 +101,23 @@ impl AppDelegate<DisplayState> for Delegate {
             }
             ENGINE_TOGGLE_STATE => {
                 let id = cmd.get_object::<String>().expect("api violation");
-                self.engine.toggle_state(&id);
-                self.engine.update_display_state(data);
+                if let Err(e) = self.engine.toggle_state(&id) {
+                    println!("error toggling state: {}", e);
+                } else {
+                    self.engine.update_display_state(data);
+                }
                 true
             }
             ENGINE_START_AUTO_TRACKING => {
-                self.engine.start_auto_tracking();
+                if let Err(e) = self.engine.start_auto_tracking() {
+                    println!("error starting auto tracking: {}", e);
+                }
                 true
             }
             ENGINE_STOP_AUTO_TRACKING => {
-                self.engine.stop_auto_tracking();
+                if let Err(e) = self.engine.stop_auto_tracking() {
+                    println!("error stopping auto tracking: {}", e);
+                }
                 true
             }
             ENGINE_UPDATE_AUTO_TRACKER_STATE => {
@@ -122,8 +129,11 @@ impl AppDelegate<DisplayState> for Delegate {
                 let updates = cmd
                     .get_object::<HashMap<String, ObjectiveState>>()
                     .expect("api violation");
-                self.engine.update_state(updates);
-                self.engine.update_display_state(data);
+                if let Err(e) = self.engine.update_state(updates) {
+                    println!("error updating state: {}", e);
+                } else {
+                    self.engine.update_display_state(data);
+                }
                 true
             }
             _ => true,

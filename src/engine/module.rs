@@ -1,12 +1,11 @@
 use std::collections::HashMap;
 use std::convert::AsRef;
 use std::fs;
-use std::io;
 use std::path::{Path, PathBuf};
 
 use failure::{format_err, Error};
 use path_slash::PathBufExt;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use super::expression::Expression;
 

@@ -586,9 +586,9 @@ mod tests {
     impl EventSink for TestEventSink {
         fn submit_command<T: 'static + Send>(
             &self,
-            sel: Selector,
-            obj: impl Into<Option<T>>,
-            target: impl Into<Option<Target>>,
+            _sel: Selector,
+            _obj: impl Into<Option<T>>,
+            _target: impl Into<Option<Target>>,
         ) -> Result<(), ExtEventError> {
             Ok(())
         }
@@ -599,7 +599,7 @@ mod tests {
         // While we are bootstrapping everything we'll be using the FE module for
         // tests.  Eventually the unique cases should be extracted into `test_data/mod`
         let module = Module::open("mods/ff4fe/manifest.json")?;
-        let engine = Engine::new(module, TestEventSink)?;
+        let _engine = Engine::new(module, TestEventSink)?;
 
         Ok(())
     }

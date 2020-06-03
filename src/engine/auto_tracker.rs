@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::{io::Cursor, thread, time::Duration};
 
 use byteorder::{LittleEndian, ReadBytesExt};
-use druid::{Data, ExtEventSink};
+use druid::Data;
 use failure::{format_err, Error};
 use rlua::{self, Function, Lua, Table, UserData, UserDataMethods};
 use usb2snes::Connection;

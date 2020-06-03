@@ -1,5 +1,4 @@
 use std::iter::Iterator;
-use std::slice::Iter;
 use std::sync::Arc;
 
 use druid::Data;

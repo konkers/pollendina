@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::cmp::min;
 use std::sync::Arc;
 
 use druid::{
@@ -22,7 +21,7 @@ use druid::{
 };
 
 use crate::assets::{image::ImageData, IMAGES};
-use crate::engine::{DisplayChild, DisplayViewMap, MapInfo, ObjectiveState};
+use crate::engine::{MapInfo, ObjectiveState};
 
 /// A widget that renders an Image
 pub struct Map {
