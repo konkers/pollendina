@@ -590,13 +590,45 @@ mod tests {
         }
     }
 
+    fn assert_state(engine: &Engine, id: &str, state: ObjectiveState) {
+        assert_eq!(*engine.objectives.get(id).unwrap(), state);
+    }
+
     #[test]
     fn load_fe_module() -> Result<(), Error> {
         // While we are bootstrapping everything we'll be using the FE module for
         // tests.  Eventually the unique cases should be extracted into `test_data/mod`
         let module = Module::open("mods/ff4fe/manifest.json")?;
-        let _engine = Engine::new(module, TestEventSink)?;
+        let mut engine = Engine::new(module, TestEventSink)?;
 
+        assert_state(&engine, &"baron", ObjectiveState::Unlocked);
+        assert_state(&engine, &"fabul", ObjectiveState::Unlocked);
+        assert_state(&engine, &"d-castle", ObjectiveState::Locked);
+        assert_state(&engine, &"bahamut-cave", ObjectiveState::Locked);
+
+        // Dwarf Castle should still be locked if Magma Key is only Unlocked.
+        let updates = [("magma-key".to_string(), ObjectiveState::Unlocked)]
+            .iter()
+            .cloned()
+            .collect();
+        engine.update_state(&updates)?;
+        assert_state(&engine, &"d-castle", ObjectiveState::Locked);
+
+        // Completing Magma Key now unlocks Dwarf Castle.
+        let updates = [("magma-key".to_string(), ObjectiveState::Complete)]
+            .iter()
+            .cloned()
+            .collect();
+        engine.update_state(&updates)?;
+        assert_state(&engine, &"d-castle", ObjectiveState::Unlocked);
+
+        // Unlocking Darkness Crystal is enough to unlock Moon objectives.
+        let updates = [("darkness-crystal".to_string(), ObjectiveState::Complete)]
+            .iter()
+            .cloned()
+            .collect();
+        engine.update_state(&updates)?;
+        assert_state(&engine, &"bahamut-cave", ObjectiveState::Unlocked);
         Ok(())
     }
 }
