@@ -265,14 +265,11 @@ impl Engine {
                 .ok_or(format_err!("can't get objective state for '{}`", id))?;
 
             if info.checks.len() == 0 {
-                print!("{}: {:?} ", id, state);
                 // Enable objectives that have no checks.
                 if state == ObjectiveState::Disabled {
                     state = ObjectiveState::Locked;
                 }
-                println!("-> {:?} ", state);
             } else {
-                println!("{}: {:?}", id, state);
                 let mut any_unlocked = false;
                 for check in &info.checks {
                     let unlocked = check.unlocked_by.evaluate(&self.objectives)?;
@@ -287,7 +284,6 @@ impl Engine {
                     if state == ObjectiveState::Locked && unlocked {
                         state = ObjectiveState::Unlocked;
                     }
-                    println!("  {} {} {:?}", unlocked, enabled, state);
                 }
                 // If any all of the checks are locked AND the state is
                 // unlocked, re-lock it.
