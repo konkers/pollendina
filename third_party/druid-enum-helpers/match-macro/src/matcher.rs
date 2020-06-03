@@ -1,6 +1,6 @@
 use druid::widget::prelude::*;
 use druid::{Data, WidgetPod};
-use std::mem::{Discriminant, discriminant};
+use std::mem::{discriminant, Discriminant};
 
 pub struct WidgetMatcher<D> {
     disc: Option<Discriminant<D>>,
@@ -27,7 +27,8 @@ impl<D: Data> Widget<D> for WidgetMatcher<D> {
             self.content = Some(WidgetPod::new((self.constructor)(data)));
             self.disc = Some(discriminant(data));
             ctx.children_changed();
-        } if let Some(content) = &mut self.content {
+        }
+        if let Some(content) = &mut self.content {
             content.event(ctx, event, data, env);
         }
     }
