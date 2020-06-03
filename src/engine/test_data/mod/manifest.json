@@ -16,14 +16,12 @@
             "path": "key-items.json"
         }
     ],
-    "display": [
-        {
-            "type": "Grid",
-            "columns": 2,
-            "objectives": [
-                "cave-key",
-                "sword-of-might"
-            ]
-        }
-    ]
+    "layout": {
+        "type": "Grid",
+        "columns": 2,
+        "objectives": [
+            "cave-key",
+            "sword-of-might"
+        ]
+    }
 }
