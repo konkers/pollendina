@@ -223,7 +223,7 @@ impl Engine {
                 deps.append(&mut check.unlocked_by.deps());
                 for dep in deps {
                     if let Some(dep_idx) = index_map.get(&dep) {
-                        edges.push((*idx, *dep_idx));
+                        edges.push((*dep_idx, *idx));
                     } else {
                         println!("unknown id {}", dep);
                     }
