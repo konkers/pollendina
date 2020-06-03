@@ -17,7 +17,6 @@ use std::cmp::Ordering;
 use druid::kurbo::common::FloatExt;
 use druid::kurbo::{Point, Rect, Size};
 
-use druid::widget::SizedBox;
 use druid::{
     BoxConstraints, Data, Env, Event, EventCtx, KeyOrValue, LayoutCtx, LifeCycle, LifeCycleCtx,
     PaintCtx, UpdateCtx, Widget, WidgetPod,
@@ -66,6 +65,7 @@ pub(crate) enum Axis {
 /// If a widget is smaller than the container on the minor axis, this determines
 /// where it is positioned.
 #[derive(Debug, Clone, Copy, PartialEq, Data)]
+#[allow(dead_code)]
 pub enum CrossAxisAlignment {
     /// Top or leading.
     ///
@@ -86,6 +86,7 @@ pub enum CrossAxisAlignment {
 /// If there is surplus space on the main axis after laying out children, this
 /// enum represents how children are laid out in this space.
 #[derive(Debug, Clone, Copy, PartialEq, Data)]
+#[allow(dead_code)]
 pub enum MainAxisAlignment {
     /// Top or leading.
     ///
@@ -121,6 +122,7 @@ impl DynFlexParams {
     ///
     /// [`Flex`]: struct.Flex.html
     /// [`CrossAxisAlignment`]: enum.CrossAxisAlignment.html
+    #[allow(dead_code)]
     pub fn new(flex: f64, alignment: impl Into<Option<CrossAxisAlignment>>) -> Self {
         DynFlexParams {
             flex,
@@ -214,10 +216,7 @@ impl<T: Data + DynFlexItem> DynFlex<T> {
             Ordering::Less => data.for_each(|_, i| {
                 if i >= len {
                     let widget = (self.closure)();
-                    let child = ChildWidget {
-                        widget: WidgetPod::new(widget),
-                        params: 0.0.into(),
-                    };
+                    let child = ChildWidget::new(widget, 0.0.into());
 
                     self.children.push(child);
                 }
@@ -230,6 +229,7 @@ impl<T: Data + DynFlexItem> DynFlex<T> {
     /// Builder-style method for specifying the childrens' [`CrossAxisAlignment`].
     ///
     /// [`CrossAxisAlignment`]: enum.CrossAxisAlignment.html
+    #[allow(dead_code)]
     pub fn cross_axis_alignment(mut self, alignment: CrossAxisAlignment) -> Self {
         self.cross_alignment = alignment;
         self
@@ -238,6 +238,7 @@ impl<T: Data + DynFlexItem> DynFlex<T> {
     /// Builder-style method for specifying the childrens' [`MainAxisAlignment`].
     ///
     /// [`MainAxisAlignment`]: enum.MainAxisAlignment.html
+    #[allow(dead_code)]
     pub fn main_axis_alignment(mut self, alignment: MainAxisAlignment) -> Self {
         self.main_alignment = alignment;
         self
@@ -257,145 +258,10 @@ impl<T: Data + DynFlexItem> DynFlex<T> {
     /// The default value is `false`.
     ///
     /// [`MainAxisAlignment`]: enum.MainAxisAlignment.html
+    #[allow(dead_code)]
     pub fn must_fill_main_axis(mut self, fill: bool) -> Self {
         self.fill_major_axis = fill;
         self
-    }
-
-    /// Builder-style variant of `add_child`.
-    ///
-    /// Convenient for assembling a group of widgets in a single expression.
-    pub fn with_child(mut self, child: impl Widget<T> + 'static) -> Self {
-        self.add_flex_child(child, 0.0);
-        self
-    }
-
-    /// Builder-style method to add a flexible child to the container.
-    ///
-    /// This method is used when you need more control over the behaviour
-    /// of the widget you are adding. In the general case, this likely
-    /// means giving that child a 'flex factor', but it could also mean
-    /// giving the child a custom [`CrossAxisAlignment`], or a combination
-    /// of the two.
-    ///
-    /// This function takes a child widget and [`FlexParams`]; importantly
-    /// you can pass in a float as your [`FlexParams`] in most cases.
-    ///
-    /// For the non-builder varient, see [`add_flex_child`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use druid::widget::{Flex, FlexParams, Label, Slider, CrossAxisAlignment};
-    ///
-    /// let my_row = Flex::row()
-    ///     .with_flex_child(Slider::new(), 1.0)
-    ///     .with_flex_child(Slider::new(), FlexParams::new(1.0, CrossAxisAlignment::End));
-    /// ```
-    ///
-    /// [`FlexParams`]: struct.FlexParams.html
-    /// [`add_flex_child`]: #method.add_flex_child
-    /// [`CrossAxisAlignment`]: enum.CrossAxisAlignment.html
-    pub fn with_flex_child(
-        mut self,
-        child: impl Widget<T> + 'static,
-        params: impl Into<DynFlexParams>,
-    ) -> Self {
-        self.add_flex_child(child, params);
-        self
-    }
-
-    /// Builder-style method for adding a fixed-size spacer to the container.
-    pub fn with_spacer(mut self, len: impl Into<KeyOrValue<f64>>) -> Self {
-        self.add_spacer(len);
-        self
-    }
-
-    /// Builder-style method for adding a `flex` spacer to the container.
-    pub fn with_flex_spacer(mut self, flex: f64) -> Self {
-        self.add_flex_spacer(flex);
-        self
-    }
-
-    /// Set the childrens' [`CrossAxisAlignment`].
-    ///
-    /// [`CrossAxisAlignment`]: enum.CrossAxisAlignment.html
-    pub fn set_cross_axis_alignment(&mut self, alignment: CrossAxisAlignment) {
-        self.cross_alignment = alignment;
-    }
-
-    /// Set the childrens' [`MainAxisAlignment`].
-    ///
-    /// [`MainAxisAlignment`]: enum.MainAxisAlignment.html
-    pub fn set_main_axis_alignment(&mut self, alignment: MainAxisAlignment) {
-        self.main_alignment = alignment;
-    }
-
-    /// Set whether the container must expand to fill the available space on
-    /// its main axis.
-    pub fn set_must_fill_main_axis(&mut self, fill: bool) {
-        self.fill_major_axis = fill;
-    }
-
-    /// Add a non-flex child widget.
-    ///
-    /// See also [`with_child`].
-    ///
-    /// [`with_child`]: #method.with_child
-    pub fn add_child(&mut self, child: impl Widget<T> + 'static) {
-        self.add_flex_child(child, 0.0);
-    }
-
-    /// Add a flexible child widget.
-    ///
-    /// This method is used when you need more control over the behaviour
-    /// of the widget you are adding. In the general case, this likely
-    /// means giving that child a 'flex factor', but it could also mean
-    /// giving the child a custom [`CrossAxisAlignment`], or a combination
-    /// of the two.
-    ///
-    /// This function takes a child widget and [`FlexParams`]; importantly
-    /// you can pass in a float as your [`FlexParams`] in most cases.
-    ///
-    /// For the builder-style varient, see [`with_flex_child`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use druid::widget::{Flex, FlexParams, Label, Slider, CrossAxisAlignment};
-    ///
-    /// let mut my_row = Flex::row();
-    /// my_row.add_flex_child(Slider::new(), 1.0);
-    /// my_row.add_flex_child(Slider::new(), FlexParams::new(1.0, CrossAxisAlignment::End));
-    /// ```
-    ///
-    /// [`FlexParams`]: struct.FlexParams.html
-    /// [`with_flex_child`]: #method.with_flex_child
-    pub fn add_flex_child(
-        &mut self,
-        child: impl Widget<T> + 'static,
-        params: impl Into<DynFlexParams>,
-    ) {
-        let child = ChildWidget::new(child, params.into());
-        self.children.push(child);
-    }
-
-    /// Add an empty spacer widget with the given length.
-    pub fn add_spacer(&mut self, len: impl Into<KeyOrValue<f64>>) {
-        let spacer = Spacer {
-            axis: self.direction,
-            len: len.into(),
-        };
-        self.add_flex_child(spacer, 0.0);
-    }
-
-    /// Add an empty spacer widget with a specific `flex` factor.
-    pub fn add_flex_spacer(&mut self, flex: f64) {
-        let child = match self.direction {
-            Axis::Vertical => SizedBox::empty().expand_height(),
-            Axis::Horizontal => SizedBox::empty().expand_width(),
-        };
-        self.add_flex_child(child, flex);
     }
 }
 
