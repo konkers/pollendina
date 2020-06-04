@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::convert::AsRef;
+use std::fmt::Display;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -48,6 +49,7 @@ pub struct Manifest {
 pub struct ObjectiveCheck {
     #[serde(default, rename = "type")]
     pub ty: String,
+    pub id: Option<String>,
     #[serde(default)]
     pub name: String,
     #[serde(default, rename = "enabled-by")]
@@ -62,6 +64,10 @@ pub struct ObjectiveInfo {
     #[serde(default, rename = "type")]
     pub ty: String,
     pub name: String,
+    #[serde(default, rename = "enabled-by")]
+    pub enabled_by: Expression,
+    #[serde(default, rename = "unlocked-by")]
+    pub unlocked_by: Expression,
     #[serde(default)]
     pub checks: Vec<ObjectiveCheck>,
 }
@@ -152,29 +158,18 @@ impl Module {
             None => None,
         };
 
-        let mut objectives = HashMap::new();
-        for loc in &manifest.objectives {
-            let obj_path = base_path.join(PathBuf::from_slash(&loc.path));
-            let obj_str = std::fs::read_to_string(&obj_path)
-                .map_err(|e| format_err!("Failed to open {}: {}", obj_path.display(), e))?;
-            let objs: Vec<ObjectiveInfo> = serde_json::from_str(&obj_str)
-                .map_err(|e| format_err!("Failed to parse {}: {}", obj_path.display(), e))?;
-            for o in objs {
-                let mut obj = o.clone();
-                obj.ty = loc.ty.clone();
-                if objectives.contains_key(&obj.id) {
-                    return Err(format_err!(
-                        "Duplicate id {} found in {}.",
-                        &obj.id,
-                        obj_path.display()
-                    ));
-                }
-                objectives.insert(obj.id.clone(), obj);
-            }
-        }
+        let mut module = Module {
+            manifest,
+            objectives: HashMap::new(),
+            maps: HashMap::new(),
+            auto_track,
+            assets: Vec::new(),
+        };
+
+        module.import_objectives(&base_path)?;
 
         let mut maps = HashMap::new();
-        for loc in &manifest.maps {
+        for loc in &module.manifest.maps {
             let map_path = base_path.join(PathBuf::from_slash(&loc.path));
             let map_str = std::fs::read_to_string(&map_path)
                 .map_err(|e| format_err!("Failed to open {}: {}", map_path.display(), e))?;
@@ -190,13 +185,85 @@ impl Module {
 
         // TODO(konkers): verify module integrity
         //  All id references should resolve (display and elsewhere)
-        Ok(Module {
-            manifest,
-            objectives,
-            maps,
-            auto_track,
-            assets,
-        })
+        Ok(module)
+    }
+
+    fn import_objectives(&mut self, base_path: &Path) -> Result<(), Error> {
+        for loc in &self.manifest.objectives {
+            let path = base_path.join(PathBuf::from_slash(&loc.path));
+            let obj_str = std::fs::read_to_string(&path)
+                .map_err(|e| format_err!("Failed to open {}: {}", path.display(), e))?;
+            let objs: Vec<ObjectiveInfo> = serde_json::from_str(&obj_str)
+                .map_err(|e| format_err!("Failed to parse {}: {}", path.display(), e))?;
+            for o in objs {
+                let mut obj = o.clone();
+                self.check_for_unique_id(&obj.id, &path)?;
+                obj.ty = loc.ty.clone();
+
+                let mut checks_enabled_by = Expression::False;
+                let mut checks_unlocked_by = Expression::False;
+                // Create objectives for each check.
+                for (i, check) in o.checks.iter().enumerate() {
+                    // If an ID is not givin. Assign one of the form `objective_id:index`.
+                    let id = check.id.clone().unwrap_or(format!("{}:{}", &o.id, i));
+                    self.check_for_unique_id(&id, &path)?;
+
+                    // Expression defaults for checks should be True
+                    let enabled_by = check.enabled_by.clone().eval_default(Expression::True);
+                    let unlocked_by = check.unlocked_by.clone().eval_default(Expression::True);
+
+                    // Add check conditions to parent objective.
+                    checks_enabled_by = checks_enabled_by.or(Expression::Objective(id.clone()));
+                    checks_unlocked_by = checks_unlocked_by.or(Expression::Objective(id.clone()));
+
+                    self.objectives.insert(
+                        id.clone(),
+                        ObjectiveInfo {
+                            id,
+                            ty: "__CHECK__".into(),
+                            name: check.name.clone(),
+                            unlocked_by: unlocked_by,
+                            enabled_by: enabled_by,
+                            checks: vec![],
+                        },
+                    );
+                }
+
+                if o.checks.len() == 0 {
+                    // Objectives with no checks are enabled by default and
+                    // unlocked manually.
+                    obj.enabled_by = obj.enabled_by.eval_default(Expression::True);
+                    obj.unlocked_by = obj.unlocked_by.eval_default(Expression::Manual);
+                } else {
+                    // Objectives with checks have their enabled_by/unlocked_by
+                    // ORed with their checks.  The default is False to short circuit
+                    // with the checks expression.
+                    obj.enabled_by = obj
+                        .enabled_by
+                        .eval_default(Expression::False)
+                        .or(checks_enabled_by);
+                    obj.unlocked_by = obj
+                        .unlocked_by
+                        .eval_default(Expression::False)
+                        .or(checks_unlocked_by);
+                }
+
+                self.objectives.insert(obj.id.clone(), obj);
+            }
+        }
+        Ok(())
+    }
+
+    fn check_for_unique_id(&self, id: &String, path: &Path) -> Result<(), Error> {
+        if self.objectives.contains_key(id) {
+            Err(format_err!(
+                "Duplicate id {} found in {}.",
+                id,
+                path.display()
+            ))
+        } else {
+            Ok(())
+        }
     }
 
     fn visit_asset_dir(
@@ -268,6 +335,8 @@ mod tests {
                 id: "test".to_string(),
                 ty: "".to_string(),
                 name: "Test Objective".to_string(),
+                enabled_by: Expression::default(),
+                unlocked_by: Expression::default(),
                 checks: vec![],
             },
         )
@@ -285,11 +354,14 @@ mod tests {
                 id: "test".to_string(),
                 ty: "location".to_string(),
                 name: "Test Objective".to_string(),
+                enabled_by: Expression::default(),
+                unlocked_by: Expression::default(),
                 checks: vec![ObjectiveCheck {
                     ty: "key-item".to_string(),
+                    id: None,
                     name: "".to_string(),
-                    enabled_by: Expression::True,
-                    unlocked_by: Expression::True,
+                    enabled_by: Expression::default(),
+                    unlocked_by: Expression::default(),
                 }],
             },
         )
