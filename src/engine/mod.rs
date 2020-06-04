@@ -11,6 +11,7 @@ mod auto_tracker;
 pub mod expression;
 pub mod module;
 
+use expression::Expression;
 pub use module::{DisplayViewInfo, Module, Param};
 
 use crate::assets::{add_image_to_cache, add_objective_to_cache, IMAGES};
@@ -38,12 +39,18 @@ pub enum ObjectiveState {
 }
 
 impl ObjectiveState {
-    pub fn is_active(&self) -> bool {
-        *self == ObjectiveState::Unlocked || *self == ObjectiveState::Complete
+    pub fn is(&self, threshold: &Self) -> bool {
+        self.ordinal() >= threshold.ordinal()
     }
 
-    pub fn is_complete(&self) -> bool {
-        *self == ObjectiveState::Complete
+    fn ordinal(&self) -> u32 {
+        match self {
+            ObjectiveState::Disabled => 0,
+            ObjectiveState::Locked => 1,
+            ObjectiveState::GlitchLocked => 2,
+            ObjectiveState::Unlocked => 3,
+            ObjectiveState::Complete => 4,
+        }
     }
 }
 
@@ -222,15 +229,13 @@ impl Engine {
         let mut edges = Vec::new();
         for (id, info) in &module.objectives {
             let idx = index_map.get(id).unwrap();
-            for check in &info.checks {
-                let mut deps = check.enabled_by.deps();
-                deps.append(&mut check.unlocked_by.deps());
-                for dep in deps {
-                    if let Some(dep_idx) = index_map.get(&dep) {
-                        edges.push((*dep_idx, *idx));
-                    } else {
-                        println!("unknown id {}", dep);
-                    }
+            let mut deps = info.enabled_by.deps();
+            deps.append(&mut info.unlocked_by.deps());
+            for dep in deps {
+                if let Some(dep_idx) = index_map.get(&dep) {
+                    edges.push((*dep_idx, *idx));
+                } else {
+                    println!("unknown id {}", dep);
                 }
             }
         }
@@ -264,34 +269,28 @@ impl Engine {
                 .get(id)
                 .ok_or(format_err!("can't get objective state for '{}`", id))?;
 
-            if info.checks.len() == 0 {
-                // Enable objectives that have no checks.
-                if state == ObjectiveState::Disabled {
+            if info.enabled_by != Expression::Manual {
+                let enabled = info.enabled_by.evaluate_enabled(&self.objectives)?;
+                if state == ObjectiveState::Disabled && enabled {
                     state = ObjectiveState::Locked;
                 }
-            } else {
-                let mut any_unlocked = false;
-                for check in &info.checks {
-                    let unlocked = check.unlocked_by.evaluate(&self.objectives)?;
-                    let enabled = check.enabled_by.evaluate(&self.objectives)?;
-                    any_unlocked |= unlocked;
-
-                    // Order here is important.  We want to be able to unlock and
-                    // enable an objective in the same pass.
-                    if state == ObjectiveState::Disabled && enabled {
-                        state = ObjectiveState::Locked;
-                    }
-                    if state == ObjectiveState::Locked && unlocked {
-                        state = ObjectiveState::Unlocked;
-                    }
+                if state == ObjectiveState::Locked && !enabled {
+                    state = ObjectiveState::Disabled;
                 }
-                // If any all of the checks are locked AND the state is
-                // unlocked, re-lock it.
-                if state == ObjectiveState::Unlocked && !any_unlocked {
+            }
+
+            if info.unlocked_by != Expression::Manual {
+                let unlocked = info.unlocked_by.evaluate_unlocked(&self.objectives)?;
+                if state == ObjectiveState::Locked && unlocked {
+                    state = ObjectiveState::Unlocked;
+                }
+                // Re-lock if a dependencies become locked.
+                if state == ObjectiveState::Unlocked && !unlocked {
                     state = ObjectiveState::Locked;
                 }
             }
 
+            println!(" => {:?}", &state);
             *self
                 .objectives
                 .get_mut(id)
@@ -621,6 +620,14 @@ mod tests {
             .collect();
         engine.update_state(&updates)?;
         assert_state(&engine, &"d-castle", ObjectiveState::Unlocked);
+
+        // Un-completing the Magma Key should re-locks Dwarf Castle.
+        let updates = [("magma-key".to_string(), ObjectiveState::Unlocked)]
+            .iter()
+            .cloned()
+            .collect();
+        engine.update_state(&updates)?;
+        assert_state(&engine, &"d-castle", ObjectiveState::Locked);
 
         // Unlocking Darkness Crystal is enough to unlock Moon objectives.
         let updates = [("darkness-crystal".to_string(), ObjectiveState::Complete)]

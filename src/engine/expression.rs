@@ -15,7 +15,10 @@ use super::ObjectiveState;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expression {
+    Default,
+    Manual,
     True,
+    False,
     Objective(String),
     ObjectiveComplete(String),
     And(Box<Expression>, Box<Expression>),
@@ -25,7 +28,7 @@ pub enum Expression {
 
 impl Default for Expression {
     fn default() -> Self {
-        Expression::True
+        Expression::Default
     }
 }
 
@@ -132,9 +135,33 @@ impl Expression {
             .map_err(|e| format_err!("error parsing expression: {}", e))
     }
 
+    pub fn eval_default(self, default_value: Expression) -> Expression {
+        if self == Expression::Default {
+            default_value
+        } else {
+            self
+        }
+    }
+
+    pub fn or(self, other: Self) -> Expression {
+        // short circut constants
+        if self == Expression::False {
+            other
+        } else if other == Expression::False {
+            self
+        } else if other == Expression::True || self == Expression::True {
+            Expression::True
+        } else {
+            Expression::Or(Box::new(self), Box::new(other))
+        }
+    }
+
     // Return a `Vec` of objective ids upon which this expression depends.
     pub fn deps(&self) -> Vec<String> {
         match self {
+            Expression::Default => vec![],
+            Expression::Manual => vec![],
+            Expression::False => vec![],
             Expression::True => vec![],
             Expression::Objective(id) => vec![id.clone()],
             Expression::ObjectiveComplete(id) => vec![id.clone()],
@@ -160,17 +187,39 @@ impl Expression {
     }
 
     // Evaluate this expression based on `state`.
-    pub fn evaluate(&self, state: &HashMap<String, ObjectiveState>) -> Result<bool, Error> {
+    pub fn evaluate_by(
+        &self,
+        state: &HashMap<String, ObjectiveState>,
+        threshold: &ObjectiveState,
+    ) -> Result<bool, Error> {
         match self {
+            Expression::Default => Err(format_err!("evaluate called on default expression")),
+            Expression::Manual => Err(format_err!("evaluate called on manual expression")),
+            Expression::False => Ok(false),
             Expression::True => Ok(true),
-            Expression::Objective(id) => Self::find_state(id, state).map(|o| o.is_active()),
+            Expression::Objective(id) => Self::find_state(id, state).map(|o| o.is(threshold)),
             Expression::ObjectiveComplete(id) => {
-                Self::find_state(id, state).map(|o| o.is_complete())
+                Self::find_state(id, state).map(|o| o.is(&ObjectiveState::Complete))
             }
-            Expression::Not(obj) => obj.evaluate(state).map(|v| !v),
-            Expression::And(a, b) => Ok(a.evaluate(state)? && b.evaluate(state)?),
-            Expression::Or(a, b) => Ok(a.evaluate(state)? || b.evaluate(state)?),
+            Expression::Not(obj) => obj.evaluate_by(state, threshold).map(|v| !v),
+            Expression::And(a, b) => {
+                Ok(a.evaluate_by(state, threshold)? && b.evaluate_by(state, threshold)?)
+            }
+            Expression::Or(a, b) => {
+                Ok(a.evaluate_by(state, threshold)? || b.evaluate_by(state, threshold)?)
+            }
         }
+    }
+
+    pub fn evaluate_unlocked(
+        &self,
+        state: &HashMap<String, ObjectiveState>,
+    ) -> Result<bool, Error> {
+        self.evaluate_by(state, &ObjectiveState::Unlocked)
+    }
+
+    pub fn evaluate_enabled(&self, state: &HashMap<String, ObjectiveState>) -> Result<bool, Error> {
+        self.evaluate_by(state, &ObjectiveState::Locked)
     }
 }
 
