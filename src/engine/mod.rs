@@ -290,7 +290,6 @@ impl Engine {
                 }
             }
 
-            println!(" => {:?}", &state);
             *self
                 .objectives
                 .get_mut(id)
@@ -599,6 +598,18 @@ mod tests {
         // tests.  Eventually the unique cases should be extracted into `test_data/mod`
         let module = Module::open("mods/ff4fe/manifest.json")?;
         let mut engine = Engine::new(module, TestEventSink)?;
+        let _state = engine.new_display_state();
+
+        // Make sure assets loaded.
+        IMAGES.with(|images| {
+            assert!(images
+                .borrow()
+                .get(&"objective:pan:disabled".into())
+                .is_some());
+        });
+
+        // Make sure we have a map.
+        assert_ne!(engine.module.maps.len(), 0);
 
         assert_state(&engine, &"baron", ObjectiveState::Unlocked);
         assert_state(&engine, &"fabul", ObjectiveState::Unlocked);

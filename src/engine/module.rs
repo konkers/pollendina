@@ -168,20 +168,18 @@ impl Module {
 
         module.import_objectives(&base_path)?;
 
-        let mut maps = HashMap::new();
         for loc in &module.manifest.maps {
             let map_path = base_path.join(PathBuf::from_slash(&loc.path));
             let map_str = std::fs::read_to_string(&map_path)
                 .map_err(|e| format_err!("Failed to open {}: {}", map_path.display(), e))?;
             let map: MapInfo = serde_json::from_str(&map_str)
                 .map_err(|e| format_err!("Failed to parse {}: {}", map_path.display(), e))?;
-            maps.insert(map.id.clone(), map);
+            module.maps.insert(map.id.clone(), map);
         }
 
         // Traverse `assets` directory looking for PNGs.
         let assets_path = base_path.join("assets");
-        let mut assets = Vec::new();
-        Self::visit_asset_dir(&assets_path, &assets_path, &mut assets)?;
+        Self::visit_asset_dir(&assets_path, &assets_path, &mut module.assets)?;
 
         // TODO(konkers): verify module integrity
         //  All id references should resolve (display and elsewhere)
