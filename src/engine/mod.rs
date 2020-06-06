@@ -15,7 +15,9 @@ use expression::Expression;
 pub use module::{DisplayViewInfo, Module, Param};
 
 use crate::assets::{add_image_to_cache, add_objective_to_cache, IMAGES};
+use crate::widget::constellation::{Field, Star};
 use crate::widget::dyn_flex::{DynFlexItem, DynFlexParams};
+use crate::widget::list_iter::ListIter;
 
 pub use auto_tracker::AutoTrackerState;
 use auto_tracker::{AutoTracker, AutoTrackerController};
@@ -81,19 +83,51 @@ pub struct MapObjective {
     pub id: String,
     pub x: f64,
     pub y: f64,
+    pub radius: f64,
     pub state: ObjectiveState,
+}
+
+impl Star for MapObjective {
+    fn pos(&self) -> (f64, f64) {
+        (self.x, self.y)
+    }
+
+    fn radius(&self) -> f64 {
+        self.radius
+    }
 }
 
 #[derive(Clone, Data, Lens)]
 pub struct MapInfo {
     pub id: String,
+    pub width: f64,
+    pub height: f64,
+    // depricated
     pub objective_radius: f64,
     pub objectives: Arc<Vec<MapObjective>>,
+}
+
+impl Field for MapInfo {
+    fn size(&self) -> (f64, f64) {
+        (self.width, self.height)
+    }
 }
 
 impl DynFlexItem for MapInfo {
     fn flex_params(&self) -> DynFlexParams {
         return 1.0.into();
+    }
+}
+
+impl ListIter<MapObjective> for MapInfo {
+    fn for_each(&self, cb: impl FnMut(&MapObjective, usize)) {
+        self.objectives.for_each(cb)
+    }
+    fn for_each_mut(&mut self, cb: impl FnMut(&mut MapObjective, usize)) {
+        self.objectives.for_each_mut(cb)
+    }
+    fn data_len(&self) -> usize {
+        self.objectives.data_len()
     }
 }
 
@@ -342,12 +376,15 @@ impl Engine {
                             id: info.id.clone(),
                             x: info.x as f64,
                             y: info.y as f64,
+                            radius: obj_info.objective_radius,
                             state: ObjectiveState::Locked,
                         });
                     }
 
                     maps.push(MapInfo {
                         id: id.clone(),
+                        width: obj_info.width as f64,
+                        height: obj_info.height as f64,
                         objective_radius: obj_info.objective_radius,
                         objectives: Arc::new(objectives),
                     });

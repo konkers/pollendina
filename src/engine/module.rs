@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::convert::AsRef;
-use std::fmt::Display;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -83,6 +82,8 @@ pub struct MapObjective {
 pub struct MapInfo {
     pub id: String,
     pub name: String,
+    pub width: u64,
+    pub height: u64,
     #[serde(rename = "objective-radius")]
     pub objective_radius: f64,
     #[serde(default)]

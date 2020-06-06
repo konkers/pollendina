@@ -6,8 +6,8 @@ use std::sync::Arc;
 use druid::widget::{Button, Flex, Label, List, Padding, TextBox};
 use druid::{
     platform_menus, AppDelegate, AppLauncher, Command, Data, DelegateCtx, Env, ExtEventError,
-    ExtEventSink, LocalizedString, MenuDesc, Selector, Target, Widget, WidgetExt, WindowDesc,
-    WindowId,
+    ExtEventSink, LensExt, LocalizedString, MenuDesc, Selector, Target, Widget, WidgetExt,
+    WindowDesc, WindowId,
 };
 use failure::Error;
 use match_macro::match_widget;
@@ -21,7 +21,7 @@ use engine::{
     DisplayViewGrid, DisplayViewMap, Engine, EventSink, Module, ModuleParam, ModuleParamValue,
     ObjectiveState,
 };
-use widget::{DynFlex, Grid, Map, Objective};
+use widget::{Asset, Constellation, DynFlex, Grid, MapObjective, Objective, Stack};
 
 pub(crate) const UI_OPEN_CONFIG: Selector<()> = Selector::new("ui:open_config");
 pub(crate) const UI_CANCEL_CONFIG: Selector<()> = Selector::new("ui:cancel_config");
@@ -180,7 +180,21 @@ fn count_widget() -> impl Widget<DisplayViewCount> {
 }
 
 fn map_widget() -> impl Widget<DisplayViewMap> {
-    DynFlex::column(|| Padding::new(8.0, Map::new())).lens(DisplayViewMap::maps)
+    DynFlex::column(|| {
+        Padding::new(
+            8.0,
+            Stack::new()
+                .with_child(
+                    Asset::new().lens(
+                        engine::MapInfo::id.map(|id| format!("map:{}", id), |_id, _new_id| {}),
+                    ),
+                )
+                .with_child(Constellation::new(|| {
+                    MapObjective::new().lens(engine::MapObjective::state)
+                })),
+        )
+    })
+    .lens(DisplayViewMap::maps)
 }
 
 fn flex_row_widget() -> impl Widget<DisplayViewFlex> {

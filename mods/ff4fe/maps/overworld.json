@@ -1,6 +1,8 @@
 {
     "id": "overworld",
     "name": "Overworld",
+    "width": 1012,
+    "height": 932,
     "objective-radius": 16.0,
     "objectives": [
         {
