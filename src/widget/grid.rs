@@ -129,7 +129,6 @@ impl Widget<DisplayViewGrid> for Grid {
         data.children.for_each(|child_data, i| {
             if i % cols == 0 {
                 y += row_height;
-                width = width.max(x);
                 row_height = bc.min().height;
                 x = 0.0;
             }
@@ -150,6 +149,7 @@ impl Widget<DisplayViewGrid> for Grid {
             paint_rect = paint_rect.union(child.paint_rect());
 
             x += child_size.width;
+            width = width.max(x);
             row_height = row_height.max(child_size.height);
         });
 
