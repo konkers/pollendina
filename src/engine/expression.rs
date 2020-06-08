@@ -156,6 +156,19 @@ impl Expression {
         }
     }
 
+    pub fn and(self, other: Self) -> Expression {
+        // short circut constants
+        if self == Expression::True {
+            other
+        } else if other == Expression::True {
+            self
+        } else if other == Expression::False || self == Expression::False {
+            Expression::False
+        } else {
+            Expression::And(Box::new(self), Box::new(other))
+        }
+    }
+
     // Return a `Vec` of objective ids upon which this expression depends.
     pub fn deps(&self) -> Vec<String> {
         match self {
