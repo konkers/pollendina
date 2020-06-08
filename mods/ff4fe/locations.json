@@ -508,7 +508,8 @@
         "checks": [
             {
                 "type": "key-item",
-                "enabled-by": "flag-k-summon"
+                "enabled-by": "flag-k-summon",
+                "unlocked-by": "pan"
             }
         ]
     },
