@@ -45,6 +45,7 @@ fn make_completed_image(src: &DynamicImage) -> DynamicImage {
     let mut img = src.clone().to_rgba();
     map_image_hsv(&mut img, |hsv| {
         hsv.hue = RgbHue::from_degrees(120.0);
+        hsv.saturation = 1.0;
         hsv.value *= 0.35;
     });
 
