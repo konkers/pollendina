@@ -25,6 +25,10 @@
             "path": "locations.json"
         },
         {
+            "type": "boss",
+            "path": "bosses.json"
+        },
+        {
             "type": "misc",
             "path": "misc.json"
         },
@@ -74,6 +78,7 @@
                             "legend-sword",
                             "pan",
                             "spoon",
+                            "d-mist",
                             "rat-tail",
                             "pink-tail"
                         ]
