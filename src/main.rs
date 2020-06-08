@@ -3,11 +3,11 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use druid::widget::{Button, Flex, Label, List, Padding, TextBox};
+use druid::widget::{Button, Container, Flex, Label, List, Padding, TextBox};
 use druid::{
-    platform_menus, AppDelegate, AppLauncher, Command, Data, DelegateCtx, Env, ExtEventError,
-    ExtEventSink, LensExt, LocalizedString, MenuDesc, Selector, Target, Widget, WidgetExt,
-    WindowDesc, WindowId,
+    platform_menus, AppDelegate, AppLauncher, Color, Command, Data, DelegateCtx, Env,
+    ExtEventError, ExtEventSink, LensExt, LocalizedString, MenuDesc, MouseEvent, Point, Selector,
+    Target, Widget, WidgetExt, WindowDesc, WindowId,
 };
 use failure::Error;
 use match_macro::match_widget;
@@ -21,11 +21,14 @@ use engine::{
     DisplayViewGrid, DisplayViewMap, Engine, EventSink, Module, ModuleParam, ModuleParamValue,
     ObjectiveState,
 };
-use widget::{Asset, Constellation, DynFlex, Grid, MapObjective, Objective, Stack};
+use widget::{
+    Asset, ClickExt, Constellation, DynFlex, Grid, MapObjective, ModalHost, Objective, Stack,
+};
 
 pub(crate) const UI_OPEN_CONFIG: Selector<()> = Selector::new("ui:open_config");
 pub(crate) const UI_CANCEL_CONFIG: Selector<()> = Selector::new("ui:cancel_config");
 pub(crate) const UI_APPLY_CONFIG: Selector<()> = Selector::new("ui:update_config");
+const UI_OPEN_POPUP: Selector<((f64, f64), String)> = Selector::new("ui:open_popup");
 
 pub(crate) const ENGINE_TOGGLE_STATE: Selector<String> = Selector::new("engine:toggle_state");
 pub(crate) const ENGINE_UPDATE_STATE: Selector<HashMap<String, ObjectiveState>> =
@@ -99,6 +102,15 @@ impl AppDelegate<DisplayState> for Delegate {
             println!("applying config changes");
             self.close_config_window(data, ctx);
             false
+        } else if let Some(payload) = cmd.get(UI_OPEN_POPUP) {
+            if let Err(e) = self.engine.build_popup(data, &payload.1) {
+                println!("error building popup: {}", e);
+            } else {
+                let pos = Point::new((payload.0).0, (payload.0).1);
+                let cmd = ModalHost::make_modal_command(pos, modal_builder);
+                ctx.submit_command(cmd, None);
+            }
+            false
         } else if let Some(id) = cmd.get(ENGINE_TOGGLE_STATE) {
             if let Err(e) = self.engine.toggle_state(&id) {
                 println!("error toggling state: {}", e);
@@ -146,7 +158,9 @@ impl AppDelegate<DisplayState> for Delegate {
 }
 
 fn main() -> Result<(), Error> {
-    let main_window = WindowDesc::new(ui_builder).menu(app_menu());
+    let main_window = WindowDesc::new(ui_builder)
+        .menu(app_menu())
+        .show_titlebar(false);
     let app = AppLauncher::with_window(main_window);
 
     let module = Module::open("mods/ff4fe/manifest.json")?;
@@ -190,7 +204,24 @@ fn map_widget() -> impl Widget<DisplayViewMap> {
                     ),
                 )
                 .with_child(Constellation::new(|| {
-                    MapObjective::new().lens(engine::MapObjective::state)
+                    MapObjective::new()
+                        .lens(engine::MapObjective::state)
+                        .on_left_click(
+                            |ctx, event: &MouseEvent, data: &mut engine::MapObjective, _env| {
+                                // We're sending window based position here and the
+                                // modal host uses widget local coordinates.  This
+                                // works out only because it's placed at the window
+                                // origin.
+                                let id = data.id.clone();
+                                /*let cmd = ModalHost::make_modal_command(event.window_pos, || {
+                                    modal_builder(id)
+                                });
+                                */
+                                let pos = event.window_pos;
+                                let cmd = UI_OPEN_POPUP.with(((pos.x, pos.y), id));
+                                ctx.submit_command(cmd, None);
+                            },
+                        )
                 })),
         )
     })
@@ -212,11 +243,25 @@ fn display_widget() -> impl Widget<DisplayView> {
         DisplayView::Map(_) => map_widget(),
         DisplayView::FlexRow(_) => flex_row_widget(),
         DisplayView::FlexCol(_) => flex_col_widget(),
+        DisplayView::None => Label::new(""),
     }
 }
+
+fn modal_builder() -> impl Widget<DisplayState> {
+    Container::new(Padding::new(
+        8.0,
+        display_widget().lens(DisplayState::popup),
+    ))
+    .background(Color::rgb8(0x44, 0x44, 0x44))
+    .rounded(4.0)
+}
+
 fn ui_builder() -> impl Widget<DisplayState> {
     let mut root = Flex::column();
-    root.add_flex_child(display_widget().lens(DisplayState::layout), 1.0);
+    root.add_flex_child(
+        ModalHost::new(display_widget().lens(DisplayState::layout)),
+        1.0,
+    );
 
     let mut bot = Flex::row();
     bot.add_child(

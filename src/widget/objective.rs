@@ -42,10 +42,16 @@ impl Objective {
             _ => ":disabled",
         };
 
-        let id = format!("objective:{}{}", &data.id, &postfix);
+        let obj_id = format!("objective:{}{}", &data.id, &postfix);
+        let ty_id = format!("type:{}{}", &data.ty, &postfix);
 
         IMAGES.with(|images| {
-            self.image = images.borrow().get(&id);
+            self.image = images.borrow().get(&obj_id);
+            // If there is no objective specific image, fall back on a type
+            // specific one.
+            if self.image.is_none() {
+                self.image = images.borrow().get(&ty_id);
+            }
         });
     }
 }
