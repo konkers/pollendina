@@ -272,6 +272,9 @@ impl Engine {
             let idx = index_map.get(id).unwrap();
             let mut deps = info.enabled_by.deps();
             deps.append(&mut info.unlocked_by.deps());
+            deps.append(&mut info.completed_by.deps());
+
+            // TODO(konkers): we could de-dup these for a performance gain.
             for dep in deps {
                 if let Some(dep_idx) = index_map.get(&dep) {
                     edges.push((*dep_idx, *idx));
@@ -310,6 +313,8 @@ impl Engine {
                 .get(id)
                 .ok_or(format_err!("can't get objective state for '{}`", id))?;
 
+            // (konkers) Idle thought: should we process the "undos" of expressions
+            // in reverse order at the end?
             if info.enabled_by != Expression::Manual {
                 let enabled = info.enabled_by.evaluate_enabled(&self.objectives)?;
                 if state == ObjectiveState::Disabled && enabled {
@@ -328,6 +333,16 @@ impl Engine {
                 // Re-lock if a dependencies become locked.
                 if state == ObjectiveState::Unlocked && !unlocked {
                     state = ObjectiveState::Locked;
+                }
+            }
+
+            if info.completed_by != Expression::Manual {
+                let completed = info.completed_by.evaluate_unlocked(&self.objectives)?;
+                if state == ObjectiveState::Unlocked && completed {
+                    state = ObjectiveState::Complete;
+                }
+                if state == ObjectiveState::Complete && !completed {
+                    state = ObjectiveState::Unlocked;
                 }
             }
 
@@ -727,6 +742,14 @@ mod tests {
             .collect();
         engine.update_state(&updates)?;
         assert_state(&engine, &"bahamut-cave", ObjectiveState::Unlocked);
+
+        // Completing D. Mist slot should complete Mist Cave.
+        let updates = [("mist-cave:0".to_string(), ObjectiveState::Complete)]
+            .iter()
+            .cloned()
+            .collect();
+        engine.update_state(&updates)?;
+        assert_state(&engine, &"mist-cave", ObjectiveState::Complete);
         Ok(())
     }
 }

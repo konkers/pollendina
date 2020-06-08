@@ -64,6 +64,8 @@ pub struct ObjectiveInfo {
     #[serde(default, rename = "type")]
     pub ty: String,
     pub name: String,
+    #[serde(skip)]
+    pub completed_by: Expression,
     #[serde(default, rename = "enabled-by")]
     pub enabled_by: Expression,
     #[serde(default, rename = "unlocked-by")]
@@ -202,6 +204,7 @@ impl Module {
 
                 let mut checks_enabled_by = Expression::False;
                 let mut checks_unlocked_by = Expression::False;
+                let mut checks_completed_by = Expression::True;
                 // Create objectives for each check.
                 for (i, check) in obj.checks.iter_mut().enumerate() {
                     // If an ID is not givin. Assign one of the form `objective_id:index`.
@@ -221,6 +224,8 @@ impl Module {
                     // Add check conditions to parent objective.
                     checks_enabled_by = checks_enabled_by.or(Expression::Objective(id.clone()));
                     checks_unlocked_by = checks_unlocked_by.or(Expression::Objective(id.clone()));
+                    checks_completed_by =
+                        checks_completed_by.and(Expression::ObjectiveComplete(id.clone()));
 
                     self.objectives.insert(
                         id.clone(),
@@ -230,6 +235,7 @@ impl Module {
                             name: check.name.clone(),
                             unlocked_by: unlocked_by,
                             enabled_by: enabled_by,
+                            completed_by: Expression::Manual,
                             checks: vec![],
                         },
                     );
@@ -240,6 +246,7 @@ impl Module {
                     // unlocked manually.
                     obj.enabled_by = obj.enabled_by.eval_default(Expression::True);
                     obj.unlocked_by = obj.unlocked_by.eval_default(Expression::Manual);
+                    obj.completed_by = obj.completed_by.eval_default(Expression::Manual);
                 } else {
                     // Objectives with checks have their enabled_by/unlocked_by
                     // ORed with their checks.  The default is False to short circuit
@@ -252,6 +259,9 @@ impl Module {
                         .unlocked_by
                         .eval_default(Expression::False)
                         .or(checks_unlocked_by);
+
+                    // No support for explicit `completed_by` expressions.
+                    obj.completed_by = checks_completed_by;
                 }
 
                 self.objectives.insert(obj.id.clone(), obj);
@@ -343,6 +353,7 @@ mod tests {
                 name: "Test Objective".to_string(),
                 enabled_by: Expression::default(),
                 unlocked_by: Expression::default(),
+                completed_by: Expression::default(),
                 checks: vec![],
             },
         )
@@ -362,6 +373,7 @@ mod tests {
                 name: "Test Objective".to_string(),
                 enabled_by: Expression::default(),
                 unlocked_by: Expression::default(),
+                completed_by: Expression::default(),
                 checks: vec![ObjectiveCheck {
                     ty: "key-item".to_string(),
                     id: "".to_string(),

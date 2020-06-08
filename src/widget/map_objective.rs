@@ -69,6 +69,7 @@ impl Widget<ObjectiveState> for MapObjective {
         let outline_color = Color::rgb8(0xff, 0xff, 0xff);
 
         let unlocked_color = Color::rgb8(0x00, 0xff, 0x00);
+        let complete_color = Color::rgb8(0x00, 0x88, 0xcc);
         let glitch_locked_color = Color::rgb8(0xff, 0xff, 0x00);
         let locked_color = Color::rgb8(0x44, 0x44, 0x44);
 
@@ -81,7 +82,7 @@ impl Widget<ObjectiveState> for MapObjective {
 
         let inner_color = match data {
             ObjectiveState::Disabled => return,
-            ObjectiveState::Complete => return,
+            ObjectiveState::Complete => &complete_color,
             ObjectiveState::Locked => &locked_color,
             ObjectiveState::GlitchLocked => &glitch_locked_color,
             ObjectiveState::Unlocked => &unlocked_color,
