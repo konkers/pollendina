@@ -59,6 +59,7 @@ impl ObjectiveState {
 #[derive(Clone, Data)]
 pub struct DisplayChild {
     pub id: String,
+    pub ty: String,
     pub state: ObjectiveState,
 }
 
@@ -150,6 +151,7 @@ pub enum DisplayView {
     Map(DisplayViewMap),
     FlexRow(DisplayViewFlex),
     FlexCol(DisplayViewFlex),
+    None,
 }
 
 impl DynFlexItem for DisplayView {
@@ -160,6 +162,7 @@ impl DynFlexItem for DisplayView {
             DisplayView::Map(m) => m.flex,
             DisplayView::FlexRow(f) => f.flex,
             DisplayView::FlexCol(f) => f.flex,
+            DisplayView::None => 0.into(),
         }
         .into()
     }
@@ -181,6 +184,7 @@ pub struct ModuleParam {
 #[derive(Clone, Data, Lens)]
 pub struct DisplayState {
     pub layout: DisplayView,
+    pub popup: DisplayView,
     pub params: Arc<Vec<ModuleParam>>,
     pub auto_tracker_state: AutoTrackerState,
     pub config_win: Arc<Option<WindowId>>,
@@ -188,6 +192,7 @@ pub struct DisplayState {
 
 pub struct Engine {
     module: Module,
+    popup_info: Option<DisplayViewInfo>,
     objectives: HashMap<String, ObjectiveState>,
     eval_order: Vec<String>,
     auto_tracker: Option<AutoTrackerController>,
@@ -214,10 +219,11 @@ impl Engine {
             let mut store = images.borrow_mut();
             for asset in &module.assets {
                 let data = fs::read(&asset.path)?;
-                if asset.id.starts_with("objective:") {
-                    add_objective_to_cache(&mut store, &asset.id, &data);
-                } else {
+                if asset.id.starts_with("map:") {
+                    // Don't cal
                     add_image_to_cache(&mut store, &asset.id, &data);
+                } else {
+                    add_objective_to_cache(&mut store, &asset.id, &data);
                 }
             }
 
@@ -226,6 +232,7 @@ impl Engine {
 
         let mut engine = Engine {
             module,
+            popup_info: None,
             objectives,
             eval_order,
             auto_tracker,
@@ -341,10 +348,17 @@ impl Engine {
             } => {
                 let mut children = Vec::new();
                 for objective in objectives {
+                    let ty = if let Some(o) = self.module.objectives.get(objective) {
+                        o.ty.clone()
+                    } else {
+                        "unknown".into()
+                    };
+
                     // All objectives start in the Locked state.  The normal
                     // app lifecycle will take care of keeping them up to date.
                     children.push(DisplayChild {
                         id: objective.clone(),
+                        ty: ty,
                         state: ObjectiveState::Locked,
                     });
                 }
@@ -428,6 +442,7 @@ impl Engine {
 
         let mut state = DisplayState {
             layout: layout,
+            popup: DisplayView::None,
             params: Arc::new(params),
             auto_tracker_state: AutoTrackerState::Idle,
             config_win: Arc::new(None),
@@ -559,10 +574,12 @@ impl Engine {
 
     pub fn update_display_state(&self, data: &mut DisplayState) {
         self.update_view(&mut data.layout, &self.module.manifest.layout);
+        if let Some(popup_info) = &self.popup_info {
+            self.update_view(&mut data.popup, &popup_info);
+        }
     }
 
     pub fn toggle_state(&mut self, id: &String) -> Result<(), Error> {
-        println!("toggle_state {}", id);
         if let Some(o) = self.objectives.get_mut(id) {
             let new_state = match *o {
                 ObjectiveState::Disabled => ObjectiveState::Disabled,
@@ -604,6 +621,32 @@ impl Engine {
             self.objectives.insert(id.clone(), state.clone());
             self.eval_objectives()?;
         }
+        Ok(())
+    }
+
+    pub fn build_popup(&mut self, data: &mut DisplayState, id: &String) -> Result<(), Error> {
+        let obj = self
+            .module
+            .objectives
+            .get(id)
+            .ok_or(format_err!("Can't find objective {}", id))?;
+
+        let mut ids = Vec::new();
+        for check in &obj.checks {
+            ids.push(check.id.clone());
+        }
+
+        // Hard code grid until we add multi layout support.
+        let popup_info = DisplayViewInfo::Grid {
+            columns: 3,
+            objectives: ids,
+            flex: 0.0,
+        };
+
+        data.popup = self.new_view(&popup_info);
+        self.popup_info = Some(popup_info);
+
+        self.update_display_state(data);
         Ok(())
     }
 }

@@ -1,16 +1,20 @@
 pub mod asset;
+pub mod click_ext;
 pub mod constellation;
 pub mod dyn_flex;
 pub mod grid;
 pub mod list_iter;
 pub mod map_objective;
+pub mod modal_host;
 pub mod objective;
 pub mod stack;
 
 pub use asset::Asset;
+pub use click_ext::ClickExt;
 pub use constellation::{Constellation, Star};
 pub use dyn_flex::{DynFlex, DynFlexParams};
 pub use grid::Grid;
 pub use map_objective::MapObjective;
+pub use modal_host::ModalHost;
 pub use objective::Objective;
 pub use stack::Stack;

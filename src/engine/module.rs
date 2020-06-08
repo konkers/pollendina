@@ -48,7 +48,8 @@ pub struct Manifest {
 pub struct ObjectiveCheck {
     #[serde(default, rename = "type")]
     pub ty: String,
-    pub id: Option<String>,
+    #[serde(default)]
+    pub id: String,
     #[serde(default)]
     pub name: String,
     #[serde(default, rename = "enabled-by")]
@@ -202,10 +203,16 @@ impl Module {
                 let mut checks_enabled_by = Expression::False;
                 let mut checks_unlocked_by = Expression::False;
                 // Create objectives for each check.
-                for (i, check) in o.checks.iter().enumerate() {
+                for (i, check) in obj.checks.iter_mut().enumerate() {
                     // If an ID is not givin. Assign one of the form `objective_id:index`.
-                    let id = check.id.clone().unwrap_or(format!("{}:{}", &o.id, i));
+                    let id = if check.id == "" {
+                        format!("{}:{}", &o.id, i)
+                    } else {
+                        check.id.clone()
+                    };
                     self.check_for_unique_id(&id, &path)?;
+
+                    check.id = id.clone();
 
                     // Expression defaults for checks should be True
                     let enabled_by = check.enabled_by.clone().eval_default(Expression::True);
@@ -219,7 +226,7 @@ impl Module {
                         id.clone(),
                         ObjectiveInfo {
                             id,
-                            ty: "__CHECK__".into(),
+                            ty: check.ty.clone(),
                             name: check.name.clone(),
                             unlocked_by: unlocked_by,
                             enabled_by: enabled_by,
@@ -357,7 +364,7 @@ mod tests {
                 unlocked_by: Expression::default(),
                 checks: vec![ObjectiveCheck {
                     ty: "key-item".to_string(),
-                    id: None,
+                    id: "".to_string(),
                     name: "".to_string(),
                     enabled_by: Expression::default(),
                     unlocked_by: Expression::default(),
