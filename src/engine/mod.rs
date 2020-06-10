@@ -699,7 +699,7 @@ mod tests {
         IMAGES.with(|images| {
             assert!(images
                 .borrow()
-                .get(&"objective:pan:disabled".into())
+                .get(&"objective:pan:locked".into())
                 .is_some());
         });
 
@@ -750,6 +750,9 @@ mod tests {
             .collect();
         engine.update_state(&updates)?;
         assert_state(&engine, &"mist-cave", ObjectiveState::Complete);
+
+        assert_state(&engine, &"mt-ordeals:0", ObjectiveState::Disabled);
+
         Ok(())
     }
 }

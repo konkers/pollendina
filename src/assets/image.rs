@@ -31,7 +31,7 @@ where
         channels[3] = (rgb_color.alpha * 255.0) as u8;
     }
 }
-fn make_disabled_image(src: &DynamicImage) -> DynamicImage {
+fn make_locked_image(src: &DynamicImage) -> DynamicImage {
     let mut img = src.clone().to_rgba();
     map_image_hsv(&mut img, |hsv| {
         hsv.saturation = 0.0;
@@ -59,12 +59,12 @@ pub(crate) fn add_image_to_cache(store: &mut AssetStore<ImageData>, id: &str, da
 
 pub(crate) fn add_objective_to_cache(store: &mut AssetStore<ImageData>, id: &str, data: &[u8]) {
     let image = image::load_from_memory(data).unwrap();
-    let disabled_image = make_disabled_image(&image);
+    let locked_image = make_locked_image(&image);
     let completed_image = make_completed_image(&image);
     store.add(&id.to_string(), ImageData::from_dynamic_image(image));
     store.add(
-        &format!("{}:disabled", id),
-        ImageData::from_dynamic_image(disabled_image),
+        &format!("{}:locked", id),
+        ImageData::from_dynamic_image(locked_image),
     );
     store.add(
         &format!("{}:completed", id),

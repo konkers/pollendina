@@ -21,7 +21,7 @@ use druid::{
 };
 
 use super::list_iter::ListIter;
-use crate::engine::{DisplayChild, DisplayViewGrid};
+use crate::engine::{DisplayChild, DisplayViewGrid, ObjectiveState};
 
 /// A list widget for a variable-size collection of items.
 pub struct Grid {
@@ -126,24 +126,36 @@ impl Widget<DisplayViewGrid> for Grid {
         let mut paint_rect = Rect::ZERO;
         let mut children = self.children.iter_mut();
         let cols = data.columns;
+        let mut skipped_children = 0;
         data.children.for_each(|child_data, i| {
-            if i % cols == 0 {
-                y += row_height;
-                row_height = bc.min().height;
-                x = 0.0;
-            }
-
             let child = match children.next() {
                 Some(child) => child,
                 None => {
                     return;
                 }
             };
+
+            // Skip disabled children.
+            if child_data.state == ObjectiveState::Disabled {
+                skipped_children += 1;
+                return;
+            }
+
+            // Adjust index for children that get skipped.
+            let i = i - skipped_children;
+
+            if i % cols == 0 {
+                y += row_height;
+                row_height = 0.0;
+                x = 0.0;
+            }
+
             let child_bc = BoxConstraints::new(
                 Size::new(bc.min().width, 0.0),
                 Size::new(bc.max().width, std::f64::INFINITY),
             );
             let child_size = child.layout(ctx, &child_bc, child_data, env);
+
             let rect = Rect::from_origin_size(Point::new(x, y), child_size);
             child.set_layout_rect(ctx, child_data, env, rect);
             paint_rect = paint_rect.union(child.paint_rect());
