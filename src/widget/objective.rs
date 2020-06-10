@@ -39,7 +39,11 @@ impl Objective {
         let postfix = match data.state {
             ObjectiveState::Unlocked => "",
             ObjectiveState::Complete => ":completed",
-            _ => ":disabled",
+            ObjectiveState::Locked => ":locked",
+            _ => {
+                self.image = None;
+                return;
+            }
         };
 
         let obj_id = format!("objective:{}{}", &data.id, &postfix);
