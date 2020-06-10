@@ -85,7 +85,7 @@
                     },
                     {
                         "type": "Count",
-                        "objective_type": "key-items"
+                        "objective_type": "key-item"
                     }
                 ]
             },
