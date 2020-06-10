@@ -668,6 +668,27 @@ impl Engine {
         self.update_display_state(data);
         Ok(())
     }
+
+    pub fn dump_state(&self) -> Result<(), Error> {
+        for id in &self.eval_order {
+            let obj = self
+                .module
+                .objectives
+                .get(id)
+                .ok_or(format_err!("Can't find objective {}", id))?;
+            let state = self
+                .objectives
+                .get(id)
+                .ok_or(format_err!("Can't find objective state {}", id))?;
+
+            println!("{}:", id);
+            println!("  state: {:?}", state);
+            println!("  enabled_by: {:?}", obj.enabled_by);
+            println!("  unlocked_by: {:?}", obj.unlocked_by);
+            println!("  completed_by: {:?}", obj.completed_by);
+        }
+        Ok(())
+    }
 }
 
 #[cfg(test)]

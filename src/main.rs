@@ -33,6 +33,7 @@ const UI_OPEN_POPUP: Selector<((f64, f64), String)> = Selector::new("ui:open_pop
 pub(crate) const ENGINE_TOGGLE_STATE: Selector<String> = Selector::new("engine:toggle_state");
 pub(crate) const ENGINE_UPDATE_STATE: Selector<HashMap<String, ObjectiveState>> =
     Selector::new("engine:update_state");
+pub(crate) const ENGINE_DUMP_STATE: Selector<()> = Selector::new("engine:dump_state");
 
 pub(crate) const ENGINE_UPDATE_AUTO_TRACKER_STATE: Selector<AutoTrackerState> =
     Selector::new("engine:update_auto_tracker_state");
@@ -136,6 +137,11 @@ impl AppDelegate<DisplayState> for Delegate {
                 println!("error updating state: {}", e);
             } else {
                 self.engine.update_display_state(data);
+            }
+            true
+        } else if cmd.is(ENGINE_DUMP_STATE) {
+            if let Err(e) = self.engine.dump_state() {
+                println!("Error dumping state: {}", e);
             }
             true
         } else {
@@ -287,6 +293,9 @@ fn ui_builder() -> impl Widget<DisplayState> {
             .lens(DisplayState::auto_tracker_state),
     );
     bot.add_flex_spacer(1.0);
+    bot.add_child(Button::new("Dump").on_click(|ctx, _data, _env| {
+        ctx.submit_command(Command::new(ENGINE_DUMP_STATE, ()), None);
+    }));
     bot.add_child(Button::new("Config").on_click(|ctx, _data, _env| {
         ctx.submit_command(Command::new(UI_OPEN_CONFIG, ()), None);
     }));
