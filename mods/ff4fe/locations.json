@@ -4,13 +4,13 @@
         "name": "Intro at Baron",
         "checks": [
             {
-                "type": "key-item"
+                "type": "key-item-check"
             },
             {
-                "type": "char"
+                "type": "char-check"
             },
             {
-                "type": "char"
+                "type": "char-check"
             }
         ]
     },
@@ -30,18 +30,18 @@
                 "unlocked-by": "baron-key"
             },
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Baron Guards"
             },
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Yang"
             },
             {
-                "type": "char"
+                "type": "char-check"
             },
             {
-                "type": "key-item"
+                "type": "key-item-check"
             }
         ]
     },
@@ -50,30 +50,30 @@
         "name": "Baron Castle",
         "checks": [
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Baigan",
                 "unlocked-by": "baron-key"
             },
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Kainazzo",
                 "unlocked-by": "baron-key"
             },
             {
-                "type": "char",
+                "type": "char-check",
                 "unlocked-by": "baron-key"
             },
             {
-                "type": "key-item",
+                "type": "key-item-check",
                 "unlocked-by": "baron-key"
             },
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Odin",
                 "unlocked-by": "baron-key"
             },
             {
-                "type": "key-item",
+                "type": "key-item-check",
                 "enabled-by": "flag-k-summon",
                 "unlocked-by": "baron-key"
             }
@@ -84,7 +84,7 @@
         "name": "Mist Cave",
         "checks": [
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "D. Mist"
             }
         ]
@@ -100,17 +100,17 @@
                 "type": "armor-shop"
             },
             {
-                "type": "key-item",
+                "type": "key-item-check",
                 "enabled-by": "flag-n-key",
                 "unlocked-by": "d-mist"
             },
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Baron Soldiers",
                 "unlocked-by": "package"
             },
             {
-                "type": "char",
+                "type": "char-check",
                 "unlocked-by": "package"
             }
         ]
@@ -129,7 +129,7 @@
                 "type": "armor-shop"
             },
             {
-                "type": "char",
+                "type": "char-check",
                 "unlocked-by": "sand-ruby"
             }
         ]
@@ -139,11 +139,11 @@
         "name": "Watery Pass",
         "checks": [
             {
-                "type": "char",
+                "type": "char-check",
                 "enabled-by": "!flag-n-chars"
             },
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Octomamm"
             }
         ]
@@ -153,7 +153,7 @@
         "name": "Damcyan Castle",
         "checks": [
             {
-                "type": "char",
+                "type": "char-check",
                 "enabled-by": "!flag-n-chars"
             }
         ]
@@ -163,11 +163,11 @@
         "name": "Antlion's Lair",
         "checks": [
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Antlion"
             },
             {
-                "type": "key-item"
+                "type": "key-item-check"
             }
         ]
     },
@@ -176,11 +176,11 @@
         "name": "Mt. Hobs",
         "checks": [
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "MomBomb"
             },
             {
-                "type": "char"
+                "type": "char-check"
             }
         ]
     },
@@ -198,18 +198,18 @@
                 "type": "armor-shop"
             },
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Fabul Gauntlet"
             },
             {
-                "type": "key-item"
+                "type": "key-item-check"
             },
             {
-                "type": "key-item",
+                "type": "key-item-check",
                 "unlocked-by": "underground"
             },
             {
-                "type": "key-item",
+                "type": "key-item-check",
                 "unlocked-by": "underground && pan"
             }
         ]
@@ -228,7 +228,7 @@
                 "type": "armor-shop"
             },
             {
-                "type": "key-item",
+                "type": "key-item-check",
                 "enabled-by": "!flag-n-key"
             }
         ]
@@ -238,12 +238,12 @@
         "name": "Cave Magnes",
         "checks": [
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Dark Elf",
                 "unlocked-by": "twin-harp"
             },
             {
-                "type": "key-item",
+                "type": "key-item-check",
                 "unlocked-by": "twin-harp"
             }
         ]
@@ -253,24 +253,24 @@
         "name": "Tower of Zot",
         "checks": [
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Magus Sisters"
             },
             {
-                "type": "char",
+                "type": "char-check",
                 "unlocked-by": "earth-crystal"
             },
             {
-                "type": "char",
+                "type": "char-check",
                 "unlocked-by": "earth-crystal"
             },
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Valvalis",
                 "unlocked-by": "earth-crystal"
             },
             {
-                "type": "key-item",
+                "type": "key-item-check",
                 "unlocked-by": "earth-crystal"
             }
         ]
@@ -295,7 +295,7 @@
         "name": "Adamant Grotto",
         "checks": [
             {
-                "type": "key-item",
+                "type": "key-item-check",
                 "unlocked-by": "rat-tail && hook"
             }
         ]
@@ -314,11 +314,11 @@
                 "type": "armor-shop"
             },
             {
-                "type": "char",
+                "type": "char-check",
                 "enabled-by": "!flag-n-chars"
             },
             {
-                "type": "char",
+                "type": "char-check",
                 "enabled-by": "!flag-n-chars"
             }
         ]
@@ -328,22 +328,22 @@
         "name": "Mt. Ordeals",
         "checks": [
             {
-                "type": "char",
+                "type": "char-check",
                 "enabled-by": "!flag-n-chars"
             },
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Milon"
             },
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Milon Z"
             },
             {
-                "type": "key-item"
+                "type": "key-item-check"
             },
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Dark Knight Cecil"
             }
         ]
@@ -380,16 +380,16 @@
                 "unlocked-by": "hook"
             },
             {
-                "type": "char",
+                "type": "char-check",
                 "unlocked-by": "hook"
             },
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "King & Queen Eblan",
                 "unlocked-by": "hook"
             },
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Rubicante",
                 "unlocked-by": "hook"
             }
@@ -412,18 +412,22 @@
                 "unlocked-by": "underground"
             },
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Calbrena",
                 "unlocked-by": "underground"
             },
             {
-                "type": "char",
+                "type": "char-check",
                 "unlocked-by": "underground"
             },
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Calbrena",
                 "unlocked-by": "underground"
+            },
+            {
+                "type": "key-item-check",
+                "unlocked-by": "hook"
             }
         ]
     },
@@ -450,11 +454,11 @@
         "name": "Sealed Cave",
         "checks": [
             {
-                "type": "key-item",
+                "type": "key-item-check",
                 "unlocked-by": "underground && luca-key"
             },
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "evil-wall",
                 "unlocked-by": "underground && luca-key"
             }
@@ -477,26 +481,26 @@
                 "unlocked-by": "underground"
             },
             {
-                "type": "key-item",
+                "type": "key-item-check",
                 "unlocked-by": "underground"
             },
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Asura",
                 "unlocked-by": "underground"
             },
             {
-                "type": "key-item",
+                "type": "key-item-check",
                 "enabled-by": "flag-k-summon",
                 "unlocked-by": "underground"
             },
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Leviathan",
                 "unlocked-by": "underground"
             },
             {
-                "type": "key-item",
+                "type": "key-item-check",
                 "enabled-by": "flag-k-summon",
                 "unlocked-by": "underground"
             }
@@ -507,7 +511,7 @@
         "name": "Sylph Cave",
         "checks": [
             {
-                "type": "key-item",
+                "type": "key-item-check",
                 "enabled-by": "flag-k-summon",
                 "unlocked-by": "pan"
             }
@@ -528,21 +532,21 @@
         "name": "Tower of Babil",
         "checks": [
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Dr. Lugae",
                 "unlocked-by": "underground"
             },
             {
-                "type": "key-item",
+                "type": "key-item-check",
                 "unlocked-by": "underground"
             },
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Dark Imps",
                 "unlocked-by": "underground && tower-key"
             },
             {
-                "type": "key-item",
+                "type": "key-item-check",
                 "unlocked-by": "underground && tower-key"
             }
         ]
@@ -562,12 +566,12 @@
         "name": "Cave Bahamut",
         "checks": [
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Bahamut",
                 "unlocked-by": "darkness-crystal"
             },
             {
-                "type": "key-item",
+                "type": "key-item-check",
                 "enabled-by": "flag-k-moon",
                 "unlocked-by": "darkness-crystal"
             }
@@ -578,12 +582,12 @@
         "name": "Murasame Spot",
         "checks": [
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Pale Dim",
                 "unlocked-by": "darkness-crystal"
             },
             {
-                "type": "key-item",
+                "type": "key-item-check",
                 "enabled-by": "flag-k-moon",
                 "unlocked-by": "darkness-crystal"
             }
@@ -594,12 +598,12 @@
         "name": "Crystal Sword Spot",
         "checks": [
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Wyvern",
                 "unlocked-by": "darkness-crystal"
             },
             {
-                "type": "key-item",
+                "type": "key-item-check",
                 "enabled-by": "flag-k-moon",
                 "unlocked-by": "darkness-crystal"
             }
@@ -610,12 +614,12 @@
         "name": "White Spear Spot",
         "checks": [
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Plague",
                 "unlocked-by": "darkness-crystal"
             },
             {
-                "type": "key-item",
+                "type": "key-item-check",
                 "enabled-by": "flag-k-moon",
                 "unlocked-by": "darkness-crystal"
             }
@@ -626,17 +630,17 @@
         "name": "Ribbon Spot",
         "checks": [
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "D. Lunars",
                 "unlocked-by": "darkness-crystal"
             },
             {
-                "type": "key-item",
+                "type": "key-item-check",
                 "enabled-by": "flag-k-moon",
                 "unlocked-by": "darkness-crystal"
             },
             {
-                "type": "key-item",
+                "type": "key-item-check",
                 "enabled-by": "flag-k-moon",
                 "unlocked-by": "darkness-crystal"
             }
@@ -647,12 +651,12 @@
         "name": "Masamune Spot",
         "checks": [
             {
-                "type": "boss",
+                "type": "boss-check",
                 "name": "Ogopogo",
                 "unlocked-by": "darkness-crystal"
             },
             {
-                "type": "key-item",
+                "type": "key-item-check",
                 "enabled-by": "flag-k-moon",
                 "unlocked-by": "darkness-crystal"
             }
