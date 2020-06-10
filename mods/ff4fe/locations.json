@@ -389,6 +389,10 @@
                 "type": "boss-check",
                 "name": "Rubicante",
                 "unlocked-by": "hook"
+            },
+            {
+                "type": "key-item-check",
+                "unlocked-by": "hook"
             }
         ]
     },
