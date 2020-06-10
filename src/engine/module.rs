@@ -223,9 +223,14 @@ impl Module {
 
                     // Add check conditions to parent objective.
                     checks_enabled_by = checks_enabled_by.or(Expression::Objective(id.clone()));
-                    checks_unlocked_by = checks_unlocked_by.or(Expression::Objective(id.clone()));
-                    checks_completed_by =
-                        checks_completed_by.and(Expression::ObjectiveComplete(id.clone()));
+                    checks_unlocked_by =
+                        checks_unlocked_by.or(Expression::ObjectiveUnlocked(id.clone()));
+
+                    // Node is complete if all non-disabled checks are complete.
+                    checks_completed_by = checks_completed_by.and(Expression::Or(
+                        Box::new(Expression::ObjectiveComplete(id.clone())),
+                        Box::new(Expression::ObjectiveDisabled(id.clone())),
+                    ));
 
                     self.objectives.insert(
                         id.clone(),

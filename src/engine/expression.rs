@@ -21,6 +21,8 @@ pub enum Expression {
     False,
     Objective(String),
     ObjectiveComplete(String),
+    ObjectiveDisabled(String),
+    ObjectiveUnlocked(String),
     And(Box<Expression>, Box<Expression>),
     Or(Box<Expression>, Box<Expression>),
     Not(Box<Expression>),
@@ -172,12 +174,13 @@ impl Expression {
     // Return a `Vec` of objective ids upon which this expression depends.
     pub fn deps(&self) -> Vec<String> {
         match self {
-            Expression::Default => vec![],
-            Expression::Manual => vec![],
-            Expression::False => vec![],
-            Expression::True => vec![],
-            Expression::Objective(id) => vec![id.clone()],
-            Expression::ObjectiveComplete(id) => vec![id.clone()],
+            Expression::Default | Expression::Manual | Expression::False | Expression::True => {
+                vec![]
+            }
+            Expression::Objective(id)
+            | Expression::ObjectiveComplete(id)
+            | Expression::ObjectiveDisabled(id)
+            | Expression::ObjectiveUnlocked(id) => vec![id.clone()],
             Expression::Not(obj) => obj.deps(),
             Expression::And(a, b) => {
                 let mut d = a.deps();
@@ -210,9 +213,15 @@ impl Expression {
             Expression::Manual => Err(format_err!("evaluate called on manual expression")),
             Expression::False => Ok(false),
             Expression::True => Ok(true),
-            Expression::Objective(id) => Self::find_state(id, state).map(|o| o.is(threshold)),
+            Expression::Objective(id) => Self::find_state(id, state).map(|o| o.at_least(threshold)),
             Expression::ObjectiveComplete(id) => {
                 Self::find_state(id, state).map(|o| o.is(&ObjectiveState::Complete))
+            }
+            Expression::ObjectiveDisabled(id) => {
+                Self::find_state(id, state).map(|o| o.is(&ObjectiveState::Disabled))
+            }
+            Expression::ObjectiveUnlocked(id) => {
+                Self::find_state(id, state).map(|o| o.is(&ObjectiveState::Unlocked))
             }
             Expression::Not(obj) => obj.evaluate_by(state, threshold).map(|v| !v),
             Expression::And(a, b) => {

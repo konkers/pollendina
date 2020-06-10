@@ -41,8 +41,12 @@ pub enum ObjectiveState {
 }
 
 impl ObjectiveState {
-    pub fn is(&self, threshold: &Self) -> bool {
+    pub fn at_least(&self, threshold: &Self) -> bool {
         self.ordinal() >= threshold.ordinal()
+    }
+
+    pub fn is(&self, threshold: &Self) -> bool {
+        self == threshold
     }
 
     fn ordinal(&self) -> u32 {
@@ -338,7 +342,7 @@ impl Engine {
 
             if info.completed_by != Expression::Manual {
                 let completed = info.completed_by.evaluate_unlocked(&self.objectives)?;
-                if state == ObjectiveState::Unlocked && completed {
+                if completed {
                     state = ObjectiveState::Complete;
                 }
                 if state == ObjectiveState::Complete && !completed {
@@ -687,6 +691,12 @@ mod tests {
         assert_eq!(*engine.objectives.get(id).unwrap(), state);
     }
 
+    fn update_state(engine: &mut Engine, updates: &[(&str, ObjectiveState)]) -> Result<(), Error> {
+        let updates = updates.iter().map(|x| (x.0.to_string(), x.1)).collect();
+
+        engine.update_state(&updates)
+    }
+
     #[test]
     fn load_fe_module() -> Result<(), Error> {
         // While we are bootstrapping everything we'll be using the FE module for
@@ -706,52 +716,79 @@ mod tests {
         // Make sure we have a map.
         assert_ne!(engine.module.maps.len(), 0);
 
+        // Depending on gating, some objectives start out unlocked and
+        // others locked.
         assert_state(&engine, &"baron", ObjectiveState::Unlocked);
         assert_state(&engine, &"fabul", ObjectiveState::Unlocked);
         assert_state(&engine, &"d-castle", ObjectiveState::Locked);
         assert_state(&engine, &"bahamut-cave", ObjectiveState::Locked);
 
         // Dwarf Castle should still be locked if Magma Key is only Unlocked.
-        let updates = [("magma-key".to_string(), ObjectiveState::Unlocked)]
-            .iter()
-            .cloned()
-            .collect();
-        engine.update_state(&updates)?;
+        update_state(&mut engine, &[("magma-key", ObjectiveState::Unlocked)])?;
         assert_state(&engine, &"d-castle", ObjectiveState::Locked);
 
         // Completing Magma Key now unlocks Dwarf Castle.
-        let updates = [("magma-key".to_string(), ObjectiveState::Complete)]
-            .iter()
-            .cloned()
-            .collect();
-        engine.update_state(&updates)?;
+        update_state(&mut engine, &[("magma-key", ObjectiveState::Complete)])?;
         assert_state(&engine, &"d-castle", ObjectiveState::Unlocked);
 
         // Un-completing the Magma Key should re-locks Dwarf Castle.
-        let updates = [("magma-key".to_string(), ObjectiveState::Unlocked)]
-            .iter()
-            .cloned()
-            .collect();
-        engine.update_state(&updates)?;
+        update_state(&mut engine, &[("magma-key", ObjectiveState::Unlocked)])?;
         assert_state(&engine, &"d-castle", ObjectiveState::Locked);
 
         // Unlocking Darkness Crystal is enough to unlock Moon objectives.
-        let updates = [("darkness-crystal".to_string(), ObjectiveState::Complete)]
-            .iter()
-            .cloned()
-            .collect();
-        engine.update_state(&updates)?;
+        update_state(
+            &mut engine,
+            &[("darkness-crystal", ObjectiveState::Complete)],
+        )?;
         assert_state(&engine, &"bahamut-cave", ObjectiveState::Unlocked);
 
         // Completing D. Mist slot should complete Mist Cave.
-        let updates = [("mist-cave:0".to_string(), ObjectiveState::Complete)]
-            .iter()
-            .cloned()
-            .collect();
-        engine.update_state(&updates)?;
+        update_state(&mut engine, &[("mist-cave:0", ObjectiveState::Complete)])?;
         assert_state(&engine, &"mist-cave", ObjectiveState::Complete);
 
+        // Completing all non-disabled checks should cause the location to be
+        // completed
         assert_state(&engine, &"mt-ordeals:0", ObjectiveState::Disabled);
+        assert_state(&engine, &"mt-ordeals", ObjectiveState::Unlocked);
+        update_state(
+            &mut engine,
+            &[
+                ("mt-ordeals:1", ObjectiveState::Complete),
+                ("mt-ordeals:2", ObjectiveState::Complete),
+                ("mt-ordeals:3", ObjectiveState::Complete),
+                ("mt-ordeals:4", ObjectiveState::Complete),
+            ],
+        )?;
+        assert_state(&engine, &"mt-ordeals", ObjectiveState::Complete);
+
+        // baron has 5 objectives that are not gated and 2 that are gated by
+        // the baron key.  It should:
+        // * start Unlocked due to the 5 non-gated checks.
+        // * should transition to Locked when those are complete.
+        // * should transition to Unlocked when the baron-key is unlocked.
+        // * should transition to Complete once the last two checks are complete.
+        assert_state(&engine, &"baron", ObjectiveState::Unlocked);
+        update_state(
+            &mut engine,
+            &[
+                ("baron:0", ObjectiveState::Complete),
+                ("baron:3", ObjectiveState::Complete),
+                ("baron:4", ObjectiveState::Complete),
+                ("baron:5", ObjectiveState::Complete),
+                ("baron:6", ObjectiveState::Complete),
+            ],
+        )?;
+        assert_state(&engine, &"baron", ObjectiveState::Locked);
+        update_state(&mut engine, &[("baron-key", ObjectiveState::Unlocked)])?;
+        assert_state(&engine, &"baron", ObjectiveState::Unlocked);
+        update_state(
+            &mut engine,
+            &[
+                ("baron:1", ObjectiveState::Complete),
+                ("baron:2", ObjectiveState::Complete),
+            ],
+        )?;
+        assert_state(&engine, &"baron", ObjectiveState::Complete);
 
         Ok(())
     }
