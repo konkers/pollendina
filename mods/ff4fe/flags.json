@@ -1,18 +1,22 @@
 [
     {
         "id": "flag-k-moon",
-        "name": "Kmoon"
+        "name": "Kmoon",
+        "enabled-by": "param"
     },
     {
         "id": "flag-k-summon",
-        "name": "Ksummon"
+        "name": "Ksummon",
+        "enabled-by": "param"
     },
     {
         "id": "flag-n-chars",
-        "name": "Nchars"
+        "name": "Nchars",
+        "enabled-by": "param"
     },
     {
         "id": "flag-n-key",
-        "name": "Nkey"
+        "name": "Nkey",
+        "enabled-by": "param"
     }
 ]

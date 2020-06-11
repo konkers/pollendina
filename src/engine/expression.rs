@@ -126,8 +126,15 @@ fn or(input: &str) -> IResult<&str, Expression> {
     alt((or_expr, and))(input)
 }
 
+// Param is a special case for parameter objectives.  It is way of making
+// an objective enabled manually instead of defaulting to true.
+fn param(input: &str) -> IResult<&str, Expression> {
+    let (input, _) = tag("param")(input)?;
+    Ok((input, Expression::Manual))
+}
+
 fn parse_expression(input: &str) -> IResult<&str, Expression> {
-    or(input)
+    alt((param, or))(input)
 }
 
 impl Expression {
@@ -310,10 +317,8 @@ mod tests {
 
     #[test]
     fn expressions() {
-        test_expressions(
-            &vec!["tower-key", " tower-key"],
-            Expression::Objective("tower-key".into()),
-        );
+        test_expressions(&vec!["param"], Expression::Manual);
+
         test_expressions(
             &vec!["complete(tower-key)", " complete ( tower-key )"],
             Expression::ObjectiveComplete("tower-key".into()),

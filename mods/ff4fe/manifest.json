@@ -6,8 +6,24 @@
     "game-url": "https://ff4fe.com/",
     "params": [
         {
-            "name": "flags",
-            "type": "TextBox"
+            "name": "Kmoon",
+            "type": "CheckBox",
+            "id": "flag-k-moon"
+        },
+        {
+            "name": "Ksummon",
+            "type": "CheckBox",
+            "id": "flag-k-summon"
+        },
+        {
+            "name": "Nchars",
+            "type": "CheckBox",
+            "id": "flag-n-chars"
+        },
+        {
+            "name": "Nkey",
+            "type": "CheckBox",
+            "id": "flag-n-key"
         }
     ],
     "auto-track": "auto_track.lua",
