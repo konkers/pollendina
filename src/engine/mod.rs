@@ -172,9 +172,16 @@ impl DynFlexItem for DisplayView {
     }
 }
 
+#[derive(Clone, Data, Lens, PartialEq)]
+pub struct CheckBoxParamValue {
+    id: String,
+    value: bool,
+}
+
 #[derive(Clone, Data, PartialEq)]
 pub enum ModuleParamValue {
     TextBox(String),
+    CheckBox(CheckBoxParamValue),
 }
 
 #[derive(Clone, Data, Lens, PartialEq)]
@@ -324,7 +331,7 @@ impl Engine {
                 if state == ObjectiveState::Disabled && enabled {
                     state = ObjectiveState::Locked;
                 }
-                if state == ObjectiveState::Locked && !enabled {
+                if !enabled {
                     state = ObjectiveState::Disabled;
                 }
             }
@@ -455,6 +462,13 @@ impl Engine {
         for p in &self.module.manifest.params {
             let (name, value) = match p {
                 Param::TextBox { name } => (name.clone(), ModuleParamValue::TextBox("".into())),
+                Param::CheckBox { id, name } => (
+                    name.clone(),
+                    ModuleParamValue::CheckBox(CheckBoxParamValue {
+                        id: id.clone(),
+                        value: false,
+                    }),
+                ),
             };
             params.push(ModuleParam { name, value });
         }
@@ -596,6 +610,43 @@ impl Engine {
         if let Some(popup_info) = &self.popup_info {
             self.update_view(&mut data.popup, &popup_info);
         }
+    }
+
+    pub fn update_param_state(&self, data: &mut DisplayState) {
+        let params = Arc::make_mut(&mut data.params).iter_mut();
+        for p in params {
+            if let ModuleParamValue::CheckBox(v) = &mut p.value {
+                let state = match self.objectives.get(&v.id) {
+                    Some(state) => state,
+                    None => continue,
+                };
+
+                v.value = match state {
+                    ObjectiveState::Disabled => false,
+                    _ => true,
+                }
+            }
+        }
+    }
+
+    pub fn save_param_state(&mut self, data: &mut DisplayState) -> Result<(), Error> {
+        for p in &*data.params {
+            if let ModuleParamValue::CheckBox(v) = &p.value {
+                let new_state = if v.value {
+                    ObjectiveState::Unlocked
+                } else {
+                    ObjectiveState::Disabled
+                };
+                *self
+                    .objectives
+                    .get_mut(&v.id)
+                    .ok_or(format_err!("objective {} not found", &v.id))? = new_state;
+            }
+        }
+        self.eval_objectives()?;
+        self.update_display_state(data);
+
+        Ok(())
     }
 
     pub fn toggle_state(&mut self, id: &String) -> Result<(), Error> {
@@ -768,7 +819,9 @@ mod tests {
         assert_state(&engine, &"mist-cave", ObjectiveState::Complete);
 
         // Completing all non-disabled checks should cause the location to be
-        // completed
+        // completed.  We need to turn on Nchars to ensure the char check is
+        // disabled.
+        update_state(&mut engine, &[("flag-n-chars", ObjectiveState::Unlocked)])?;
         assert_state(&engine, &"mt-ordeals:0", ObjectiveState::Disabled);
         assert_state(&engine, &"mt-ordeals", ObjectiveState::Unlocked);
         update_state(
@@ -810,6 +863,12 @@ mod tests {
             ],
         )?;
         assert_state(&engine, &"baron", ObjectiveState::Complete);
+
+        // Damncyan's character is gated by !Nchars.
+        update_state(&mut engine, &[("flag-n-chars", ObjectiveState::Disabled)])?;
+        assert_state(&engine, &"damcyan:0", ObjectiveState::Unlocked);
+        update_state(&mut engine, &[("flag-n-chars", ObjectiveState::Unlocked)])?;
+        assert_state(&engine, &"damcyan:0", ObjectiveState::Disabled);
 
         Ok(())
     }

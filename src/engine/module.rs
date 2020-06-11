@@ -26,6 +26,7 @@ pub struct MapInfoLoc {
 #[serde(tag = "type")]
 pub enum Param {
     TextBox { name: String },
+    CheckBox { id: String, name: String },
 }
 
 #[derive(Debug, Deserialize, PartialEq)]

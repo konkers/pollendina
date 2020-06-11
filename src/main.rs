@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use druid::widget::{Button, Container, Flex, Label, List, Padding, TextBox};
+use druid::widget::{Button, Checkbox, Container, Flex, Label, List, Padding, TextBox};
 use druid::{
     platform_menus, AppDelegate, AppLauncher, Color, Command, Data, DelegateCtx, Env,
     ExtEventError, ExtEventSink, LensExt, LocalizedString, MenuDesc, MouseEvent, Point, Selector,
@@ -17,9 +17,9 @@ mod engine;
 mod widget;
 
 use engine::{
-    AutoTrackerState, DisplayChild, DisplayState, DisplayView, DisplayViewCount, DisplayViewFlex,
-    DisplayViewGrid, DisplayViewMap, Engine, EventSink, Module, ModuleParam, ModuleParamValue,
-    ObjectiveState,
+    AutoTrackerState, CheckBoxParamValue, DisplayChild, DisplayState, DisplayView,
+    DisplayViewCount, DisplayViewFlex, DisplayViewGrid, DisplayViewMap, Engine, EventSink, Module,
+    ModuleParam, ModuleParamValue, ObjectiveState,
 };
 use widget::{
     Asset, ClickExt, Constellation, DynFlex, Grid, MapObjective, ModalHost, Objective, Stack,
@@ -88,6 +88,7 @@ impl AppDelegate<DisplayState> for Delegate {
                     ctx.submit_command(command, id);
                 }
                 None => {
+                    self.engine.update_param_state(data);
                     let window = WindowDesc::new(config_ui_builder).menu(app_menu());
                     let win_id = window.id;
                     ctx.new_window(window);
@@ -101,6 +102,9 @@ impl AppDelegate<DisplayState> for Delegate {
             false
         } else if cmd.is(UI_APPLY_CONFIG) {
             println!("applying config changes");
+            if let Err(e) = self.engine.save_param_state(data) {
+                println!("error saving config changes: {}", e);
+            }
             self.close_config_window(data, ctx);
             false
         } else if let Some(payload) = cmd.get(UI_OPEN_POPUP) {
@@ -316,6 +320,7 @@ fn config_ui_builder() -> impl Widget<DisplayState> {
             row.add_flex_child(
                 match_widget! { ModuleParamValue,
                     ModuleParamValue::TextBox(_) => TextBox::new(),
+                    ModuleParamValue::CheckBox(_) => Checkbox::new("").lens(CheckBoxParamValue::value),
                 }
                 .expand_width()
                 .lens(ModuleParam::value),
