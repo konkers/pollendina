@@ -324,15 +324,10 @@ impl Engine {
                 .get(id)
                 .ok_or(format_err!("can't get objective state for '{}`", id))?;
 
-            // (konkers) Idle thought: should we process the "undos" of expressions
-            // in reverse order at the end?
             if info.enabled_by != Expression::Manual {
                 let enabled = info.enabled_by.evaluate_enabled(&self.objectives)?;
                 if state == ObjectiveState::Disabled && enabled {
                     state = ObjectiveState::Locked;
-                }
-                if !enabled {
-                    state = ObjectiveState::Disabled;
                 }
             }
 
@@ -340,10 +335,6 @@ impl Engine {
                 let unlocked = info.unlocked_by.evaluate_unlocked(&self.objectives)?;
                 if state == ObjectiveState::Locked && unlocked {
                     state = ObjectiveState::Unlocked;
-                }
-                // Re-lock if a dependencies become locked.
-                if state == ObjectiveState::Unlocked && !unlocked {
-                    state = ObjectiveState::Locked;
                 }
             }
 
@@ -357,6 +348,20 @@ impl Engine {
                 }
             }
 
+            if info.unlocked_by != Expression::Manual {
+                let unlocked = info.unlocked_by.evaluate_unlocked(&self.objectives)?;
+                // Re-lock if a dependencies become locked.
+                if state == ObjectiveState::Unlocked && !unlocked {
+                    state = ObjectiveState::Locked;
+                }
+            }
+
+            if info.enabled_by != Expression::Manual {
+                let enabled = info.enabled_by.evaluate_enabled(&self.objectives)?;
+                if !enabled {
+                    state = ObjectiveState::Disabled;
+                }
+            }
             *self
                 .objectives
                 .get_mut(id)
@@ -867,8 +872,10 @@ mod tests {
         // Damncyan's character is gated by !Nchars.
         update_state(&mut engine, &[("flag-n-chars", ObjectiveState::Disabled)])?;
         assert_state(&engine, &"damcyan:0", ObjectiveState::Unlocked);
+        assert_state(&engine, &"damcyan", ObjectiveState::Unlocked);
         update_state(&mut engine, &[("flag-n-chars", ObjectiveState::Unlocked)])?;
         assert_state(&engine, &"damcyan:0", ObjectiveState::Disabled);
+        assert_state(&engine, &"damcyan", ObjectiveState::Disabled);
 
         Ok(())
     }
