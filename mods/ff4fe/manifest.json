@@ -102,6 +102,10 @@
                     {
                         "type": "Count",
                         "objective_type": "key-item"
+                    },
+                    {
+                        "type": "Spacer",
+                        "flex": 1.0
                     }
                 ]
             },
