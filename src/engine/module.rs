@@ -123,6 +123,9 @@ pub enum DisplayViewInfo {
         #[serde(default)]
         flex: f64,
     },
+    Spacer {
+        flex: f64,
+    },
 }
 
 #[derive(Debug)]

@@ -1,4 +1,5 @@
 #![recursion_limit = "256"]
+#![windows_subsystem = "windows"]
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -253,6 +254,7 @@ fn display_widget() -> impl Widget<DisplayView> {
         DisplayView::Map(_) => map_widget(),
         DisplayView::FlexRow(_) => flex_row_widget(),
         DisplayView::FlexCol(_) => flex_col_widget(),
+        DisplayView::Spacer(_) => Label::new(""),
         DisplayView::None => Label::new(""),
     }
 }
