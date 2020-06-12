@@ -834,7 +834,7 @@ mod tests {
             &[
                 ("mt-ordeals:1", ObjectiveState::Complete),
                 ("mt-ordeals:2", ObjectiveState::Complete),
-                ("mt-ordeals:3", ObjectiveState::Complete),
+                ("mt-ordeals-key-item-check", ObjectiveState::Complete),
                 ("mt-ordeals:4", ObjectiveState::Complete),
             ],
         )?;
@@ -854,7 +854,7 @@ mod tests {
                 ("baron:3", ObjectiveState::Complete),
                 ("baron:4", ObjectiveState::Complete),
                 ("baron:5", ObjectiveState::Complete),
-                ("baron:6", ObjectiveState::Complete),
+                ("baron-inn-key-item-check", ObjectiveState::Complete),
             ],
         )?;
         assert_state(&engine, &"baron", ObjectiveState::Locked);
