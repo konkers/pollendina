@@ -148,6 +148,11 @@ pub struct DisplayViewFlex {
     pub flex: f64,
 }
 
+#[derive(Clone, Data, Lens)]
+pub struct DisplayViewSpacer {
+    pub flex: f64,
+}
+
 #[derive(Clone, Data)]
 pub enum DisplayView {
     Grid(DisplayViewGrid),
@@ -155,6 +160,7 @@ pub enum DisplayView {
     Map(DisplayViewMap),
     FlexRow(DisplayViewFlex),
     FlexCol(DisplayViewFlex),
+    Spacer(DisplayViewSpacer),
     None,
 }
 
@@ -166,6 +172,7 @@ impl DynFlexItem for DisplayView {
             DisplayView::Map(m) => m.flex,
             DisplayView::FlexRow(f) => f.flex,
             DisplayView::FlexCol(f) => f.flex,
+            DisplayView::Spacer(s) => s.flex,
             DisplayView::None => 0.into(),
         }
         .into()
@@ -447,6 +454,9 @@ impl Engine {
                 children: Arc::new(self.new_sub_layout(children)),
                 flex: *flex,
             }),
+            DisplayViewInfo::Spacer { flex } => {
+                DisplayView::Spacer(DisplayViewSpacer { flex: *flex })
+            }
         }
     }
 
@@ -594,6 +604,7 @@ impl Engine {
                     self.update_sub_layout(&mut f.children, &children_info)
                 }
             }
+            DisplayViewInfo::Spacer { flex: _flex } => {}
         }
     }
 
