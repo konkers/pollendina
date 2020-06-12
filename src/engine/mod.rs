@@ -12,7 +12,7 @@ pub mod expression;
 pub mod module;
 
 use expression::Expression;
-pub use module::{DisplayViewInfo, Module, Param};
+pub use module::{DisplayViewInfo, DisplayViewInfoView, LayoutParamsInfo, Module, Param};
 
 use crate::assets::{add_image_to_cache, add_objective_to_cache, IMAGES};
 use crate::widget::constellation::{Field, Star};
@@ -73,14 +73,12 @@ pub struct DisplayChild {
 pub struct DisplayViewGrid {
     pub columns: usize,
     pub children: Arc<Vec<DisplayChild>>,
-    pub flex: f64,
 }
 
 #[derive(Clone, Data, Lens)]
 pub struct DisplayViewCount {
     pub found: u32,
     pub total: u32,
-    pub flex: f64,
 }
 
 #[derive(Clone, Data, Lens)]
@@ -139,22 +137,18 @@ impl ListIter<MapObjective> for MapInfo {
 #[derive(Clone, Data, Lens)]
 pub struct DisplayViewMap {
     pub maps: Arc<Vec<MapInfo>>,
-    pub flex: f64,
 }
 
 #[derive(Clone, Data, Lens)]
 pub struct DisplayViewFlex {
     pub children: Arc<Vec<DisplayView>>,
-    pub flex: f64,
 }
 
 #[derive(Clone, Data, Lens)]
-pub struct DisplayViewSpacer {
-    pub flex: f64,
-}
+pub struct DisplayViewSpacer {}
 
 #[derive(Clone, Data)]
-pub enum DisplayView {
+pub enum DisplayViewData {
     Grid(DisplayViewGrid),
     Count(DisplayViewCount),
     Map(DisplayViewMap),
@@ -164,18 +158,26 @@ pub enum DisplayView {
     None,
 }
 
+impl Default for DisplayViewData {
+    fn default() -> Self {
+        DisplayViewData::None
+    }
+}
+
+#[derive(Clone, Data, Default)]
+pub struct LayoutParams {
+    pub flex: f64,
+}
+
+#[derive(Clone, Data, Default, Lens)]
+pub struct DisplayView {
+    pub layout_params: LayoutParams,
+    pub data: DisplayViewData,
+}
+
 impl DynFlexItem for DisplayView {
     fn flex_params(&self) -> DynFlexParams {
-        match self {
-            DisplayView::Grid(g) => g.flex,
-            DisplayView::Count(c) => c.flex,
-            DisplayView::Map(m) => m.flex,
-            DisplayView::FlexRow(f) => f.flex,
-            DisplayView::FlexCol(f) => f.flex,
-            DisplayView::Spacer(s) => s.flex,
-            DisplayView::None => 0.into(),
-        }
-        .into()
+        return self.layout_params.flex.into();
     }
 }
 
@@ -378,11 +380,10 @@ impl Engine {
     }
 
     fn new_view(&self, info: &DisplayViewInfo) -> DisplayView {
-        match info {
-            DisplayViewInfo::Grid {
+        let data = match &info.view {
+            DisplayViewInfoView::Grid {
                 columns,
                 objectives,
-                flex,
             } => {
                 let mut children = Vec::new();
                 for objective in objectives {
@@ -400,24 +401,15 @@ impl Engine {
                         state: ObjectiveState::Locked,
                     });
                 }
-                DisplayView::Grid(DisplayViewGrid {
+                DisplayViewData::Grid(DisplayViewGrid {
                     columns: *columns,
                     children: Arc::new(children),
-                    flex: *flex,
                 })
             }
-            DisplayViewInfo::Count {
+            DisplayViewInfoView::Count {
                 objective_type: _objective_type,
-                flex,
-            } => DisplayView::Count(DisplayViewCount {
-                found: 0,
-                total: 0,
-                flex: *flex,
-            }),
-            DisplayViewInfo::Map {
-                maps: map_ids,
-                flex,
-            } => {
+            } => DisplayViewData::Count(DisplayViewCount { found: 0, total: 0 }),
+            DisplayViewInfoView::Map { maps: map_ids } => {
                 let mut maps = Vec::new();
                 for id in map_ids {
                     let obj_info = self.module.maps.get(id).unwrap();
@@ -441,22 +433,28 @@ impl Engine {
                         objectives: Arc::new(objectives),
                     });
                 }
-                DisplayView::Map(DisplayViewMap {
+                DisplayViewData::Map(DisplayViewMap {
                     maps: Arc::new(maps),
-                    flex: *flex,
                 })
             }
-            DisplayViewInfo::FlexRow { children, flex } => DisplayView::FlexRow(DisplayViewFlex {
-                children: Arc::new(self.new_sub_layout(children)),
-                flex: *flex,
-            }),
-            DisplayViewInfo::FlexCol { children, flex } => DisplayView::FlexCol(DisplayViewFlex {
-                children: Arc::new(self.new_sub_layout(children)),
-                flex: *flex,
-            }),
-            DisplayViewInfo::Spacer { flex } => {
-                DisplayView::Spacer(DisplayViewSpacer { flex: *flex })
+            DisplayViewInfoView::FlexRow { children } => {
+                DisplayViewData::FlexRow(DisplayViewFlex {
+                    children: Arc::new(self.new_sub_layout(children)),
+                })
             }
+            DisplayViewInfoView::FlexCol { children } => {
+                DisplayViewData::FlexCol(DisplayViewFlex {
+                    children: Arc::new(self.new_sub_layout(children)),
+                })
+            }
+            DisplayViewInfoView::Spacer {} => DisplayViewData::Spacer(DisplayViewSpacer {}),
+        };
+
+        DisplayView {
+            layout_params: LayoutParams {
+                flex: info.layout_params.flex,
+            },
+            data: data,
         }
     }
 
@@ -490,7 +488,7 @@ impl Engine {
 
         let mut state = DisplayState {
             layout: layout,
-            popup: DisplayView::None,
+            popup: Default::default(),
             params: Arc::new(params),
             auto_tracker_state: AutoTrackerState::Idle,
             config_win: Arc::new(None),
@@ -562,49 +560,40 @@ impl Engine {
     }
 
     fn update_view(&self, view: &mut DisplayView, info: &DisplayViewInfo) {
-        match info {
-            DisplayViewInfo::Grid {
+        match &info.view {
+            DisplayViewInfoView::Grid {
                 columns,
                 objectives,
-                flex: _flex,
             } => {
-                if let DisplayView::Grid(g) = view {
+                if let DisplayViewData::Grid(g) = &mut view.data {
                     self.update_grid_state(g, columns, objectives);
                 }
             }
-            DisplayViewInfo::Count {
-                objective_type,
-                flex: _flex,
-            } => {
-                if let DisplayView::Count(c) = view {
+            DisplayViewInfoView::Count { objective_type } => {
+                if let DisplayViewData::Count(c) = &mut view.data {
                     self.update_count_state(c, objective_type);
                 }
             }
-            DisplayViewInfo::Map {
-                maps: _maps,
-                flex: _flex,
-            } => {
-                if let DisplayView::Map(m) = view {
+            DisplayViewInfoView::Map { maps: _maps } => {
+                if let DisplayViewData::Map(m) = &mut view.data {
                     self.update_map_state(m);
                 }
             }
-            DisplayViewInfo::FlexRow {
+            DisplayViewInfoView::FlexRow {
                 children: children_info,
-                flex: _flex,
             } => {
-                if let DisplayView::FlexRow(f) = view {
+                if let DisplayViewData::FlexRow(f) = &mut view.data {
                     self.update_sub_layout(&mut f.children, &children_info)
                 }
             }
-            DisplayViewInfo::FlexCol {
+            DisplayViewInfoView::FlexCol {
                 children: children_info,
-                flex: _flex,
             } => {
-                if let DisplayView::FlexCol(f) = view {
+                if let DisplayViewData::FlexCol(f) = &mut view.data {
                     self.update_sub_layout(&mut f.children, &children_info)
                 }
             }
-            DisplayViewInfo::Spacer { flex: _flex } => {}
+            DisplayViewInfoView::Spacer {} => {}
         }
     }
 
@@ -723,10 +712,12 @@ impl Engine {
         }
 
         // Hard code grid until we add multi layout support.
-        let popup_info = DisplayViewInfo::Grid {
-            columns: 3,
-            objectives: ids,
-            flex: 0.0,
+        let popup_info = DisplayViewInfo {
+            layout_params: LayoutParamsInfo { flex: 0.0 },
+            view: DisplayViewInfoView::Grid {
+                columns: 3,
+                objectives: ids,
+            },
         };
 
         data.popup = self.new_view(&popup_info);

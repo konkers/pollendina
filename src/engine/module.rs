@@ -96,36 +96,38 @@ pub struct MapInfo {
 
 #[derive(Debug, Deserialize, PartialEq)]
 #[serde(tag = "type")]
-pub enum DisplayViewInfo {
+pub enum DisplayViewInfoView {
     Grid {
         columns: usize,
         objectives: Vec<String>,
-        #[serde(default)]
-        flex: f64,
     },
     Count {
         objective_type: String,
-        #[serde(default)]
-        flex: f64,
     },
     Map {
         maps: Vec<String>,
-        #[serde(default)]
-        flex: f64,
     },
     FlexRow {
         children: Vec<DisplayViewInfo>,
-        #[serde(default)]
-        flex: f64,
     },
     FlexCol {
         children: Vec<DisplayViewInfo>,
-        #[serde(default)]
-        flex: f64,
     },
-    Spacer {
-        flex: f64,
-    },
+    Spacer {},
+}
+
+#[derive(Debug, Deserialize, PartialEq)]
+pub struct LayoutParamsInfo {
+    #[serde(default)]
+    pub flex: f64,
+}
+#[derive(Debug, Deserialize, PartialEq)]
+pub struct DisplayViewInfo {
+    #[serde(flatten)]
+    pub layout_params: LayoutParamsInfo,
+
+    #[serde(flatten)]
+    pub view: DisplayViewInfoView,
 }
 
 #[derive(Debug)]
