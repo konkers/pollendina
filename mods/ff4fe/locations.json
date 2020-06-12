@@ -4,6 +4,7 @@
         "name": "Intro at Baron",
         "checks": [
             {
+                "id": "intro-key-item-check",
                 "type": "key-item-check"
             },
             {
@@ -41,6 +42,7 @@
                 "type": "char-check"
             },
             {
+                "id": "baron-inn-key-item-check",
                 "type": "key-item-check"
             }
         ]
@@ -64,6 +66,7 @@
                 "unlocked-by": "baron-key"
             },
             {
+                "id": "baron-castle-key-item-check",
                 "type": "key-item-check",
                 "unlocked-by": "baron-key"
             },
@@ -73,6 +76,7 @@
                 "unlocked-by": "baron-key"
             },
             {
+                "id": "odin-key-item-check",
                 "type": "key-item-check",
                 "enabled-by": "flag-k-summon",
                 "unlocked-by": "baron-key"
@@ -100,6 +104,7 @@
                 "type": "armor-shop"
             },
             {
+                "id": "d-mist-key-item-check",
                 "type": "key-item-check",
                 "enabled-by": "flag-n-key",
                 "unlocked-by": "d-mist"
@@ -167,6 +172,7 @@
                 "name": "Antlion"
             },
             {
+                "id": "antlion-key-item-check",
                 "type": "key-item-check"
             }
         ]
@@ -199,13 +205,16 @@
                 "name": "Fabul Gauntlet"
             },
             {
+                "id": "fabul-gauntlet-key-item-check",
                 "type": "key-item-check"
             },
             {
+                "id": "sheila1-key-item-check",
                 "type": "key-item-check",
                 "unlocked-by": "underground"
             },
             {
+                "id": "sheila2-key-item-check",
                 "type": "key-item-check",
                 "unlocked-by": "underground && pan"
             }
@@ -225,6 +234,7 @@
                 "type": "armor-shop"
             },
             {
+                "id": "edward-key-item-check",
                 "type": "key-item-check",
                 "enabled-by": "!flag-n-key"
             }
@@ -240,6 +250,7 @@
                 "unlocked-by": "twin-harp"
             },
             {
+                "id": "magnes-key-item-check",
                 "type": "key-item-check",
                 "unlocked-by": "twin-harp"
             }
@@ -267,6 +278,7 @@
                 "unlocked-by": "earth-crystal"
             },
             {
+                "id": "zot-key-item-check",
                 "type": "key-item-check",
                 "unlocked-by": "earth-crystal"
             }
@@ -292,6 +304,7 @@
         "name": "Adamant Grotto",
         "checks": [
             {
+                "id": "adamant-grotto-key-item-check",
                 "type": "key-item-check",
                 "unlocked-by": "rat-tail && hook"
             }
@@ -337,6 +350,7 @@
                 "name": "Milon Z"
             },
             {
+                "id": "mt-ordeals-key-item-check",
                 "type": "key-item-check"
             },
             {
@@ -389,10 +403,6 @@
                 "type": "boss-check",
                 "name": "Rubicante",
                 "unlocked-by": "hook"
-            },
-            {
-                "type": "key-item-check",
-                "unlocked-by": "hook"
             }
         ]
     },
@@ -427,6 +437,7 @@
                 "unlocked-by": "underground"
             },
             {
+                "id": "d-castle-key-item-check",
                 "type": "key-item-check",
                 "unlocked-by": "hook"
             }
@@ -455,6 +466,7 @@
         "name": "Sealed Cave",
         "checks": [
             {
+                "id": "sealed-cave-key-item-check",
                 "type": "key-item-check",
                 "unlocked-by": "underground && luca-key"
             },
@@ -482,6 +494,7 @@
                 "unlocked-by": "underground"
             },
             {
+                "id": "feymarch-key-item-check",
                 "type": "key-item-check",
                 "unlocked-by": "underground"
             },
@@ -491,6 +504,7 @@
                 "unlocked-by": "underground"
             },
             {
+                "id": "asura-key-item-check",
                 "type": "key-item-check",
                 "enabled-by": "flag-k-summon",
                 "unlocked-by": "underground"
@@ -501,6 +515,7 @@
                 "unlocked-by": "underground"
             },
             {
+                "id": "leviathan-key-item-check",
                 "type": "key-item-check",
                 "enabled-by": "flag-k-summon",
                 "unlocked-by": "underground"
@@ -512,6 +527,7 @@
         "name": "Sylph Cave",
         "checks": [
             {
+                "id": "sylph-cave-key-item-check",
                 "type": "key-item-check",
                 "enabled-by": "flag-k-summon",
                 "unlocked-by": "pan"
@@ -538,6 +554,7 @@
                 "unlocked-by": "underground"
             },
             {
+                "id": "top-of-tower-key-item-check",
                 "type": "key-item-check",
                 "unlocked-by": "underground"
             },
@@ -547,6 +564,7 @@
                 "unlocked-by": "underground && tower-key"
             },
             {
+                "id": "super-cannon-key-item-check",
                 "type": "key-item-check",
                 "unlocked-by": "underground && tower-key"
             }
@@ -572,6 +590,7 @@
                 "unlocked-by": "darkness-crystal"
             },
             {
+                "id": "bahamut-key-item-check",
                 "type": "key-item-check",
                 "enabled-by": "flag-k-moon",
                 "unlocked-by": "darkness-crystal"
@@ -598,6 +617,7 @@
                 "unlocked-by": "darkness-crystal"
             },
             {
+                "id": "pale-dim-key-item-check",
                 "type": "key-item-check",
                 "enabled-by": "flag-k-moon",
                 "unlocked-by": "darkness-crystal"
@@ -614,6 +634,7 @@
                 "unlocked-by": "darkness-crystal"
             },
             {
+                "id": "wyver-key-item-check",
                 "type": "key-item-check",
                 "enabled-by": "flag-k-moon",
                 "unlocked-by": "darkness-crystal"
@@ -630,6 +651,7 @@
                 "unlocked-by": "darkness-crystal"
             },
             {
+                "id": "plague-key-item-check",
                 "type": "key-item-check",
                 "enabled-by": "flag-k-moon",
                 "unlocked-by": "darkness-crystal"
@@ -642,15 +664,17 @@
         "checks": [
             {
                 "type": "boss-check",
-                "name": "D. Lunars",
+                "name": "Ds. Lunar",
                 "unlocked-by": "darkness-crystal"
             },
             {
+                "id": "ds-lunar1-key-item-check",
                 "type": "key-item-check",
                 "enabled-by": "flag-k-moon",
                 "unlocked-by": "darkness-crystal"
             },
             {
+                "id": "ds-lunar2-key-item-check",
                 "type": "key-item-check",
                 "enabled-by": "flag-k-moon",
                 "unlocked-by": "darkness-crystal"
@@ -667,6 +691,7 @@
                 "unlocked-by": "darkness-crystal"
             },
             {
+                "id": "ogopogo-key-item-check",
                 "type": "key-item-check",
                 "enabled-by": "flag-k-moon",
                 "unlocked-by": "darkness-crystal"
