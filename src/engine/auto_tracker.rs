@@ -79,8 +79,10 @@ pub(crate) struct AutoTracker {
     control_channel: mpsc::UnboundedReceiver<AutoTrackerCommand>,
     state: AutoTrackerState,
     lua: Lua,
+    connection: Option<Connection>,
 }
 
+#[derive(Debug)]
 enum AutoTrackerCommand {
     Start,
     Stop,
@@ -90,6 +92,7 @@ enum AutoTrackerCommand {
 pub enum AutoTrackerState {
     Idle,
     Connecting,
+    Disconnected,
     Running,
 }
 
@@ -168,6 +171,7 @@ impl AutoTracker {
             control_channel: rx,
             state: AutoTrackerState::Idle,
             lua,
+            connection: None,
         };
 
         tracker.start(event_sink);
@@ -177,85 +181,146 @@ impl AutoTracker {
         })
     }
 
-    async fn sample<T: EventSink>(&mut self, c: &mut Connection, sink: &T) -> Result<(), Error> {
-        let watches = self.lua.context(|ctx| -> Result<_, Error> {
-            let mut watches = Vec::new();
-            let globals = ctx.globals();
-            let watches_table = globals.get::<_, Table>("__mem_watch")?;
-            for pair in watches_table.pairs::<u32, Table>() {
-                let (index, table) = pair?;
-                let address = table.get::<_, u32>("address")?;
-                let len = table.get::<_, usize>("len")?;
-                watches.push(MemWatch {
-                    address,
-                    len,
-                    callback_index: index,
-                });
-            }
-            Ok(watches)
-        })?;
-
-        let mut bufs = Vec::new();
-        for watch in &watches {
-            let mut buf = vec![0u8; watch.len as usize];
-            c.read_mem(watch.address, &mut buf).await?;
-            bufs.push(MemData { data: buf });
-        }
-
-        let mut updates = HashMap::new();
-
-        self.lua.context(|ctx| -> Result<(), Error> {
-            let globals = ctx.globals();
-            let watches_table = globals.get::<_, Table>("__mem_watch")?;
-
-            // updates is protected by this scope.
-            ctx.scope(|scope| -> Result<(), Error> {
-                ctx.globals().set(
-                    "set_objective_state",
-                    scope.create_function_mut(|_, (id, state): (String, ObjectiveStateData)| {
-                        updates.insert(id, state.0);
-                        Ok(())
-                    })?,
-                )?;
-
-                for (i, watch) in watches.iter().enumerate() {
-                    let buf = &bufs[i];
-                    let table = watches_table.get::<_, Table>(watch.callback_index)?;
-                    let callback = table.get::<_, Function>("callback")?;
-                    callback.call::<_, ()>(buf.clone())?;
+    async fn sample<T: EventSink>(&mut self, sink: &T) -> Result<(), Error> {
+        if let Some(c) = self.connection.as_mut() {
+            let watches = self.lua.context(|ctx| -> Result<_, Error> {
+                let mut watches = Vec::new();
+                let globals = ctx.globals();
+                let watches_table = globals.get::<_, Table>("__mem_watch")?;
+                for pair in watches_table.pairs::<u32, Table>() {
+                    let (index, table) = pair?;
+                    let address = table.get::<_, u32>("address")?;
+                    let len = table.get::<_, usize>("len")?;
+                    watches.push(MemWatch {
+                        address,
+                        len,
+                        callback_index: index,
+                    });
                 }
+                Ok(watches)
+            })?;
+
+            let mut bufs = Vec::new();
+            for watch in &watches {
+                let mut buf = vec![0u8; watch.len as usize];
+                c.read_mem(watch.address, &mut buf).await?;
+                bufs.push(MemData { data: buf });
+            }
+
+            let mut updates = HashMap::new();
+
+            self.lua.context(|ctx| -> Result<(), Error> {
+                let globals = ctx.globals();
+                let watches_table = globals.get::<_, Table>("__mem_watch")?;
+
+                // updates is protected by this scope.
+                ctx.scope(|scope| -> Result<(), Error> {
+                    ctx.globals().set(
+                        "set_objective_state",
+                        scope.create_function_mut(
+                            |_, (id, state): (String, ObjectiveStateData)| {
+                                updates.insert(id, state.0);
+                                Ok(())
+                            },
+                        )?,
+                    )?;
+
+                    for (i, watch) in watches.iter().enumerate() {
+                        let buf = &bufs[i];
+                        let table = watches_table.get::<_, Table>(watch.callback_index)?;
+                        let callback = table.get::<_, Function>("callback")?;
+                        callback.call::<_, ()>(buf.clone())?;
+                    }
+                    Ok(())
+                })?;
                 Ok(())
             })?;
-            Ok(())
-        })?;
 
-        sink.submit_command(ENGINE_UPDATE_STATE, updates, None)
-            .map_err(|e| format_err!("Failed to send command: {}", e))
+            sink.submit_command(ENGINE_UPDATE_STATE, updates, None)
+                .map_err(|e| format_err!("Failed to send command: {}", e))
+        } else {
+            Ok(())
+        }
+    }
+
+    fn update_state<T: EventSink>(
+        &mut self,
+        sink: &T,
+        state: AutoTrackerState,
+    ) -> Result<(), Error> {
+        self.state = state;
+
+        sink.submit_command(ENGINE_UPDATE_AUTO_TRACKER_STATE, self.state.clone(), None)
+            .map_err(|e| format_err!("Failed to send state: {}", e))
+    }
+
+    async fn connect_internal<T: EventSink>(&mut self, sink: &T) -> Result<(), Error> {
+        self.update_state(sink, AutoTrackerState::Connecting)?;
+        let mut c = Connection::new("ws://localhost:8080").await?;
+        let devs = c.get_device_list().await?;
+        if devs.len() == 0 {
+            return Err(format_err!("No devices found"));
+        }
+        let dev = devs[0].to_string();
+        println!("Attaching to {}.", dev);
+        c.attach(&dev).await?;
+
+        self.update_state(sink, AutoTrackerState::Running)?;
+
+        self.connection = Some(c);
+        Ok(())
+    }
+
+    async fn connect<T: EventSink>(&mut self, sink: &T) -> Result<(), Error> {
+        let res = self.connect_internal(sink).await;
+
+        if let Err(_) = res {
+            self.update_state(sink, AutoTrackerState::Disconnected)?;
+        }
+        res
+    }
+
+    async fn handle_command<T: EventSink>(
+        &mut self,
+        sink: &T,
+        cmd: &AutoTrackerCommand,
+    ) -> Result<(), Error> {
+        match cmd {
+            AutoTrackerCommand::Start => {
+                if let Err(e) = self.connect(sink).await {
+                    println!("Error connecting: {}", e);
+                };
+            }
+            AutoTrackerCommand::Stop => {
+                self.connection = None;
+                self.update_state(sink, AutoTrackerState::Idle)?;
+            }
+        }
+        Ok(())
+    }
+
+    async fn handle_tick<T: EventSink>(&mut self, sink: &T) -> Result<(), Error> {
+        match self.state {
+            AutoTrackerState::Running => self.sample(sink).await?,
+            AutoTrackerState::Disconnected => {
+                if let Err(e) = self.connect(sink).await {
+                    println!("Error re-connecting: {}", e);
+                }
+            }
+            _ => (),
+        }
+
+        Ok(())
     }
 
     async fn auto_track<T: EventSink>(&mut self, sink: T) -> Result<(), Error> {
         let mut ticker = interval(Duration::from_millis(500));
-        let mut connection = None;
         loop {
             select! {
                 cmd = self.control_channel.next().fuse() => {
                     if let Some(cmd) = cmd {
-                        match cmd {
-                            AutoTrackerCommand::Start => {
-                                self.state = AutoTrackerState::Connecting;
-                                let mut c = Connection::new("ws://localhost:8080").await?;
-                                let devs = c.get_device_list().await?;
-                                let dev = devs[0].to_string();
-                                println!("Attaching to {}.", dev);
-                                c.attach(&dev).await?;
-
-                                connection = Some(c);
-                                self.state = AutoTrackerState::Running;
-                            },
-                            AutoTrackerCommand::Stop => {
-                                connection = None;
-                                self.state = AutoTrackerState::Idle;
-                            }
+                        if let Err(e) = self.handle_command(&sink, &cmd).await {
+                            println!("Error handling command {:?}: {}", &cmd, e);
                         }
                     } else {
                         // Control channel dropped.  We're done here.
@@ -263,13 +328,12 @@ impl AutoTracker {
                     }
                 },
                 _ = ticker.next().fuse() => {
-                    if let Some(c) = connection.as_mut() {
-                        self.sample(c, &sink).await?;
-                    }
+                        if let Err(e) = self.handle_tick(&sink).await {
+                            self.update_state(&sink, AutoTrackerState::Disconnected)?;
+                            println!("Error handling tick: {}", e);
+                        }
                 },
             };
-            sink.submit_command(ENGINE_UPDATE_AUTO_TRACKER_STATE, self.state.clone(), None)
-                .map_err(|e| format_err!("Failed to send state: {}", e))?;
         }
     }
 
