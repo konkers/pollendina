@@ -8,6 +8,7 @@ use path_slash::PathBufExt;
 use serde::Deserialize;
 
 use super::expression::Expression;
+use super::{CornerRadius, Inset, ThemeColor};
 
 #[derive(Debug, Deserialize, PartialEq)]
 pub struct ObjectiveInfoLoc {
@@ -117,10 +118,21 @@ pub enum DisplayViewInfoView {
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
 pub struct LayoutParamsInfo {
     #[serde(default)]
     pub flex: f64,
+
+    #[serde(default)]
+    pub background: ThemeColor,
+
+    #[serde(default)]
+    pub corner_radius: CornerRadius,
+
+    #[serde(default)]
+    pub inset: Inset,
 }
+
 #[derive(Debug, Deserialize, PartialEq)]
 pub struct DisplayViewInfo {
     #[serde(flatten)]

@@ -4,11 +4,11 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use druid::widget::{Button, Checkbox, Container, Flex, Label, List, Padding, TextBox};
+use druid::widget::{Button, Checkbox, Flex, Label, List, Padding, TextBox};
 use druid::{
-    platform_menus, AppDelegate, AppLauncher, Color, Command, Data, DelegateCtx, Env,
-    ExtEventError, ExtEventSink, LensExt, LocalizedString, MenuDesc, MouseEvent, Point, Selector,
-    Target, Widget, WidgetExt, WindowDesc, WindowId,
+    platform_menus, AppDelegate, AppLauncher, Command, Data, DelegateCtx, Env, ExtEventError,
+    ExtEventSink, LensExt, LocalizedString, MenuDesc, MouseEvent, Point, Selector, Target, Widget,
+    WidgetExt, WindowDesc, WindowId,
 };
 use failure::Error;
 use match_macro::match_widget;
@@ -23,7 +23,8 @@ use engine::{
     EventSink, Module, ModuleParam, ModuleParamValue, ObjectiveState,
 };
 use widget::{
-    Asset, ClickExt, Constellation, DynFlex, Grid, MapObjective, ModalHost, Objective, Stack,
+    Asset, ClickExt, Constellation, Container, DynFlex, Grid, MapObjective, ModalHost, Objective,
+    Stack,
 };
 
 pub(crate) const UI_OPEN_CONFIG: Selector<()> = Selector::new("ui:open_config");
@@ -248,25 +249,22 @@ fn flex_col_widget() -> impl Widget<DisplayViewFlex> {
 }
 
 fn display_widget() -> impl Widget<DisplayView> {
-    (match_widget! { DisplayViewData,
-        DisplayViewData::Grid(_) => grid_widget(),
-        DisplayViewData::Count(_) => count_widget(),
-        DisplayViewData::Map(_) => map_widget(),
-        DisplayViewData::FlexRow(_) => flex_row_widget(),
-        DisplayViewData::FlexCol(_) => flex_col_widget(),
-        DisplayViewData::Spacer(_) => Label::new(""),
-        DisplayViewData::None => Label::new(""),
-    })
-    .lens(DisplayView::data)
+    Container::new(
+        (match_widget! { DisplayViewData,
+            DisplayViewData::Grid(_) => grid_widget(),
+            DisplayViewData::Count(_) => count_widget(),
+            DisplayViewData::Map(_) => map_widget(),
+            DisplayViewData::FlexRow(_) => flex_row_widget(),
+            DisplayViewData::FlexCol(_) => flex_col_widget(),
+            DisplayViewData::Spacer(_) => Label::new(""),
+            DisplayViewData::None => Label::new(""),
+        })
+        .lens(DisplayView::data),
+    )
 }
 
 fn modal_builder() -> impl Widget<DisplayState> {
-    Container::new(Padding::new(
-        8.0,
-        display_widget().lens(DisplayState::popup),
-    ))
-    .background(Color::rgb8(0x44, 0x44, 0x44))
-    .rounded(4.0)
+    display_widget().lens(DisplayState::popup)
 }
 
 fn ui_builder() -> impl Widget<DisplayState> {
