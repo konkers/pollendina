@@ -271,13 +271,9 @@ fn modal_builder() -> impl Widget<DisplayState> {
 
 fn ui_builder() -> impl Widget<DisplayState> {
     let mut root = Flex::column();
-    root.add_flex_child(
-        ModalHost::new(display_widget().lens(DisplayState::layout)),
-        1.0,
-    );
 
-    let mut bot = Flex::row();
-    bot.add_child(
+    let mut top = Flex::row();
+    top.add_child(
         Button::new(|data: &AutoTrackerState, _env: &_| {
             if *data == AutoTrackerState::Idle {
                 "Start auto tracking".into()
@@ -295,19 +291,23 @@ fn ui_builder() -> impl Widget<DisplayState> {
         })
         .lens(DisplayState::auto_tracker_state),
     );
-    bot.add_child(
+    top.add_child(
         Label::new(|data: &AutoTrackerState, _env: &_| format!("{:?}", data))
             .lens(DisplayState::auto_tracker_state),
     );
-    bot.add_flex_spacer(1.0);
-    bot.add_child(Button::new("Dump").on_click(|ctx, _data, _env| {
+    top.add_flex_spacer(1.0);
+    top.add_child(Button::new("Dump").on_click(|ctx, _data, _env| {
         ctx.submit_command(Command::new(ENGINE_DUMP_STATE, ()), None);
     }));
-    bot.add_child(Button::new("Config").on_click(|ctx, _data, _env| {
+    top.add_child(Button::new("Config").on_click(|ctx, _data, _env| {
         ctx.submit_command(Command::new(UI_OPEN_CONFIG, ()), None);
     }));
-    root.add_child(Padding::new(8.0, bot));
-    //root.debug_paint_layout()
+    root.add_child(Padding::new(8.0, top));
+
+    root.add_flex_child(display_widget().lens(DisplayState::layout), 1.0);
+
+    let root = ModalHost::new(root);
+    // root.debug_paint_layout()
     root
 }
 
