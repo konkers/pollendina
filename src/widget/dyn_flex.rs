@@ -33,6 +33,7 @@ pub struct DynFlex<T> {
     cross_alignment: CrossAxisAlignment,
     main_alignment: MainAxisAlignment,
     fill_major_axis: bool,
+    fill_minor_axis: bool,
     children: Vec<ChildWidget<T>>,
     closure: Box<dyn Fn() -> Box<dyn Widget<T>>>,
 }
@@ -189,6 +190,7 @@ impl<T: Data + DynFlexItem> DynFlex<T> {
             cross_alignment: CrossAxisAlignment::Center,
             main_alignment: MainAxisAlignment::Start,
             fill_major_axis: false,
+            fill_minor_axis: false,
         }
     }
 
@@ -203,6 +205,7 @@ impl<T: Data + DynFlexItem> DynFlex<T> {
             cross_alignment: CrossAxisAlignment::Center,
             main_alignment: MainAxisAlignment::Start,
             fill_major_axis: false,
+            fill_minor_axis: false,
         }
     }
 
@@ -261,6 +264,11 @@ impl<T: Data + DynFlexItem> DynFlex<T> {
     #[allow(dead_code)]
     pub fn must_fill_main_axis(mut self, fill: bool) -> Self {
         self.fill_major_axis = fill;
+        self
+    }
+
+    pub fn must_fill_minor_axis(mut self, fill: bool) -> Self {
+        self.fill_minor_axis = fill;
         self
     }
 }
@@ -327,7 +335,12 @@ impl<C: Data + DynFlexItem, T: ListIter<C>> Widget<T> for DynFlex<C> {
         });
         // Measure non-flex children.
         let mut major_non_flex = 0.0;
-        let mut minor = self.direction.minor(bc.min());
+        let mut minor = if self.fill_minor_axis {
+            self.direction.minor(bc.max())
+        } else {
+            self.direction.minor(bc.min())
+        };
+
         let mut children_data_iter = children_data.iter();
         for child in &mut self.children {
             if let Some(child_data) = children_data_iter.next() {
