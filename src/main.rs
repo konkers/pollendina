@@ -23,8 +23,8 @@ use engine::{
     EventSink, Module, ModuleParam, ModuleParamValue, ObjectiveState,
 };
 use widget::{
-    Asset, ClickExt, Constellation, Container, DynFlex, Grid, MapObjective, ModalHost, Objective,
-    Stack,
+    dyn_flex::CrossAxisAlignment, Asset, ClickExt, Constellation, Container, DynFlex, Grid,
+    MapObjective, ModalHost, Objective, Stack,
 };
 
 pub(crate) const UI_OPEN_CONFIG: Selector<()> = Selector::new("ui:open_config");
@@ -237,6 +237,8 @@ fn map_widget() -> impl Widget<DisplayViewMap> {
                 })),
         )
     })
+    .cross_axis_alignment(CrossAxisAlignment::Center)
+    .must_fill_minor_axis(true)
     .lens(DisplayViewMap::maps)
 }
 
