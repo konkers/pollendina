@@ -3,9 +3,13 @@ use std::collections::HashMap;
 use std::fs;
 use std::sync::Arc;
 
-use druid::{Data, ExtEventError, Lens, Selector, Target, WindowId};
+use druid::{
+    theme, widget::BackgroundBrush, Color, Data, ExtEventError, Key, Lens, Selector, Target,
+    WindowId,
+};
 use failure::{format_err, Error};
 use petgraph::{algo::toposort, graph::DiGraph};
+use serde::Deserialize;
 
 mod auto_tracker;
 pub mod expression;
@@ -15,9 +19,12 @@ use expression::Expression;
 pub use module::{DisplayViewInfo, DisplayViewInfoView, LayoutParamsInfo, Module, Param};
 
 use crate::assets::{add_image_to_cache, add_objective_to_cache, IMAGES};
-use crate::widget::constellation::{Field, Star};
-use crate::widget::dyn_flex::{DynFlexItem, DynFlexParams};
-use crate::widget::list_iter::ListIter;
+use crate::widget::{
+    constellation::{Field, Star},
+    container::ContainerParams,
+    dyn_flex::{DynFlexItem, DynFlexParams},
+    list_iter::ListIter,
+};
 
 pub use auto_tracker::AutoTrackerState;
 use auto_tracker::{AutoTracker, AutoTrackerController};
@@ -164,9 +171,84 @@ impl Default for DisplayViewData {
     }
 }
 
-#[derive(Clone, Data, Default)]
+#[derive(Clone, Data, Debug, Deserialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub enum ThemeColor {
+    Clear,
+    BgDark,
+    BgLight,
+}
+
+impl Default for ThemeColor {
+    fn default() -> Self {
+        return ThemeColor::Clear;
+    }
+}
+
+impl ThemeColor {
+    pub fn color_key(&self) -> Option<Key<Color>> {
+        match self {
+            ThemeColor::Clear => None,
+            ThemeColor::BgLight => Some(theme::BACKGROUND_LIGHT),
+            ThemeColor::BgDark => Some(theme::BACKGROUND_DARK),
+        }
+    }
+}
+
+#[derive(Clone, Data, Debug, Deserialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub enum CornerRadius {
+    None,
+    Small,
+    Large,
+}
+
+impl Default for CornerRadius {
+    fn default() -> Self {
+        return CornerRadius::None;
+    }
+}
+
+impl Into<f64> for CornerRadius {
+    fn into(self) -> f64 {
+        match self {
+            CornerRadius::None => 0.,
+            CornerRadius::Small => 4.,
+            CornerRadius::Large => 8.,
+        }
+    }
+}
+
+#[derive(Clone, Data, Debug, Deserialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub enum Inset {
+    None,
+    Small,
+    Large,
+}
+
+impl Default for Inset {
+    fn default() -> Self {
+        return Inset::None;
+    }
+}
+
+impl Into<f64> for Inset {
+    fn into(self) -> f64 {
+        match self {
+            Inset::None => 0.,
+            Inset::Small => 4.,
+            Inset::Large => 8.,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Data, Default)]
 pub struct LayoutParams {
     pub flex: f64,
+    pub background: ThemeColor,
+    pub corner_radius: CornerRadius,
+    pub inset: Inset,
 }
 
 #[derive(Clone, Data, Default, Lens)]
@@ -178,6 +260,23 @@ pub struct DisplayView {
 impl DynFlexItem for DisplayView {
     fn flex_params(&self) -> DynFlexParams {
         return self.layout_params.flex.into();
+    }
+}
+
+impl ContainerParams for DisplayView {
+    fn background<T>(&self) -> Option<BackgroundBrush<T>> {
+        self.layout_params
+            .background
+            .color_key()
+            .map(|c| BackgroundBrush::ColorKey(c))
+    }
+
+    fn corner_radius(&self) -> f64 {
+        self.layout_params.corner_radius.clone().into()
+    }
+
+    fn inset(&self) -> f64 {
+        self.layout_params.inset.clone().into()
     }
 }
 
@@ -453,6 +552,9 @@ impl Engine {
         DisplayView {
             layout_params: LayoutParams {
                 flex: info.layout_params.flex,
+                background: info.layout_params.background.clone(),
+                corner_radius: info.layout_params.corner_radius.clone(),
+                inset: info.layout_params.inset.clone(),
             },
             data: data,
         }
@@ -713,7 +815,12 @@ impl Engine {
 
         // Hard code grid until we add multi layout support.
         let popup_info = DisplayViewInfo {
-            layout_params: LayoutParamsInfo { flex: 0.0 },
+            layout_params: LayoutParamsInfo {
+                flex: 0.0,
+                background: ThemeColor::BgLight,
+                inset: Inset::Small,
+                corner_radius: CornerRadius::Small,
+            },
             view: DisplayViewInfoView::Grid {
                 columns: 3,
                 objectives: ids,

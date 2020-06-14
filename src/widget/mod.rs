@@ -1,6 +1,7 @@
 pub mod asset;
 pub mod click_ext;
 pub mod constellation;
+pub mod container;
 pub mod dyn_flex;
 pub mod grid;
 pub mod list_iter;
@@ -12,6 +13,7 @@ pub mod stack;
 pub use asset::Asset;
 pub use click_ext::ClickExt;
 pub use constellation::{Constellation, Star};
+pub use container::{Container, ContainerParams};
 pub use dyn_flex::{DynFlex, DynFlexParams};
 pub use grid::Grid;
 pub use map_objective::MapObjective;
