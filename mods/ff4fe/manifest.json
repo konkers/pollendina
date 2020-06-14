@@ -73,9 +73,12 @@
         "children": [
             {
                 "type": "FlexCol",
+                "background": "bg-dark",
+                "inset": "small",
                 "children": [
                     {
                         "type": "Grid",
+                        "inset": "large",
                         "columns": 4,
                         "objectives": [
                             "crystal",
@@ -111,7 +114,9 @@
             },
             {
                 "type": "FlexCol",
-                "flex": 1.0,
+                "background": "bg-light",
+                "inset": "small",
+                "flex": 2.0,
                 "children": [
                     {
                         "type": "Map",
