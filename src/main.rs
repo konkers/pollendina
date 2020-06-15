@@ -4,9 +4,9 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use druid::widget::{Button, Checkbox, Flex, Label, List, Padding, TextBox};
+use druid::widget::{Button, Checkbox, Flex, Label, List, Padding, TextBox, ViewSwitcher};
 use druid::{
-    platform_menus, AppDelegate, AppLauncher, Command, Data, DelegateCtx, Env, ExtEventError,
+    lens, platform_menus, AppDelegate, AppLauncher, Command, Data, DelegateCtx, Env, ExtEventError,
     ExtEventSink, LensExt, LocalizedString, MenuDesc, MouseEvent, Point, Selector, Target, Widget,
     WidgetExt, WindowDesc, WindowId,
 };
@@ -19,8 +19,9 @@ mod widget;
 
 use engine::{
     AutoTrackerState, CheckBoxParamValue, DisplayChild, DisplayState, DisplayView,
-    DisplayViewCount, DisplayViewData, DisplayViewFlex, DisplayViewGrid, DisplayViewMap, Engine,
-    EventSink, Module, ModuleParam, ModuleParamValue, ObjectiveState,
+    DisplayViewCount, DisplayViewData, DisplayViewFlex, DisplayViewGrid, DisplayViewMap,
+    DisplayViewTabChild, DisplayViewTabs, Engine, EventSink, Module, ModuleParam, ModuleParamValue,
+    ObjectiveState,
 };
 use widget::{
     dyn_flex::CrossAxisAlignment, Asset, ClickExt, Constellation, Container, DynFlex, Grid,
@@ -250,6 +251,43 @@ fn flex_col_widget() -> impl Widget<DisplayViewFlex> {
     DynFlex::column(|| display_widget()).lens(DisplayViewFlex::children)
 }
 
+fn tabs_widget() -> impl Widget<DisplayViewTabs> {
+    let mut w = Flex::column();
+    w.add_child(
+        DynFlex::row(|| {
+            Button::new(|(_, data): &(usize, DisplayViewTabChild), _env: &_| data.label.clone())
+                .on_click(
+                    |_ctx, (current_tab, data): &mut (usize, DisplayViewTabChild), _env| {
+                        *current_tab = data.index;
+                    },
+                )
+        })
+        .lens(lens::Id.map(
+            // This mapping allows display the tab buttons to change the parent `current_tab`.
+            |t: &DisplayViewTabs| (t.current_tab, t.tabs.clone()),
+            |t: &mut DisplayViewTabs, data: (usize, Arc<Vec<DisplayViewTabChild>>)| {
+                t.current_tab = data.0;
+            },
+        )),
+    );
+    w.add_flex_child(
+        ViewSwitcher::new(
+            |data: &DisplayViewTabs, _env| data.current_tab,
+            |selector, _data, _env| {
+                Box::new(
+                    display_widget()
+                        .lens(DisplayViewTabChild::view)
+                        .lens(lens::Id.index(*selector).in_arc())
+                        .lens(DisplayViewTabs::tabs),
+                )
+            },
+        ),
+        1.0,
+    );
+
+    w
+}
+
 fn display_widget() -> impl Widget<DisplayView> {
     Container::new(
         (match_widget! { DisplayViewData,
@@ -260,6 +298,7 @@ fn display_widget() -> impl Widget<DisplayView> {
             DisplayViewData::FlexCol(_) => flex_col_widget(),
             DisplayViewData::Spacer(_) => Label::new(""),
             DisplayViewData::None => Label::new(""),
+            DisplayViewData::Tabs(_) => tabs_widget(),
         })
         .lens(DisplayView::data),
     )

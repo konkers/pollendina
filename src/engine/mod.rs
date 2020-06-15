@@ -154,6 +154,25 @@ pub struct DisplayViewFlex {
 #[derive(Clone, Data, Lens)]
 pub struct DisplayViewSpacer {}
 
+#[derive(Clone, Data, Lens)]
+pub struct DisplayViewTabChild {
+    pub label: String,
+    pub index: usize,
+    pub view: DisplayView,
+}
+
+impl DynFlexItem for DisplayViewTabChild {
+    fn flex_params(&self) -> DynFlexParams {
+        self.view.flex_params()
+    }
+}
+
+#[derive(Clone, Data, Lens)]
+pub struct DisplayViewTabs {
+    pub current_tab: usize,
+    pub tabs: Arc<Vec<DisplayViewTabChild>>,
+}
+
 #[derive(Clone, Data)]
 pub enum DisplayViewData {
     Grid(DisplayViewGrid),
@@ -162,6 +181,7 @@ pub enum DisplayViewData {
     FlexRow(DisplayViewFlex),
     FlexCol(DisplayViewFlex),
     Spacer(DisplayViewSpacer),
+    Tabs(DisplayViewTabs),
     None,
 }
 
@@ -547,6 +567,7 @@ impl Engine {
                 })
             }
             DisplayViewInfoView::Spacer {} => DisplayViewData::Spacer(DisplayViewSpacer {}),
+            DisplayViewInfoView::Tabs { labels, children } => self.new_tab_layout(labels, children),
         };
 
         DisplayView {
@@ -569,6 +590,35 @@ impl Engine {
         }
 
         views
+    }
+
+    fn new_tab_layout(
+        &self,
+        labels: &Vec<String>,
+        children: &Vec<DisplayViewInfo>,
+    ) -> DisplayViewData {
+        let mut tabs = Vec::new();
+
+        let mut labels = labels.iter();
+
+        for (i, child) in children.iter().enumerate() {
+            let label = match labels.next() {
+                Some(l) => l,
+                None => continue,
+            };
+            let view = self.new_view(child);
+            let tab = DisplayViewTabChild {
+                label: label.clone(),
+                index: i,
+                view,
+            };
+            tabs.push(tab);
+        }
+
+        DisplayViewData::Tabs(DisplayViewTabs {
+            current_tab: 0,
+            tabs: Arc::new(tabs),
+        })
     }
 
     pub fn new_display_state(&self) -> DisplayState {
@@ -696,6 +746,14 @@ impl Engine {
                 }
             }
             DisplayViewInfoView::Spacer {} => {}
+            DisplayViewInfoView::Tabs {
+                labels: _labels,
+                children: children_info,
+            } => {
+                if let DisplayViewData::Tabs(t) = &mut view.data {
+                    self.update_tab_layout(t, &children_info)
+                }
+            }
         }
     }
 
@@ -709,6 +767,19 @@ impl Engine {
                 None => return,
             };
             self.update_view(view, info);
+        }
+    }
+
+    fn update_tab_layout(&self, data: &mut DisplayViewTabs, infos: &Vec<DisplayViewInfo>) {
+        let tabs = Arc::make_mut(&mut data.tabs);
+        let mut infos = infos.iter();
+
+        for tab in tabs.iter_mut() {
+            let info = match infos.next() {
+                Some(i) => i,
+                None => return,
+            };
+            self.update_view(&mut tab.view, info);
         }
     }
 
