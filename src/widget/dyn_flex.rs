@@ -591,3 +591,10 @@ impl From<f64> for DynFlexParams {
         }
     }
 }
+
+// Blanket implementation of `DynFlexItem` for use with ListIters with shared data.
+impl<T1: Data, T: Data + DynFlexItem> DynFlexItem for (T1, T) {
+    fn flex_params(&self) -> DynFlexParams {
+        self.1.flex_params()
+    }
+}
