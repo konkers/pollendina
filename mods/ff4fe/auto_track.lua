@@ -70,6 +70,11 @@ function loc_watcher(data)
     handle_loc_state("ds-lunar1", 0x19, bit_field)
     handle_loc_state("ds-lunar2", 0x1a, bit_field)
     handle_loc_state("ogopogo", 0x1b, bit_field)
+
+    -- Indexes 0x40 - 0x5f
+    local bit_field = data:get_u32(8)
+    handle_loc_state("d-mist", 0x19, bit_field)
+
 end
 
 add_mem_watch(0xf51500, 6, key_item_watcher)
