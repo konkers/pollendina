@@ -1,0 +1,81 @@
+# Heavily based on druid's workflow at
+#   https://github.com/xi-editor/druid/blob/76fba835605aa1c51e4f541d6a08ff94542f9b0a/.github/workflows/ci.yml
+
+name: Package
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test-stable:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macOS-latest]
+    name: package app
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-cargo-
+
+      - name: install libgtk-3-dev libx11-dev
+        run: |
+          sudo apt update
+          sudo apt install libgtk-3-dev libx11-dev
+        if: contains(matrix.os, 'ubuntu')
+
+      - name: install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: clippy
+          profile: minimal
+          override: true
+
+      - name: build release
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+
+      - name: install cargo bundle
+        if: contains(matrix.os, 'macOS')
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: cargo-bundle
+
+      - name: build mac package
+        if: contains(matrix.os, 'macOS')
+        uses: actions-rs/cargo@v1
+        with:
+          command: bundle
+          args: --release
+
+      - name: create dmg
+        if: contains(matrix.os, 'macOS')
+        run: |
+          mkdir -p target/release/bundle/osx/Pollendina
+          cp -a target/release/bundle/osx/Pollendina.app target/release/bundle/osx/Pollendina
+          hdiutil create target/release/bundle/osx/Pollendina.dmg -srcfolder target/release/bundle/osx/Pollendina -ov
+
+      - name: upload mac package
+        if: contains(matrix.os, 'macOS')
+        uses: actions/upload-artifact@v1
+        with:
+          name: Pollendina.dmg
+          path: target/release/bundle/osx/Pollendina.dmg

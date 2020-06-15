@@ -2,6 +2,7 @@
 #![windows_subsystem = "windows"]
 
 use std::collections::HashMap;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use druid::widget::{Button, Checkbox, Flex, Label, List, Padding, TextBox};
@@ -10,7 +11,7 @@ use druid::{
     ExtEventSink, LocalizedString, MenuDesc, Point, Selector, Target, Widget, WidgetExt,
     WindowDesc, WindowId,
 };
-use failure::Error;
+use failure::{format_err, Error};
 use match_macro::match_widget;
 
 mod assets;
@@ -167,6 +168,84 @@ impl AppDelegate<DisplayState> for Delegate {
     }
 }
 
+fn get_exe_dir() -> Result<PathBuf, Error> {
+    let mut p = std::env::current_exe()?;
+
+    p.pop();
+
+    Ok(p)
+}
+
+fn get_dev_path() -> Result<PathBuf, Error> {
+    // For development with `cargo run` we end up in target/<buildtype>/<exe>
+    let mut p = get_exe_dir()?;
+    p.pop(); // pop <buildtype>
+    p.pop(); // pop target
+
+    Ok(p)
+}
+
+#[cfg(target_os = "macos")]
+fn get_pkg_path() -> Result<PathBuf, Error> {
+    // In a Mac app the executable lives in Contents/MacOS/<exe> and
+    // resources live in Contents/Resources.
+    let mut p = get_exe_dir()?;
+    p.pop(); // pop MacOS
+    p.push("Resources");
+
+    Ok(p)
+}
+
+#[cfg(target_os = "windows")]
+fn get_pkg_path() -> Result<PathBuf, Error> {
+    Err(format_err!("unsupported"))
+}
+
+#[cfg(target_os = "linux")]
+fn get_pkg_path() -> Result<PathBuf, Error> {
+    Err(format_err!("unsupported"))
+}
+
+fn get_mod_paths() -> Vec<PathBuf> {
+    let mut paths = Vec::new();
+    if let Ok(p) = get_dev_path() {
+        paths.push(p);
+    }
+
+    if let Ok(p) = get_pkg_path() {
+        paths.push(p);
+    }
+
+    // Include both the exe directory and CWD as fallbacks.
+    if let Ok(p) = get_exe_dir() {
+        paths.push(p);
+    }
+    if let Ok(p) = std::env::current_dir() {
+        paths.push(p);
+    }
+
+    paths
+}
+
+fn resolve_module_path<P: AsRef<Path>>(path: P) -> Result<PathBuf, Error> {
+    let path = path.as_ref();
+    let mut dirs = get_mod_paths();
+
+    for dir in &mut dirs {
+        dir.push(&path);
+        if dir.exists() {
+            println!("found {}", dir.to_string_lossy());
+            return Ok(dir.clone());
+        }
+    }
+
+    Err(format_err!(
+        "Can't find {:?} in {:?}",
+        path.to_string_lossy(),
+        &dirs
+    ))
+}
+
 fn main() -> Result<(), Error> {
     let main_window = WindowDesc::new(ui_builder)
         .menu(app_menu())
@@ -174,7 +253,9 @@ fn main() -> Result<(), Error> {
         .show_titlebar(false);
     let app = AppLauncher::with_window(main_window);
 
-    let module = Module::open("mods/ff4fe/manifest.json")?;
+    println!("{:?}", std::env::current_exe());
+    let module_path = resolve_module_path("mods/ff4fe/manifest.json")?;
+    let module = Module::open(&module_path)?;
     let engine = Engine::new(module, ExtEventSinkProxy(app.get_external_handle()))?;
     let data = engine.new_display_state();
 
