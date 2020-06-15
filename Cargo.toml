@@ -1,5 +1,5 @@
 [package]
-name = "ui"
+name = "pollendina"
 version = "0.1.0"
 authors = ["Erik Gilling <konkers@konkers.net>"]
 edition = "2018"

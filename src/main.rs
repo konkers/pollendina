@@ -173,6 +173,7 @@ impl AppDelegate<DisplayState> for Delegate {
 fn main() -> Result<(), Error> {
     let main_window = WindowDesc::new(ui_builder)
         .menu(app_menu())
+        .title("Pollendina")
         .show_titlebar(false);
     let app = AppLauncher::with_window(main_window);
 
