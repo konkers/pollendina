@@ -198,7 +198,10 @@ fn get_pkg_path() -> Result<PathBuf, Error> {
 
 #[cfg(target_os = "windows")]
 fn get_pkg_path() -> Result<PathBuf, Error> {
-    Err(format_err!("unsupported"))
+    // On Windows we're installed in bin/pollendina.exe and mods are in mods.
+    let mut p = get_exe_dir()?;
+    p.pop(); // pop bin
+    Ok(p)
 }
 
 #[cfg(target_os = "linux")]
