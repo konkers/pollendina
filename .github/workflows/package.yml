@@ -17,7 +17,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macOS-latest]
+        os: [macOS-latest, windows-2019]
     name: package app
     steps:
       - uses: actions/checkout@v2
@@ -75,7 +75,29 @@ jobs:
 
       - name: upload mac package
         if: contains(matrix.os, 'macOS')
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: Pollendina.dmg
           path: target/release/bundle/osx/Pollendina.dmg
+
+      - name: install cargo wix
+        if: contains(matrix.os, 'windows')
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: cargo-wix
+
+      - name: build windows installer
+        if: contains(matrix.os, 'windows')
+        uses: actions-rs/cargo@v1
+        with:
+          command: wix
+          args: --nocapture
+
+      # this will need to be updated every release
+      - name: upload windows installer
+        if: contains(matrix.os, 'windows')
+        uses: actions/upload-artifact@v2
+        with:
+          name: pollendina.msi
+          path: target/wix/pollendina*.msi
