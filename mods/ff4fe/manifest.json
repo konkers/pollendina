@@ -119,13 +119,42 @@
                 "flex": 2.0,
                 "children": [
                     {
-                        "type": "Map",
-                        "maps": [
-                            "overworld",
-                            "underground",
-                            "moon"
+                        "type": "Tabs",
+                        "flex": 1.0,
+                        "labels": [
+                            "🌍 Overworld",
+                            "🌋 Underground",
+                            "🌕 Moon",
+                            "All"
                         ],
-                        "flex": 1.0
+                        "children": [
+                            {
+                                "type": "Map",
+                                "maps": [
+                                    "overworld"
+                                ]
+                            },
+                            {
+                                "type": "Map",
+                                "maps": [
+                                    "underground"
+                                ]
+                            },
+                            {
+                                "type": "Map",
+                                "maps": [
+                                    "moon"
+                                ]
+                            },
+                            {
+                                "type": "Map",
+                                "maps": [
+                                    "overworld",
+                                    "underground",
+                                    "moon"
+                                ]
+                            }
+                        ]
                     }
                 ]
             }
