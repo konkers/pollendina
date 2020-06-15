@@ -115,6 +115,10 @@ pub enum DisplayViewInfoView {
         children: Vec<DisplayViewInfo>,
     },
     Spacer {},
+    Tabs {
+        labels: Vec<String>,
+        children: Vec<DisplayViewInfo>,
+    },
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
