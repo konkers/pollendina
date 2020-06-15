@@ -439,7 +439,7 @@
             {
                 "id": "d-castle-key-item-check",
                 "type": "key-item-check",
-                "unlocked-by": "hook"
+                "unlocked-by": "underground"
             }
         ]
     },
@@ -634,7 +634,7 @@
                 "unlocked-by": "darkness-crystal"
             },
             {
-                "id": "wyver-key-item-check",
+                "id": "wyvern-key-item-check",
                 "type": "key-item-check",
                 "enabled-by": "flag-k-moon",
                 "unlocked-by": "darkness-crystal"
