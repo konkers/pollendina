@@ -3,29 +3,25 @@ use std::collections::HashMap;
 use std::fs;
 use std::sync::Arc;
 
-use druid::{
-    theme, widget::BackgroundBrush, Color, Data, ExtEventError, Key, Lens, Selector, Target,
-    WindowId,
-};
+use druid::{Data, ExtEventError, Selector, Target};
 use failure::{format_err, Error};
 use petgraph::{algo::toposort, graph::DiGraph};
-use serde::Deserialize;
 
 mod auto_tracker;
+mod display;
 pub mod expression;
 pub mod module;
 
+pub use display::{
+    CheckBoxParamValue, CornerRadius, DisplayChild, DisplayState, DisplayView, DisplayViewCount,
+    DisplayViewData, DisplayViewFlex, DisplayViewGrid, DisplayViewMap, DisplayViewSpacer,
+    DisplayViewTabChild, DisplayViewTabs, Inset, LayoutParams, MapInfo, MapObjective, ModuleParam,
+    ModuleParamValue, ThemeColor,
+};
 use expression::Expression;
 pub use module::{DisplayViewInfo, DisplayViewInfoView, LayoutParamsInfo, Module, Param};
 
 use crate::assets::{add_image_to_cache, add_objective_to_cache, IMAGES};
-use crate::widget::{
-    constellation::{Field, Star},
-    container::ContainerParams,
-    dyn_flex::{DynFlexItem, DynFlexParams},
-    list_iter::ListIter,
-};
-
 pub use auto_tracker::AutoTrackerState;
 use auto_tracker::{AutoTracker, AutoTrackerController};
 
@@ -66,269 +62,6 @@ impl ObjectiveState {
         }
     }
 }
-
-#[derive(Clone, Data)]
-pub struct DisplayChild {
-    pub id: String,
-    pub ty: String,
-    pub state: ObjectiveState,
-}
-
-// Data for each view type is broken out here so that we can implements
-// widgets on them.
-#[derive(Clone, Data, Lens)]
-pub struct DisplayViewGrid {
-    pub columns: usize,
-    pub children: Arc<Vec<DisplayChild>>,
-}
-
-#[derive(Clone, Data, Lens)]
-pub struct DisplayViewCount {
-    pub found: u32,
-    pub total: u32,
-}
-
-#[derive(Clone, Data, Lens)]
-pub struct MapObjective {
-    pub id: String,
-    pub x: f64,
-    pub y: f64,
-    pub radius: f64,
-    pub state: ObjectiveState,
-}
-
-impl Star for MapObjective {
-    fn pos(&self) -> (f64, f64) {
-        (self.x, self.y)
-    }
-
-    fn radius(&self) -> f64 {
-        self.radius
-    }
-}
-
-#[derive(Clone, Data, Lens)]
-pub struct MapInfo {
-    pub id: String,
-    pub width: f64,
-    pub height: f64,
-    // depricated
-    pub objective_radius: f64,
-    pub objectives: Arc<Vec<MapObjective>>,
-}
-
-impl Field for MapInfo {
-    fn size(&self) -> (f64, f64) {
-        (self.width, self.height)
-    }
-}
-
-impl DynFlexItem for MapInfo {
-    fn flex_params(&self) -> DynFlexParams {
-        return 1.0.into();
-    }
-}
-
-impl ListIter<MapObjective> for MapInfo {
-    fn for_each(&self, cb: impl FnMut(&MapObjective, usize)) {
-        self.objectives.for_each(cb)
-    }
-    fn for_each_mut(&mut self, cb: impl FnMut(&mut MapObjective, usize)) {
-        self.objectives.for_each_mut(cb)
-    }
-    fn data_len(&self) -> usize {
-        self.objectives.data_len()
-    }
-}
-
-#[derive(Clone, Data, Lens)]
-pub struct DisplayViewMap {
-    pub maps: Arc<Vec<MapInfo>>,
-}
-
-#[derive(Clone, Data, Lens)]
-pub struct DisplayViewFlex {
-    pub children: Arc<Vec<DisplayView>>,
-}
-
-#[derive(Clone, Data, Lens)]
-pub struct DisplayViewSpacer {}
-
-#[derive(Clone, Data, Lens)]
-pub struct DisplayViewTabChild {
-    pub label: String,
-    pub index: usize,
-    pub view: DisplayView,
-}
-
-impl DynFlexItem for DisplayViewTabChild {
-    fn flex_params(&self) -> DynFlexParams {
-        self.view.flex_params()
-    }
-}
-
-#[derive(Clone, Data, Lens)]
-pub struct DisplayViewTabs {
-    pub current_tab: usize,
-    pub tabs: Arc<Vec<DisplayViewTabChild>>,
-}
-
-#[derive(Clone, Data)]
-pub enum DisplayViewData {
-    Grid(DisplayViewGrid),
-    Count(DisplayViewCount),
-    Map(DisplayViewMap),
-    FlexRow(DisplayViewFlex),
-    FlexCol(DisplayViewFlex),
-    Spacer(DisplayViewSpacer),
-    Tabs(DisplayViewTabs),
-    None,
-}
-
-impl Default for DisplayViewData {
-    fn default() -> Self {
-        DisplayViewData::None
-    }
-}
-
-#[derive(Clone, Data, Debug, Deserialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
-pub enum ThemeColor {
-    Clear,
-    BgDark,
-    BgLight,
-}
-
-impl Default for ThemeColor {
-    fn default() -> Self {
-        return ThemeColor::Clear;
-    }
-}
-
-impl ThemeColor {
-    pub fn color_key(&self) -> Option<Key<Color>> {
-        match self {
-            ThemeColor::Clear => None,
-            ThemeColor::BgLight => Some(theme::BACKGROUND_LIGHT),
-            ThemeColor::BgDark => Some(theme::BACKGROUND_DARK),
-        }
-    }
-}
-
-#[derive(Clone, Data, Debug, Deserialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
-pub enum CornerRadius {
-    None,
-    Small,
-    Large,
-}
-
-impl Default for CornerRadius {
-    fn default() -> Self {
-        return CornerRadius::None;
-    }
-}
-
-impl Into<f64> for CornerRadius {
-    fn into(self) -> f64 {
-        match self {
-            CornerRadius::None => 0.,
-            CornerRadius::Small => 4.,
-            CornerRadius::Large => 8.,
-        }
-    }
-}
-
-#[derive(Clone, Data, Debug, Deserialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
-pub enum Inset {
-    None,
-    Small,
-    Large,
-}
-
-impl Default for Inset {
-    fn default() -> Self {
-        return Inset::None;
-    }
-}
-
-impl Into<f64> for Inset {
-    fn into(self) -> f64 {
-        match self {
-            Inset::None => 0.,
-            Inset::Small => 4.,
-            Inset::Large => 8.,
-        }
-    }
-}
-
-#[derive(Clone, Debug, Data, Default)]
-pub struct LayoutParams {
-    pub flex: f64,
-    pub background: ThemeColor,
-    pub corner_radius: CornerRadius,
-    pub inset: Inset,
-}
-
-#[derive(Clone, Data, Default, Lens)]
-pub struct DisplayView {
-    pub layout_params: LayoutParams,
-    pub data: DisplayViewData,
-}
-
-impl DynFlexItem for DisplayView {
-    fn flex_params(&self) -> DynFlexParams {
-        return self.layout_params.flex.into();
-    }
-}
-
-impl ContainerParams for DisplayView {
-    fn background<T>(&self) -> Option<BackgroundBrush<T>> {
-        self.layout_params
-            .background
-            .color_key()
-            .map(|c| BackgroundBrush::ColorKey(c))
-    }
-
-    fn corner_radius(&self) -> f64 {
-        self.layout_params.corner_radius.clone().into()
-    }
-
-    fn inset(&self) -> f64 {
-        self.layout_params.inset.clone().into()
-    }
-}
-
-#[derive(Clone, Data, Lens, PartialEq)]
-pub struct CheckBoxParamValue {
-    id: String,
-    value: bool,
-}
-
-#[derive(Clone, Data, PartialEq)]
-pub enum ModuleParamValue {
-    TextBox(String),
-    CheckBox(CheckBoxParamValue),
-}
-
-#[derive(Clone, Data, Lens, PartialEq)]
-pub struct ModuleParam {
-    name: String,
-    value: ModuleParamValue,
-}
-
-// DisplayState is owned by the UI and should contain all the information
-// it needs to function.
-#[derive(Clone, Data, Lens)]
-pub struct DisplayState {
-    pub layout: DisplayView,
-    pub popup: DisplayView,
-    pub params: Arc<Vec<ModuleParam>>,
-    pub auto_tracker_state: AutoTrackerState,
-    pub config_win: Arc<Option<WindowId>>,
-}
-
 pub struct Engine {
     module: Module,
     popup_info: Option<DisplayViewInfo>,
@@ -497,132 +230,8 @@ impl Engine {
         }
         Ok(())
     }
-
-    fn new_view(&self, info: &DisplayViewInfo) -> DisplayView {
-        let data = match &info.view {
-            DisplayViewInfoView::Grid {
-                columns,
-                objectives,
-            } => {
-                let mut children = Vec::new();
-                for objective in objectives {
-                    let ty = if let Some(o) = self.module.objectives.get(objective) {
-                        o.ty.clone()
-                    } else {
-                        "unknown".into()
-                    };
-
-                    // All objectives start in the Locked state.  The normal
-                    // app lifecycle will take care of keeping them up to date.
-                    children.push(DisplayChild {
-                        id: objective.clone(),
-                        ty: ty,
-                        state: ObjectiveState::Locked,
-                    });
-                }
-                DisplayViewData::Grid(DisplayViewGrid {
-                    columns: *columns,
-                    children: Arc::new(children),
-                })
-            }
-            DisplayViewInfoView::Count {
-                objective_type: _objective_type,
-            } => DisplayViewData::Count(DisplayViewCount { found: 0, total: 0 }),
-            DisplayViewInfoView::Map { maps: map_ids } => {
-                let mut maps = Vec::new();
-                for id in map_ids {
-                    let obj_info = self.module.maps.get(id).unwrap();
-                    let mut objectives = Vec::new();
-
-                    for info in &obj_info.objectives {
-                        objectives.push(MapObjective {
-                            id: info.id.clone(),
-                            x: info.x as f64,
-                            y: info.y as f64,
-                            radius: obj_info.objective_radius,
-                            state: ObjectiveState::Locked,
-                        });
-                    }
-
-                    maps.push(MapInfo {
-                        id: id.clone(),
-                        width: obj_info.width as f64,
-                        height: obj_info.height as f64,
-                        objective_radius: obj_info.objective_radius,
-                        objectives: Arc::new(objectives),
-                    });
-                }
-                DisplayViewData::Map(DisplayViewMap {
-                    maps: Arc::new(maps),
-                })
-            }
-            DisplayViewInfoView::FlexRow { children } => {
-                DisplayViewData::FlexRow(DisplayViewFlex {
-                    children: Arc::new(self.new_sub_layout(children)),
-                })
-            }
-            DisplayViewInfoView::FlexCol { children } => {
-                DisplayViewData::FlexCol(DisplayViewFlex {
-                    children: Arc::new(self.new_sub_layout(children)),
-                })
-            }
-            DisplayViewInfoView::Spacer {} => DisplayViewData::Spacer(DisplayViewSpacer {}),
-            DisplayViewInfoView::Tabs { labels, children } => self.new_tab_layout(labels, children),
-        };
-
-        DisplayView {
-            layout_params: LayoutParams {
-                flex: info.layout_params.flex,
-                background: info.layout_params.background.clone(),
-                corner_radius: info.layout_params.corner_radius.clone(),
-                inset: info.layout_params.inset.clone(),
-            },
-            data: data,
-        }
-    }
-
-    fn new_sub_layout(&self, infos: &Vec<DisplayViewInfo>) -> Vec<DisplayView> {
-        let mut views = Vec::new();
-
-        for info in infos {
-            let view = self.new_view(&info);
-            views.push(view);
-        }
-
-        views
-    }
-
-    fn new_tab_layout(
-        &self,
-        labels: &Vec<String>,
-        children: &Vec<DisplayViewInfo>,
-    ) -> DisplayViewData {
-        let mut tabs = Vec::new();
-
-        let mut labels = labels.iter();
-
-        for (i, child) in children.iter().enumerate() {
-            let label = match labels.next() {
-                Some(l) => l,
-                None => continue,
-            };
-            let view = self.new_view(child);
-            let tab = DisplayViewTabChild {
-                label: label.clone(),
-                index: i,
-                view,
-            };
-            tabs.push(tab);
-        }
-
-        DisplayViewData::Tabs(DisplayViewTabs {
-            current_tab: 0,
-            tabs: Arc::new(tabs),
-        })
-    }
-
     pub fn new_display_state(&self) -> DisplayState {
-        let layout = self.new_view(&self.module.manifest.layout);
+        let layout = DisplayView::new(self, &self.module.manifest.layout);
         let mut params = Vec::new();
         for p in &self.module.manifest.params {
             let (name, value) = match p {
@@ -650,143 +259,10 @@ impl Engine {
         state
     }
 
-    fn update_grid_state(
-        &self,
-        view: &mut DisplayViewGrid,
-        columns: &usize,
-        objectives: &Vec<String>,
-    ) {
-        view.columns = *columns;
-        let mut ids = objectives.iter();
-        let children = Arc::make_mut(&mut view.children);
-        for child in children {
-            let id = match ids.next() {
-                Some(i) => i,
-                None => return,
-            };
-
-            if let Some(state) = self.objectives.get(id) {
-                child.state = *state;
-            }
-        }
-    }
-
-    fn update_count_state(&self, view: &mut DisplayViewCount, objective_type: &String) {
-        // We're filtering the objectives every update.  If this becomes a bottleneck,
-        // we can cache this filtering.
-        let objectives: Vec<String> = self
-            .module
-            .objectives
-            .iter()
-            .filter(|(_, o)| o.ty == *objective_type)
-            .map(|(id, _)| id.clone())
-            .collect();
-        let total = objectives.len();
-        let mut found = 0;
-        for o in objectives {
-            if let Some(state) = self.objectives.get(&o) {
-                found += match state {
-                    ObjectiveState::Disabled => 0,
-                    ObjectiveState::Locked => 0,
-                    ObjectiveState::GlitchLocked => 0,
-                    ObjectiveState::Unlocked => 1,
-                    ObjectiveState::Complete => 1,
-                }
-            }
-        }
-
-        view.found = found as u32;
-        view.total = total as u32;
-    }
-
-    fn update_map_state(&self, view: &mut DisplayViewMap) {
-        let maps = Arc::make_mut(&mut view.maps);
-        for map in maps {
-            let objectives = Arc::make_mut(&mut map.objectives);
-            for mut o in objectives.iter_mut() {
-                if let Some(state) = self.objectives.get(&o.id) {
-                    o.state = *state;
-                }
-            }
-        }
-    }
-
-    fn update_view(&self, view: &mut DisplayView, info: &DisplayViewInfo) {
-        match &info.view {
-            DisplayViewInfoView::Grid {
-                columns,
-                objectives,
-            } => {
-                if let DisplayViewData::Grid(g) = &mut view.data {
-                    self.update_grid_state(g, columns, objectives);
-                }
-            }
-            DisplayViewInfoView::Count { objective_type } => {
-                if let DisplayViewData::Count(c) = &mut view.data {
-                    self.update_count_state(c, objective_type);
-                }
-            }
-            DisplayViewInfoView::Map { maps: _maps } => {
-                if let DisplayViewData::Map(m) = &mut view.data {
-                    self.update_map_state(m);
-                }
-            }
-            DisplayViewInfoView::FlexRow {
-                children: children_info,
-            } => {
-                if let DisplayViewData::FlexRow(f) = &mut view.data {
-                    self.update_sub_layout(&mut f.children, &children_info)
-                }
-            }
-            DisplayViewInfoView::FlexCol {
-                children: children_info,
-            } => {
-                if let DisplayViewData::FlexCol(f) = &mut view.data {
-                    self.update_sub_layout(&mut f.children, &children_info)
-                }
-            }
-            DisplayViewInfoView::Spacer {} => {}
-            DisplayViewInfoView::Tabs {
-                labels: _labels,
-                children: children_info,
-            } => {
-                if let DisplayViewData::Tabs(t) = &mut view.data {
-                    self.update_tab_layout(t, &children_info)
-                }
-            }
-        }
-    }
-
-    fn update_sub_layout(&self, views: &mut Arc<Vec<DisplayView>>, infos: &Vec<DisplayViewInfo>) {
-        let views = Arc::make_mut(views);
-        let mut infos = infos.iter();
-
-        for view in views.iter_mut() {
-            let info = match infos.next() {
-                Some(i) => i,
-                None => return,
-            };
-            self.update_view(view, info);
-        }
-    }
-
-    fn update_tab_layout(&self, data: &mut DisplayViewTabs, infos: &Vec<DisplayViewInfo>) {
-        let tabs = Arc::make_mut(&mut data.tabs);
-        let mut infos = infos.iter();
-
-        for tab in tabs.iter_mut() {
-            let info = match infos.next() {
-                Some(i) => i,
-                None => return,
-            };
-            self.update_view(&mut tab.view, info);
-        }
-    }
-
     pub fn update_display_state(&self, data: &mut DisplayState) {
-        self.update_view(&mut data.layout, &self.module.manifest.layout);
+        data.layout.update(self, &self.module.manifest.layout);
         if let Some(popup_info) = &self.popup_info {
-            self.update_view(&mut data.popup, &popup_info);
+            data.popup.update(self, &popup_info);
         }
     }
 
@@ -898,7 +374,7 @@ impl Engine {
             },
         };
 
-        data.popup = self.new_view(&popup_info);
+        data.popup = DisplayView::new(self, &popup_info);
         self.popup_info = Some(popup_info);
 
         self.update_display_state(data);
