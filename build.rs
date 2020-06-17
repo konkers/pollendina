@@ -1,6 +1,3 @@
-use std::path::PathBuf;
-use std::process::Command;
-
 #[cfg(target_os = "macos")]
 fn os_specific() {
     println!("cargo:rustc-env=MACOSX_DEPLOYMENT_TARGET=10.13");
@@ -8,6 +5,9 @@ fn os_specific() {
 
 #[cfg(target_os = "windows")]
 fn os_specific() {
+    use std::path::PathBuf;
+    use std::process::Command;
+
     // Create the wxs file listing everything in the mods directory.
     let mut heat_path = PathBuf::from(
         std::env::var("WIX")
