@@ -418,11 +418,13 @@ pub(crate) fn app_menu() -> MenuDesc<DisplayState> {
     #[cfg(target_os = "macos")]
     {
         menu = menu.append(platform_menus::mac::application::default());
+        menu = menu.append(edit_menu());
     }
 
-    menu.append(edit_menu())
+    menu
 }
 
+#[allow(unused)]
 fn edit_menu<T: Data>() -> MenuDesc<T> {
     MenuDesc::new(LocalizedString::new("common-menu-edit-menu"))
         .append(platform_menus::common::undo())
