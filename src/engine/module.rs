@@ -95,13 +95,13 @@ pub struct MapInfo {
     pub objectives: Vec<MapObjective>,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub enum ObjectiveListSpecial {
     Checks,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(untagged)]
 #[serde(rename_all = "kebab-case")]
 pub enum ObjectiveList {
@@ -109,7 +109,7 @@ pub enum ObjectiveList {
     Special(ObjectiveListSpecial),
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(tag = "type")]
 pub enum DisplayViewInfoView {
     Grid {
@@ -138,7 +138,7 @@ pub enum DisplayViewInfoView {
     },
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct LayoutParamsInfo {
     #[serde(default)]
@@ -154,7 +154,7 @@ pub struct LayoutParamsInfo {
     pub inset: Inset,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq)]
 pub struct DisplayViewInfo {
     #[serde(flatten)]
     pub layout_params: LayoutParamsInfo,
@@ -193,6 +193,9 @@ impl Module {
 
         if !manifest.layouts.contains_key(&"main".to_string()) {
             return Err(format_err!("manifest does not contain 'main' layout."));
+        }
+        if !manifest.layouts.contains_key(&"checks".to_string()) {
+            return Err(format_err!("manifest does not contain 'checks' layout."));
         }
 
         for (_, layout) in manifest.layouts.iter_mut() {
