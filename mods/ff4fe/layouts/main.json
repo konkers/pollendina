@@ -1,0 +1,37 @@
+{
+    "type": "FlexRow",
+    "flex": 1.0,
+    "children": [
+        {
+            "type": "FlexCol",
+            "background": "bg-dark",
+            "inset": "small",
+            "children": [
+                {
+                    "type": "Include",
+                    "path": "layouts/key-item-grid.json"
+                },
+                {
+                    "type": "Include",
+                    "path": "layouts/key-item-count.json"
+                },
+                {
+                    "type": "Spacer",
+                    "flex": 1.0
+                }
+            ]
+        },
+        {
+            "type": "FlexCol",
+            "background": "bg-light",
+            "inset": "small",
+            "flex": 2.0,
+            "children": [
+                {
+                    "type": "Include",
+                    "path": "layouts/maps.json"
+                }
+            ]
+        }
+    ]
+}
