@@ -1,0 +1,8 @@
+{
+    "type": "Grid",
+    "background": "bg-light",
+    "inset": "small",
+    "corner-radius": "small",
+    "columns": 3,
+    "objectives": "checks"
+}
