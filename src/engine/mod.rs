@@ -19,7 +19,10 @@ pub use display::{
     ModuleParamValue, ThemeColor,
 };
 use expression::Expression;
-pub use module::{DisplayViewInfo, DisplayViewInfoView, LayoutParamsInfo, Module, Param};
+pub use module::{
+    DisplayViewInfo, DisplayViewInfoView, LayoutParamsInfo, Module, ObjectiveList,
+    ObjectiveListSpecial, Param,
+};
 
 use crate::assets::{add_image_to_cache, add_objective_to_cache, IMAGES};
 pub use auto_tracker::AutoTrackerState;
@@ -62,12 +65,16 @@ impl ObjectiveState {
         }
     }
 }
+
 pub struct Engine {
     module: Module,
     popup_info: Option<DisplayViewInfo>,
     objectives: HashMap<String, ObjectiveState>,
     eval_order: Vec<String>,
     auto_tracker: Option<AutoTrackerController>,
+
+    // Active checks.  This will need to be redone for pinned objectives.
+    checks: Vec<String>,
 }
 
 impl Engine {
@@ -108,6 +115,7 @@ impl Engine {
             objectives,
             eval_order,
             auto_tracker,
+            checks: Vec::new(),
         };
 
         engine.eval_objectives()?;
@@ -369,10 +377,12 @@ impl Engine {
             .get(id)
             .ok_or(format_err!("Can't find objective {}", id))?;
 
-        let mut ids = Vec::new();
+        let mut checks = Vec::new();
         for check in &obj.checks {
-            ids.push(check.id.clone());
+            checks.push(check.id.clone());
         }
+
+        self.checks = checks;
 
         // Hard code grid until we add multi layout support.
         let popup_info = DisplayViewInfo {
@@ -384,7 +394,7 @@ impl Engine {
             },
             view: DisplayViewInfoView::Grid {
                 columns: 3,
-                objectives: ids,
+                objectives: ObjectiveList::Special(ObjectiveListSpecial::Checks),
             },
         };
 

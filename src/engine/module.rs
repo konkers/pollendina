@@ -96,11 +96,25 @@ pub struct MapInfo {
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub enum ObjectiveListSpecial {
+    Checks,
+}
+
+#[derive(Debug, Deserialize, PartialEq)]
+#[serde(untagged)]
+#[serde(rename_all = "kebab-case")]
+pub enum ObjectiveList {
+    List(Vec<String>),
+    Special(ObjectiveListSpecial),
+}
+
+#[derive(Debug, Deserialize, PartialEq)]
 #[serde(tag = "type")]
 pub enum DisplayViewInfoView {
     Grid {
         columns: usize,
-        objectives: Vec<String>,
+        objectives: ObjectiveList,
     },
     Count {
         objective_type: String,
@@ -462,6 +476,23 @@ mod tests {
                     unlocked_by: Expression::default(),
                 }],
             },
+        )
+        .expect("decoding error");
+
+        Ok(())
+    }
+
+    #[test]
+    fn objective_list_encoding() -> Result<(), Error> {
+        test_json_object(
+            r#"["a", "b"]"#,
+            &ObjectiveList::List(vec!["a".to_string(), "b".to_string()]),
+        )
+        .expect("decoding error");
+
+        test_json_object(
+            r#""checks""#,
+            &ObjectiveList::Special(ObjectiveListSpecial::Checks),
         )
         .expect("decoding error");
 
