@@ -231,7 +231,15 @@ impl Engine {
         Ok(())
     }
     pub fn new_display_state(&self) -> DisplayState {
-        let layout = DisplayView::new(self, &self.module.manifest.layout);
+        let layout = DisplayView::new(
+            self,
+            &self
+                .module
+                .manifest
+                .layouts
+                .get(&"main".to_string())
+                .unwrap(),
+        );
         let mut params = Vec::new();
         for p in &self.module.manifest.params {
             let (name, value) = match p {
@@ -260,7 +268,13 @@ impl Engine {
     }
 
     pub fn update_display_state(&self, data: &mut DisplayState) {
-        data.layout.update(self, &self.module.manifest.layout);
+        let layout = self
+            .module
+            .manifest
+            .layouts
+            .get(&"main".to_string())
+            .unwrap();
+        data.layout.update(self, layout);
         if let Some(popup_info) = &self.popup_info {
             data.popup.update(self, &popup_info);
         }

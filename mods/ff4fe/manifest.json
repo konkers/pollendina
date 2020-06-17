@@ -67,8 +67,10 @@
             "path": "maps/moon.json"
         }
     ],
-    "layout": {
-        "type": "Include",
-        "path": "layouts/main.json"
+    "layouts": {
+        "main": {
+            "type": "Include",
+            "path": "layouts/main.json"
+        }
     }
 }
