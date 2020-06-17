@@ -31,6 +31,8 @@ pub(crate) const UI_CANCEL_CONFIG: Selector<()> = Selector::new("ui:cancel_confi
 pub(crate) const UI_APPLY_CONFIG: Selector<()> = Selector::new("ui:update_config");
 const UI_OPEN_POPUP: Selector<((f64, f64), String)> = Selector::new("ui:open_popup");
 
+pub(crate) const UI_OPEN_BROADCAST: Selector<()> = Selector::new("ui:open_broadcast");
+
 pub(crate) const ENGINE_TOGGLE_STATE: Selector<String> = Selector::new("engine:toggle_state");
 pub(crate) const ENGINE_UPDATE_STATE: Selector<HashMap<String, ObjectiveState>> =
     Selector::new("engine:update_state");
@@ -82,7 +84,26 @@ impl AppDelegate<DisplayState> for Delegate {
         data: &mut DisplayState,
         _env: &Env,
     ) -> bool {
-        if cmd.is(UI_OPEN_CONFIG) {
+        if cmd.is(UI_OPEN_BROADCAST) {
+            match *data.broadcast_win {
+                Some(id) => {
+                    let command = Command::new(druid::commands::SHOW_WINDOW, ());
+                    ctx.submit_command(command, id);
+                }
+                None => {
+                    self.engine.update_param_state(data);
+                    let mut window = WindowDesc::new(broadcast_ui_builder).title("Broadcast View");
+
+                    if let Some(size) = self.engine.broadcast_window_size() {
+                        window = window.window_size(size).resizable(false);
+                    }
+                    let win_id = window.id;
+                    ctx.new_window(window);
+                    *Arc::make_mut(&mut data.broadcast_win) = Some(win_id);
+                }
+            };
+            false
+        } else if cmd.is(UI_OPEN_CONFIG) {
             match *data.config_win {
                 Some(id) => {
                     let command = Command::new(druid::commands::SHOW_WINDOW, ());
@@ -308,6 +329,9 @@ fn ui_builder() -> impl Widget<DisplayState> {
     top.add_child(Button::new("Dump").on_click(|ctx, _data, _env| {
         ctx.submit_command(Command::new(ENGINE_DUMP_STATE, ()), None);
     }));
+    top.add_child(Button::new("Broadcast View").on_click(|ctx, _data, _env| {
+        ctx.submit_command(Command::new(UI_OPEN_BROADCAST, ()), None);
+    }));
     top.add_child(Button::new("Config").on_click(|ctx, _data, _env| {
         ctx.submit_command(Command::new(UI_OPEN_CONFIG, ()), None);
     }));
@@ -363,6 +387,29 @@ fn config_ui_builder() -> impl Widget<DisplayState> {
 
     //root.debug_paint_layout()
     root.padding(8.0)
+}
+
+fn broadcast_ui_builder() -> impl Widget<DisplayState> {
+    display_widget().lens(DisplayState::broadcast)
+    /*
+    ViewSwitcher::new(
+        |data, _env| data.broadcast,
+        |selector, data, env| {
+            match selector {
+                Some(w)
+    Either::new(
+        |data: &DisplayState, _env| -> bool {
+            match data.broadcast {
+                Some(_) => true,
+                None => false,
+            }
+        },
+        display_widget()
+            .lens(lens::Id.map(|x: &Option<DisplayView>| x.unwrap(), |x, y| {}))
+            .lens(DisplayState::broadcast),
+        Label::new(""),
+    )
+    */
 }
 
 #[allow(unused_mut)]

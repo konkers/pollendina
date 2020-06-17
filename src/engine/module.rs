@@ -152,6 +152,14 @@ pub struct LayoutParamsInfo {
 
     #[serde(default)]
     pub inset: Inset,
+
+    // window_height and window_width only apply to the root view of
+    // a window.
+    #[serde(default)]
+    pub window_height: f64,
+
+    #[serde(default)]
+    pub window_width: f64,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
