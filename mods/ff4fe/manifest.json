@@ -71,6 +71,10 @@
         "main": {
             "type": "Include",
             "path": "layouts/main.json"
+        },
+        "checks": {
+            "type": "Include",
+            "path": "layouts/checks.json"
         }
     }
 }
