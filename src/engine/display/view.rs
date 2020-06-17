@@ -272,6 +272,9 @@ impl DisplayView {
             DisplayViewInfoView::Tabs { labels, children } => {
                 DisplayViewData::Tabs(DisplayViewTabs::new(engine, labels, children))
             }
+            DisplayViewInfoView::Include { path: _ } => {
+                panic!("encountered unprocessed display view include");
+            }
         };
 
         DisplayView {
@@ -327,6 +330,9 @@ impl DisplayView {
                 if let DisplayViewData::Tabs(t) = &mut self.data {
                     t.update(engine, &children_info)
                 }
+            }
+            DisplayViewInfoView::Include { path: _ } => {
+                panic!("encountered unprocessed display view include");
             }
         }
     }
