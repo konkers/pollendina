@@ -24,6 +24,11 @@
                 "cave-key",
                 "sword-of-might"
             ]
+        },
+        "checks": {
+            "type": "Grid",
+            "columns": 2,
+            "objectives": "checks"
         }
     }
 }

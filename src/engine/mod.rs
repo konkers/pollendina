@@ -68,7 +68,7 @@ impl ObjectiveState {
 
 pub struct Engine {
     module: Module,
-    popup_info: Option<DisplayViewInfo>,
+    popup_info: DisplayViewInfo,
     objectives: HashMap<String, ObjectiveState>,
     eval_order: Vec<String>,
     auto_tracker: Option<AutoTrackerController>,
@@ -109,9 +109,16 @@ impl Engine {
             Ok(())
         })?;
 
+        let popup_info = module
+            .manifest
+            .layouts
+            .get(&"checks".to_string())
+            .ok_or(format_err!("Can't find 'checks' layout"))?
+            .clone();
+
         let mut engine = Engine {
             module,
-            popup_info: None,
+            popup_info: popup_info,
             objectives,
             eval_order,
             auto_tracker,
@@ -263,9 +270,11 @@ impl Engine {
             params.push(ModuleParam { name, value });
         }
 
+        let popup = DisplayView::new(self, &self.popup_info);
+
         let mut state = DisplayState {
             layout: layout,
-            popup: Default::default(),
+            popup: popup,
             params: Arc::new(params),
             auto_tracker_state: AutoTrackerState::Idle,
             config_win: Arc::new(None),
@@ -283,9 +292,7 @@ impl Engine {
             .get(&"main".to_string())
             .unwrap();
         data.layout.update(self, layout);
-        if let Some(popup_info) = &self.popup_info {
-            data.popup.update(self, &popup_info);
-        }
+        data.popup.update(self, &self.popup_info);
     }
 
     pub fn update_param_state(&self, data: &mut DisplayState) {
@@ -381,25 +388,10 @@ impl Engine {
         for check in &obj.checks {
             checks.push(check.id.clone());
         }
-
         self.checks = checks;
 
-        // Hard code grid until we add multi layout support.
-        let popup_info = DisplayViewInfo {
-            layout_params: LayoutParamsInfo {
-                flex: 0.0,
-                background: ThemeColor::BgLight,
-                inset: Inset::Small,
-                corner_radius: CornerRadius::Small,
-            },
-            view: DisplayViewInfoView::Grid {
-                columns: 3,
-                objectives: ObjectiveList::Special(ObjectiveListSpecial::Checks),
-            },
-        };
-
-        data.popup = DisplayView::new(self, &popup_info);
-        self.popup_info = Some(popup_info);
+        // Recreate pop view with new checks set.
+        data.popup = DisplayView::new(self, &self.popup_info);
 
         self.update_display_state(data);
         Ok(())
