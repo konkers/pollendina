@@ -2,8 +2,8 @@
     "type": "FlexCol",
     "background": "bg-dark",
     "inset": "small",
-    "window-width": 175,
-    "window-height": 225,
+    "window-width": 200,
+    "window-height": 275,
     "children": [
         {
             "type": "Include",
