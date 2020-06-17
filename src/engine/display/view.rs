@@ -5,7 +5,7 @@ use serde::Deserialize;
 
 use crate::{
     engine::{
-        module::{DisplayViewInfo, DisplayViewInfoView},
+        module::{DisplayViewInfo, DisplayViewInfoView, ObjectiveList, ObjectiveListSpecial},
         Engine, ObjectiveState,
     },
     widget::{
@@ -339,8 +339,16 @@ impl DisplayView {
 }
 
 impl DisplayViewGrid {
-    fn new(engine: &Engine, columns: usize, objectives: &Vec<String>) -> Self {
+    fn deref_objectives<'a>(engine: &'a Engine, objectives: &'a ObjectiveList) -> &'a Vec<String> {
+        match objectives {
+            ObjectiveList::List(objectives) => objectives,
+            ObjectiveList::Special(ObjectiveListSpecial::Checks) => &engine.checks,
+        }
+    }
+
+    fn new(engine: &Engine, columns: usize, objectives: &ObjectiveList) -> Self {
         let mut children = Vec::new();
+        let objectives = Self::deref_objectives(engine, objectives);
         for objective in objectives {
             let ty = if let Some(o) = engine.module.objectives.get(objective) {
                 o.ty.clone()
@@ -362,8 +370,9 @@ impl DisplayViewGrid {
         }
     }
 
-    fn update(&mut self, engine: &Engine, columns: usize, objectives: &Vec<String>) {
+    fn update(&mut self, engine: &Engine, columns: usize, objectives: &ObjectiveList) {
         self.columns = columns;
+        let objectives = Self::deref_objectives(engine, objectives);
         let mut ids = objectives.iter();
         let children = Arc::make_mut(&mut self.children);
         for child in children {
