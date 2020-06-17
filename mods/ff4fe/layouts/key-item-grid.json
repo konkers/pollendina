@@ -1,0 +1,26 @@
+{
+    "type": "Grid",
+    "inset": "large",
+    "columns": 4,
+    "objectives": [
+        "crystal",
+        "pass",
+        "hook",
+        "darkness-crystal",
+        "earth-crystal",
+        "twin-harp",
+        "package",
+        "sand-ruby",
+        "baron-key",
+        "magma-key",
+        "tower-key",
+        "luca-key",
+        "adamant",
+        "legend-sword",
+        "pan",
+        "spoon",
+        "d-mist",
+        "rat-tail",
+        "pink-tail"
+    ]
+}
