@@ -43,7 +43,7 @@ pub struct Manifest {
     pub objectives: Vec<ObjectiveInfoLoc>,
     #[serde(default)]
     pub maps: Vec<MapInfoLoc>,
-    pub layout: DisplayViewInfo,
+    pub layouts: HashMap<String, DisplayViewInfo>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
@@ -177,7 +177,13 @@ impl Module {
             path.display()
         ))?;
 
-        Self::process_display_includes(base_path, &mut manifest.layout)?;
+        if !manifest.layouts.contains_key(&"main".to_string()) {
+            return Err(format_err!("manifest does not contain 'main' layout."));
+        }
+
+        for (_, layout) in manifest.layouts.iter_mut() {
+            Self::process_display_includes(base_path, layout)?;
+        }
 
         let auto_track = match &manifest.auto_track {
             Some(path) => {
