@@ -75,6 +75,10 @@
         "checks": {
             "type": "Include",
             "path": "layouts/checks.json"
+        },
+        "boradcast": {
+            "type": "Include",
+            "path": "layouts/broadcast.json"
         }
     }
 }

@@ -1,0 +1,17 @@
+{
+    "type": "FlexCol",
+    "background": "bg-dark",
+    "inset": "small",
+    "window-width": 175,
+    "window-height": 225,
+    "children": [
+        {
+            "type": "Include",
+            "path": "layouts/key-item-grid.json"
+        },
+        {
+            "type": "Include",
+            "path": "layouts/key-item-count.json"
+        }
+    ]
+}
