@@ -34,7 +34,9 @@ pub struct ModuleParam {
 pub struct DisplayState {
     pub layout: DisplayView,
     pub popup: DisplayView,
+    pub broadcast: DisplayView,
     pub params: Arc<Vec<ModuleParam>>,
     pub auto_tracker_state: AutoTrackerState,
     pub config_win: Arc<Option<WindowId>>,
+    pub broadcast_win: Arc<Option<WindowId>>,
 }

@@ -69,6 +69,7 @@ impl ObjectiveState {
 pub struct Engine {
     module: Module,
     popup_info: DisplayViewInfo,
+    broadcast_info: Option<DisplayViewInfo>,
     objectives: HashMap<String, ObjectiveState>,
     eval_order: Vec<String>,
     auto_tracker: Option<AutoTrackerController>,
@@ -116,9 +117,16 @@ impl Engine {
             .ok_or(format_err!("Can't find 'checks' layout"))?
             .clone();
 
+        let broadcast_info = module
+            .manifest
+            .layouts
+            .get(&"boradcast".to_string())
+            .map(|o| o.clone());
+
         let mut engine = Engine {
             module,
             popup_info: popup_info,
+            broadcast_info: broadcast_info,
             objectives,
             eval_order,
             auto_tracker,
@@ -271,13 +279,19 @@ impl Engine {
         }
 
         let popup = DisplayView::new(self, &self.popup_info);
+        let broadcast = match &self.broadcast_info {
+            Some(info) => DisplayView::new(self, info),
+            None => Default::default(),
+        };
 
         let mut state = DisplayState {
             layout: layout,
             popup: popup,
+            broadcast,
             params: Arc::new(params),
             auto_tracker_state: AutoTrackerState::Idle,
             config_win: Arc::new(None),
+            broadcast_win: Arc::new(None),
         };
         self.update_display_state(&mut state);
 
@@ -293,6 +307,9 @@ impl Engine {
             .unwrap();
         data.layout.update(self, layout);
         data.popup.update(self, &self.popup_info);
+        if let Some(info) = &self.broadcast_info {
+            data.broadcast.update(self, info);
+        }
     }
 
     pub fn update_param_state(&self, data: &mut DisplayState) {
@@ -395,6 +412,23 @@ impl Engine {
 
         self.update_display_state(data);
         Ok(())
+    }
+
+    pub fn broadcast_window_size(&self) -> Option<(f64, f64)> {
+        let (w, h) = if let Some(info) = &self.broadcast_info {
+            (
+                info.layout_params.window_width,
+                info.layout_params.window_height,
+            )
+        } else {
+            (0., 0.)
+        };
+
+        if w > 0. && h > 0. {
+            Some((w, h))
+        } else {
+            None
+        }
     }
 
     pub fn dump_state(&self) -> Result<(), Error> {
