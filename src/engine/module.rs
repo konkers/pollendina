@@ -119,6 +119,9 @@ pub enum DisplayViewInfoView {
         labels: Vec<String>,
         children: Vec<DisplayViewInfo>,
     },
+    Include {
+        path: String,
+    },
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
@@ -166,13 +169,15 @@ impl Module {
 
         let manifest_str = std::fs::read_to_string(&path)
             .map_err(|e| format_err!("Failed to open {}: {}", path.display(), e))?;
-        let manifest: Manifest = serde_json::from_str(&manifest_str)
+        let mut manifest: Manifest = serde_json::from_str(&manifest_str)
             .map_err(|e| format_err!("Failed to parse {}: {}", path.display(), e))?;
 
         let base_path = path.parent().ok_or(format_err!(
             "Can't get parent directory of {}",
             path.display()
         ))?;
+
+        Self::process_display_includes(base_path, &mut manifest.layout)?;
 
         let auto_track = match &manifest.auto_track {
             Some(path) => {
@@ -210,6 +215,48 @@ impl Module {
         // TODO(konkers): verify module integrity
         //  All id references should resolve (display and elsewhere)
         Ok(module)
+    }
+
+    fn process_display_includes(base_path: &Path, info: &mut DisplayViewInfo) -> Result<(), Error> {
+        match &mut info.view {
+            // Views with no children require no processing.
+            DisplayViewInfoView::Grid {
+                columns: _,
+                objectives: _,
+            }
+            | DisplayViewInfoView::Count { objective_type: _ }
+            | DisplayViewInfoView::Map { maps: _ }
+            | DisplayViewInfoView::Spacer {} => (),
+
+            // Views will children need to recurse.
+            DisplayViewInfoView::FlexRow { children }
+            | DisplayViewInfoView::FlexCol { children }
+            | DisplayViewInfoView::Tabs {
+                labels: _,
+                children,
+            } => {
+                for child in children.iter_mut() {
+                    Self::process_display_includes(base_path, child)?;
+                }
+            }
+
+            DisplayViewInfoView::Include { path } => {
+                *info = Self::open_display_include(base_path, &path)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn open_display_include(base_path: &Path, path: &String) -> Result<DisplayViewInfo, Error> {
+        let path = base_path.join(PathBuf::from_slash(path));
+        let layout_str = std::fs::read_to_string(&path)
+            .map_err(|e| format_err!("Failed to open {}: {}", path.display(), e))?;
+        let mut info: DisplayViewInfo = serde_json::from_str(&layout_str)
+            .map_err(|e| format_err!("Failed to parse {}: {}", path.display(), e))?;
+
+        Self::process_display_includes(base_path, &mut info)?;
+        Ok(info)
     }
 
     fn import_objectives(&mut self, base_path: &Path) -> Result<(), Error> {
