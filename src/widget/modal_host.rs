@@ -129,7 +129,14 @@ impl<T: Data> Widget<T> for ModalHost<T> {
             let modal_constraints = BoxConstraints::new(Size::ZERO, size);
             let modal_size = modal.layout(ctx, &modal_constraints, data, env);
             //let modal_orig = (size.to_vec2() - modal_size.to_vec2()) / 2.0;
-            let modal_frame = Rect::from_origin_size(self.modal_pos, modal_size);
+
+            // ensure that the modal is fully visible.
+            let pos = (
+                self.modal_pos.x.min(size.width - modal_size.width),
+                self.modal_pos.y.min(size.height - modal_size.height),
+            );
+
+            let modal_frame = Rect::from_origin_size(pos, modal_size);
             self.modal_rect = modal_frame.clone();
             modal.set_layout_rect(ctx, data, env, modal_frame);
         } else {
