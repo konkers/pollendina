@@ -275,8 +275,7 @@ fn main() -> Result<(), Error> {
         .menu(app_menu())
         .title("Pollendina")
         .window_size((650., 500.))
-        .with_min_size((650., 500.))
-        .show_titlebar(false);
+        .with_min_size((650., 500.));
     let app = AppLauncher::with_window(main_window);
 
     println!("{:?}", std::env::current_exe());
