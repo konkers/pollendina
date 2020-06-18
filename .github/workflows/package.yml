@@ -6,12 +6,15 @@ name: Package
 on:
   push:
     branches: [main]
+    tags:
+      - "*"
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  test-stable:
+  build_package:
+    needs: create_release
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -19,6 +22,12 @@ jobs:
     name: package app
     steps:
       - uses: actions/checkout@v2
+
+      - name: Setup Environment
+        run: |
+          ./.github/workflows/env-setup.sh CREATE_RELEASE
+          ./.github/workflows/env-setup.sh ARTIFACT_SUFFIX
+        shell: bash
 
       - uses: actions/cache@v2
         with:
@@ -67,16 +76,31 @@ jobs:
       - name: create dmg
         if: contains(matrix.os, 'macOS')
         run: |
-          mkdir -p target/release/bundle/osx/Pollendina
-          cp -a target/release/bundle/osx/Pollendina.app target/release/bundle/osx/Pollendina
-          hdiutil create target/release/bundle/osx/Pollendina.dmg -srcfolder target/release/bundle/osx/Pollendina -ov
+          mkdir -p target/release/bundle/osx/Pollendina${{env.ARTIFACT_SUFFIX}}
+          cp -a target/release/bundle/osx/Pollendina.app \
+            target/release/bundle/osx/Pollendina${{env.ARTIFACT_SUFFIX}}
+          hdiutil create \
+            target/release/bundle/osx/Pollendina-mac${{env.ARTIFACT_SUFFIX}}.dmg \
+            -srcfolder target/release/bundle/osx/Pollendina${{env.ARTIFACT_SUFFIX}} \
+            -ov
 
       - name: upload mac package
         if: contains(matrix.os, 'macOS')
         uses: actions/upload-artifact@v2
         with:
-          name: Pollendina.dmg
-          path: target/release/bundle/osx/Pollendina.dmg
+          name: Pollendina-mac${{env.ARTIFACT_SUFFIX}}.dmg
+          path: target/release/bundle/osx/Pollendina-mac${{env.ARTIFACT_SUFFIX}}.dmg
+
+      - name: upload mac release artifact
+        if: contains(matrix.os, 'macOS') && env.CREATE_RELEASE == 'true'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_name: Pollendina-mac${{env.ARTIFACT_SUFFIX}}.dmg
+          asset_path: target/release/bundle/osx/Pollendina-mac${{env.ARTIFACT_SUFFIX}}.dmg
+          asset_content_type: application/octet-stream
 
       - name: install cargo wix
         if: contains(matrix.os, 'windows')
@@ -90,12 +114,48 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: wix
-          args: --nocapture
+          args: --nocapture --output=target/wix/pollendina-win${{env.ARTIFACT_SUFFIX}}.msi
 
       # this will need to be updated every release
       - name: upload windows installer
         if: contains(matrix.os, 'windows')
         uses: actions/upload-artifact@v2
         with:
-          name: pollendina.msi
-          path: target/wix/pollendina*.msi
+          name: pollendina-win${{env.ARTIFACT_SUFFIX}}.msi
+          path: target/wix/pollendina-win${{env.ARTIFACT_SUFFIX}}.msi
+
+      - name: upload windows release artifact
+        if: contains(matrix.os, 'windows') && env.CREATE_RELEASE == 'true'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_name: pollendina-win${{env.ARTIFACT_SUFFIX}}.msi
+          asset_path: target/wix/pollendina-win${{env.ARTIFACT_SUFFIX}}.msi
+          asset_content_type: application/octet-stream
+
+  create_release:
+    name: Create release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Environment
+        run: |
+          ./.github/workflows/env-setup.sh CREATE_RELEASE
+        shell: bash
+
+      - name: Create release
+        if: env.CREATE_RELEASE == 'true'
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Pollendina ${{ github.ref }}
+          draft: false
+          prerelease: true
