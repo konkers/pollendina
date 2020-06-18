@@ -8,3 +8,4 @@
   - [Config Window](./02_quick_start_config_window.md)
   - [Broadcast Window](./02_quick_start_broadcast_window.md)
 - [Auto Tracking](./03_auto_tracking.md)
+- [Credits](./04_credits.md)
