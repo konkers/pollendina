@@ -19,5 +19,5 @@ availability of checks at that location:
 
 Clicking one of the location circles will bring up the checks pop-up listing all
 the checks at that location and their states. The checks are color coded
-using the same scheme described in the [Key Item View](./02_quick_start_key_item_view.md) section.
+using the same scheme described in the [Key Item View](./03_02_quick_start_key_item_view.md) section.
 Clicking outside the popup will close it.
