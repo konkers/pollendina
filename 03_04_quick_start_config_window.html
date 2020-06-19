@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Auto Tracking - Pollendina User Guilde</title>
+        <title>Config Window - Pollendina User Guilde</title>
         
 
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
@@ -81,7 +81,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div id="sidebar-scrollbox" class="sidebar-scrollbox">
-                <ol class="chapter"><li class="expanded "><a href="01_intro.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="expanded "><a href="02_quick_start.html"><strong aria-hidden="true">2.</strong> Quick Start</a></li><li><ol class="section"><li class="expanded "><a href="02_quick_start_action_bar.html"><strong aria-hidden="true">2.1.</strong> Action Bar</a></li><li class="expanded "><a href="02_quick_start_key_item_view.html"><strong aria-hidden="true">2.2.</strong> Key Item View</a></li><li class="expanded "><a href="02_quick_start_map_view.html"><strong aria-hidden="true">2.3.</strong> Map View</a></li><li class="expanded "><a href="02_quick_start_config_window.html"><strong aria-hidden="true">2.4.</strong> Config Window</a></li><li class="expanded "><a href="02_quick_start_broadcast_window.html"><strong aria-hidden="true">2.5.</strong> Broadcast Window</a></li></ol></li><li class="expanded "><a href="03_auto_tracking.html" class="active"><strong aria-hidden="true">3.</strong> Auto Tracking</a></li><li class="expanded "><a href="04_credits.html"><strong aria-hidden="true">4.</strong> Credits</a></li></ol>
+                <ol class="chapter"><li class="expanded "><a href="01_intro.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="expanded "><a href="02_install.html"><strong aria-hidden="true">2.</strong> Installation</a></li><li class="expanded "><a href="03_quick_start.html"><strong aria-hidden="true">3.</strong> Quick Start</a></li><li><ol class="section"><li class="expanded "><a href="03_01_quick_start_action_bar.html"><strong aria-hidden="true">3.1.</strong> Action Bar</a></li><li class="expanded "><a href="03_02_quick_start_key_item_view.html"><strong aria-hidden="true">3.2.</strong> Key Item View</a></li><li class="expanded "><a href="03_03_quick_start_map_view.html"><strong aria-hidden="true">3.3.</strong> Map View</a></li><li class="expanded "><a href="03_04_quick_start_config_window.html" class="active"><strong aria-hidden="true">3.4.</strong> Config Window</a></li><li class="expanded "><a href="03_05_quick_start_broadcast_window.html"><strong aria-hidden="true">3.5.</strong> Broadcast Window</a></li></ol></li><li class="expanded "><a href="04_auto_tracking.html"><strong aria-hidden="true">4.</strong> Auto Tracking</a></li><li class="expanded "><a href="05_credits.html"><strong aria-hidden="true">5.</strong> Credits</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -148,54 +148,23 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1><a class="header" href="#auto-tracking" id="auto-tracking">Auto Tracking</a></h1>
-<h2><a class="header" href="#setup" id="setup">Setup</a></h2>
-<p>Pollendina needs a usb2snes service for auto tracking. Two programs provide
-this service:</p>
-<ul>
-<li><a href="https://github.com/RedGuyyyy/sd2snes/releases">usb2snes</a> (Windows only)</li>
-<li><a href="https://skarsnik.github.io/QUsb2snes/">QUsb2snes</a> (Windows, Mac, Linux)</li>
-</ul>
-<p>QUsb2snes is probably a better choice. It's newer, has more features and
-support more platforms.</p>
-<p>The <a href="https://skarsnik.github.io/QUsb2snes/">SMZ3r multiworld setup instructions</a>
-cover getting these programs set up on both SD2SNES(FXPAK) and Emulator.</p>
-<p>The following configurations have been tested:</p>
-<table><thead><tr><th></th><th>Windows</th><th>Mac</th><th>Linux</th></tr></thead><tbody>
-<tr><td>SD2SNES(FXPAK)</td><td>✅</td><td>✅</td><td>✅</td></tr>
-<tr><td>Snes9x-rr-1.55-multitroid2</td><td>✅</td><td>🟡</td><td>🟡</td></tr>
-<tr><td>bsnes-mercury-balanced</td><td>🟡</td><td>🟡</td><td>✅</td></tr>
-</tbody></table>
-<ul>
-<li>✅ Know working</li>
-<li>🟡 Untested</li>
-<li>❌ Know not working</li>
-</ul>
-<h2><a class="header" href="#usage" id="usage">Usage</a></h2>
-<p>To use auto-tracking:</p>
-<ul>
-<li>Make sure you have the usb2snes service set up per the above instructions.</li>
-<li>Load an Free Enterprise rom.</li>
-<li>Click the <code>Start auto tracking</code> button.
-<ul>
-<li><strong><em>NOTE!!! Pollendina will only connect to the first usb2snes devices it sees.</em></strong></li>
-</ul>
-</li>
-<li>If all goes well you should see the <code>Idle</code> status change to <code>Connected</code></li>
-</ul>
+                        <h1><a class="header" href="#config-window" id="config-window">Config Window</a></h1>
+<p><img src="images/config-win.png" alt="Config Window" /></p>
+<p>The config window allows you to set the game flags. Both its UI and features
+are very basic and will change drastically in the future.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
                         
-                            <a rel="prev" href="02_quick_start_broadcast_window.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="03_03_quick_start_map_view.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
                         
 
                         
-                            <a rel="next" href="04_credits.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next" href="03_05_quick_start_broadcast_window.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
                         
@@ -207,13 +176,13 @@ cover getting these programs set up on both SD2SNES(FXPAK) and Emulator.</p>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
                 
-                    <a href="02_quick_start_broadcast_window.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a href="03_03_quick_start_map_view.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
                 
 
                 
-                    <a href="04_credits.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a href="03_05_quick_start_broadcast_window.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
                 

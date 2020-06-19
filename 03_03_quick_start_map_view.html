@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Config Window - Pollendina User Guilde</title>
+        <title>Map View - Pollendina User Guilde</title>
         
 
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
@@ -81,7 +81,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div id="sidebar-scrollbox" class="sidebar-scrollbox">
-                <ol class="chapter"><li class="expanded "><a href="01_intro.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="expanded "><a href="02_quick_start.html"><strong aria-hidden="true">2.</strong> Quick Start</a></li><li><ol class="section"><li class="expanded "><a href="02_quick_start_action_bar.html"><strong aria-hidden="true">2.1.</strong> Action Bar</a></li><li class="expanded "><a href="02_quick_start_key_item_view.html"><strong aria-hidden="true">2.2.</strong> Key Item View</a></li><li class="expanded "><a href="02_quick_start_map_view.html"><strong aria-hidden="true">2.3.</strong> Map View</a></li><li class="expanded "><a href="02_quick_start_config_window.html" class="active"><strong aria-hidden="true">2.4.</strong> Config Window</a></li><li class="expanded "><a href="02_quick_start_broadcast_window.html"><strong aria-hidden="true">2.5.</strong> Broadcast Window</a></li></ol></li><li class="expanded "><a href="03_auto_tracking.html"><strong aria-hidden="true">3.</strong> Auto Tracking</a></li><li class="expanded "><a href="04_credits.html"><strong aria-hidden="true">4.</strong> Credits</a></li></ol>
+                <ol class="chapter"><li class="expanded "><a href="01_intro.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="expanded "><a href="02_install.html"><strong aria-hidden="true">2.</strong> Installation</a></li><li class="expanded "><a href="03_quick_start.html"><strong aria-hidden="true">3.</strong> Quick Start</a></li><li><ol class="section"><li class="expanded "><a href="03_01_quick_start_action_bar.html"><strong aria-hidden="true">3.1.</strong> Action Bar</a></li><li class="expanded "><a href="03_02_quick_start_key_item_view.html"><strong aria-hidden="true">3.2.</strong> Key Item View</a></li><li class="expanded "><a href="03_03_quick_start_map_view.html" class="active"><strong aria-hidden="true">3.3.</strong> Map View</a></li><li class="expanded "><a href="03_04_quick_start_config_window.html"><strong aria-hidden="true">3.4.</strong> Config Window</a></li><li class="expanded "><a href="03_05_quick_start_broadcast_window.html"><strong aria-hidden="true">3.5.</strong> Broadcast Window</a></li></ol></li><li class="expanded "><a href="04_auto_tracking.html"><strong aria-hidden="true">4.</strong> Auto Tracking</a></li><li class="expanded "><a href="05_credits.html"><strong aria-hidden="true">5.</strong> Credits</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -148,23 +148,39 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1><a class="header" href="#config-window" id="config-window">Config Window</a></h1>
-<p><img src="images/config-win.png" alt="Config Window" /></p>
-<p>The config window allows you to set the game flags. Both its UI and features
-are very basic and will change drastically in the future.</p>
+                        <h1><a class="header" href="#map-view" id="map-view">Map View</a></h1>
+<p>The Map View shows all the location in the game on the game's maps. There are multiple
+map views which can be selected by clicking on one of the buttons:</p>
+<p><img src="images/map_views.png" alt="Map View Selectors" /></p>
+<p>Each location is represented by a colored circle. The circles color indicates a the
+availability of checks at that location:</p>
+<ul>
+<li><img src="images/loc-locked.png" alt="No Checks" /> No checks available. Even if some checks are
+complete, the location will be in this state if there are some checks that are
+not yet available.</li>
+<li><img src="images/loc-unlocked.png" alt="Some Checks" /> At least one check is available.</li>
+<li><img src="images/loc-complete.png" alt="All Checks Completed" /> All checks have been completed.</li>
+<li><img src="images/loc-disabled.png" alt="Disabled" /> If there are no checks at the locations
+because all its checks have been disabled by flags, it will not appear on the
+map.</li>
+</ul>
+<p>Clicking one of the location circles will bring up the checks pop-up listing all
+the checks at that location and their states. The checks are color coded
+using the same scheme described in the <a href="./03_02_quick_start_key_item_view.html">Key Item View</a> section.
+Clicking outside the popup will close it.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
                         
-                            <a rel="prev" href="02_quick_start_map_view.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="03_02_quick_start_key_item_view.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
                         
 
                         
-                            <a rel="next" href="02_quick_start_broadcast_window.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next" href="03_04_quick_start_config_window.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
                         
@@ -176,13 +192,13 @@ are very basic and will change drastically in the future.</p>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
                 
-                    <a href="02_quick_start_map_view.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a href="03_02_quick_start_key_item_view.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
                 
 
                 
-                    <a href="02_quick_start_broadcast_window.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a href="03_04_quick_start_config_window.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
                 
