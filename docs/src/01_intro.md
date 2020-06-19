@@ -11,7 +11,7 @@ computer. It is heavily inspired by the amazing [EmoTracker](https://emotracker.
 
 Pollendina's notable features are:
 
-- Supports **Windows** and **MacOS**.
+- Supports **Windows**, **MacOS**, **Linux**.
 - Supports **auto tracking** using [usb2snes](http://usb2snes.com/) and
   [QUsb2snes](https://skarsnik.github.io/QUsb2snes/)
 - Dynamic map and objective support.
@@ -20,7 +20,6 @@ Pollendina's notable features are:
 
 Planned features:
 
-- Support for Linux.
 - Modules for randomizers other than Free Enterprise.
 - Developer documentation.
 
