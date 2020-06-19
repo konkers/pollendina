@@ -36,6 +36,7 @@ identifier = "io.github.konkers.pollendina"
 resources = ["mods"]
 icon = ["resources/icon-32x32.png", "resources/icon-128x128.png"]
 osx_minimum_system_version = "10.13"
+deb_deps = ["libgtk-3", "libx11"]
 
 [package.metadata.wix]
 compiler-args = ["-dModsSource=mods", "-arch", "x64"]
