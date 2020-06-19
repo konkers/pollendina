@@ -1,0 +1,351 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Pollendina User Guilde</title>
+        
+        <meta name="robots" content="noindex" />
+        
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+        <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:500" rel="stylesheet" type="text/css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+
+        
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "light" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div id="sidebar-scrollbox" class="sidebar-scrollbox">
+                <ol class="chapter"><li class="expanded "><a href="01_intro.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="expanded "><a href="02_quick_start.html"><strong aria-hidden="true">2.</strong> Quick Start</a></li><li><ol class="section"><li class="expanded "><a href="02_quick_start_action_bar.html"><strong aria-hidden="true">2.1.</strong> Action Bar</a></li><li class="expanded "><a href="02_quick_start_key_item_view.html"><strong aria-hidden="true">2.2.</strong> Key Item View</a></li><li class="expanded "><a href="02_quick_start_map_view.html"><strong aria-hidden="true">2.3.</strong> Map View</a></li><li class="expanded "><a href="02_quick_start_config_window.html"><strong aria-hidden="true">2.4.</strong> Config Window</a></li><li class="expanded "><a href="02_quick_start_broadcast_window.html"><strong aria-hidden="true">2.5.</strong> Broadcast Window</a></li></ol></li><li class="expanded "><a href="03_auto_tracking.html"><strong aria-hidden="true">3.</strong> Auto Tracking</a></li><li class="expanded "><a href="04_credits.html"><strong aria-hidden="true">4.</strong> Credits</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar" class="menu-bar">
+                    <div id="menu-bar-sticky-container">
+                        <div class="left-buttons">
+                            <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                                <i class="fa fa-bars"></i>
+                            </button>
+                            <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                                <i class="fa fa-paint-brush"></i>
+                            </button>
+                            <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                                <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                            </ul>
+                            
+                            <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                                <i class="fa fa-search"></i>
+                            </button>
+                            
+                        </div>
+
+                        <h1 class="menu-title">Pollendina User Guilde</h1>
+
+                        <div class="right-buttons">
+                            <a href="print.html" title="Print this book" aria-label="Print this book">
+                                <i id="print-button" class="fa fa-print"></i>
+                            </a>
+                            
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1><a class="header" href="#introduction" id="introduction">Introduction</a></h1>
+<p><img src="images/main_window.png" alt="Main Window" /></p>
+<p>Pollendina is an randomizer tracker that runs as a native app on your
+computer. It is heavily inspired by the amazing <a href="https://emotracker.net/">EmoTracker</a></p>
+<p><strong><em>Pollendina is in it's early stages and under HEAVY, ACTIVE DEVELOPMENT!</em></strong></p>
+<p><strong><em>The user interface is likely to change throughout the alpha releases!</em></strong></p>
+<p>Pollendina's notable features are:</p>
+<ul>
+<li>Supports <strong>Windows</strong> and <strong>MacOS</strong>.</li>
+<li>Supports <strong>auto tracking</strong> using <a href="http://usb2snes.com/">usb2snes</a> and
+<a href="https://skarsnik.github.io/QUsb2snes/">QUsb2snes</a></li>
+<li>Dynamic map and objective support.</li>
+<li>Game support is added through an <strong>extensible module system</strong>.</li>
+<li>Comes bundled with <a href="http://ff4fe.com">Free Enterprise</a> module.</li>
+</ul>
+<p>Planned features:</p>
+<ul>
+<li>Support for Linux.</li>
+<li>Modules for randomizers other than Free Enterprise.</li>
+<li>Developer documentation.</li>
+</ul>
+<p>Planned Free Enterprise features:</p>
+<ul>
+<li>Flag string parsing.</li>
+<li>Automatic flag string detection from the auto-tracker.</li>
+<li>Objective support.</li>
+</ul>
+<h1><a class="header" href="#quick-start" id="quick-start">Quick Start</a></h1>
+<h2><a class="header" href="#main-window" id="main-window">Main Window</a></h2>
+<p><img src="images/main_window.png" alt="Main Window" /></p>
+<p>The main window is divided into tree sections:</p>
+<ol>
+<li><a href="./02_quick_start_action_bar.html"><strong>Action Bar</strong></a> at the top of the window.</li>
+<li><a href="./02_quick_start_key_item_view.html"><strong>Key Item View</strong></a> at the left of the window.</li>
+<li><a href="./02_quick_start_map_view.html"><strong>Map View</strong></a> at the right of the window.</li>
+</ol>
+<p>In addition the main window, there are two additional windows:</p>
+<ol>
+<li><a href="./02_quick_start_config_window.html"><strong>Config Window</strong></a></li>
+<li><a href="./02_quick_start_broadcast_window.html"><strong>Broadcast View Window</strong></a></li>
+</ol>
+<h1><a class="header" href="#action-bar" id="action-bar">Action Bar</a></h1>
+<p><img src="./images/action-bar.png" alt="Action Bar" /></p>
+<p>The Action Bar is where all the non-game related actions live. Almost no
+work has been spend on its UI so expect it to change in the future. The
+actions are:</p>
+<ul>
+<li><strong>Start/Stop auto tracking</strong> starts and stops the auto tracker. See the
+<a href="./03_auto_tracking.html">Auto Tracking</a> Chapter for more information.</li>
+<li><strong>Dump</strong> dumps application state to the console. This is not useful
+unless you are running the app from the command line.</li>
+<li><strong>Broadcast View</strong> opens the broadcast view window. See the
+<a href="./02_quick_start_broadcast_window.html">Broadcast View Window</a> section for more information</li>
+<li><strong>Config</strong> opens the config window. See the <a href="./02_quick_start_config_window.html">Config Window</a>
+section for more information.</li>
+</ul>
+<h1><a class="header" href="#key-item-view" id="key-item-view">Key Item View</a></h1>
+<p>The Key Item View displays all the key items in the game. Key Items in this view
+have 3 states. Each state has a distinct appearance.</p>
+<ul>
+<li><img src="images/twin_harp_locked.png" alt="Twin Harp Locked" />
+<strong>Locked</strong>: Key item has not been found.</li>
+<li><img src="images/twin_harp_unlocked.png" alt="Twin Harp Locked" />
+<strong>Unlocked</strong>: Key item has been found.</li>
+<li><img src="images/twin_harp_complete.png" alt="Twin Harp Locked" />
+<strong>Complete</strong>: Key item has used.</li>
+</ul>
+<p>Clicking on a key item will change its state from <strong>locked</strong>, to <strong>unlocked</strong>, to
+<strong>complete</strong>, and back to <strong>locked</strong> again. If auto tracking is active, it will
+override key items that are auto tracked.</p>
+<h1><a class="header" href="#map-view" id="map-view">Map View</a></h1>
+<p>The Map View shows all the location in the game on the game's maps. There are multiple
+map views which can be selected by clicking on one of the buttons:</p>
+<p><img src="images/map_views.png" alt="Map View Selectors" /></p>
+<p>Each location is represented by a colored circle. The circles color indicates a the
+availability of checks at that location:</p>
+<ul>
+<li><img src="images/loc-locked.png" alt="No Checks" /> No checks available. Even if some checks are
+complete, the location will be in this state if there are some checks that are
+not yet available.</li>
+<li><img src="images/loc-unlocked.png" alt="Some Checks" /> At least one check is available.</li>
+<li><img src="images/loc-complete.png" alt="All Checks Completed" /> All checks have been completed.</li>
+<li><img src="images/loc-disabled.png" alt="Disabled" /> If there are no checks at the locations
+because all its checks have been disabled by flags, it will not appear on the
+map.</li>
+</ul>
+<p>Clicking one of the location circles will bring up the checks pop-up listing all
+the checks at that location and their states. The checks are color coded
+using the same scheme described in the <a href="./02_quick_start_key_item_view.html">Key Item View</a> section.
+Clicking outside the popup will close it.</p>
+<h1><a class="header" href="#config-window" id="config-window">Config Window</a></h1>
+<p><img src="images/config-win.png" alt="Config Window" /></p>
+<p>The config window allows you to set the game flags. Both its UI and features
+are very basic and will change drastically in the future.</p>
+<h1><a class="header" href="#broadcast-window" id="broadcast-window">Broadcast Window</a></h1>
+<p><img src="images/broadcast-win.png" alt="Broadcast View Window" /></p>
+<p>The broadcast view is a simplifies view of the game state. It is useful for
+capturing and adding to your stream overlay to let people know what how
+your seed is going.</p>
+<h1><a class="header" href="#auto-tracking" id="auto-tracking">Auto Tracking</a></h1>
+<h2><a class="header" href="#setup" id="setup">Setup</a></h2>
+<p>Pollendina needs a usb2snes service for auto tracking. Two programs provide
+this service:</p>
+<ul>
+<li><a href="https://github.com/RedGuyyyy/sd2snes/releases">usb2snes</a> (Windows only)</li>
+<li><a href="https://skarsnik.github.io/QUsb2snes/">QUsb2snes</a> (Windows, Mac, Linux)</li>
+</ul>
+<p>QUsb2snes is probably a better choice. It's newer, has more features and
+support more platforms.</p>
+<p>The <a href="https://skarsnik.github.io/QUsb2snes/">SMZ3r multiworld setup instructions</a>
+cover getting these programs set up on both SD2SNES(FXPAK) and Emulator.</p>
+<p>The following configurations have been tested:</p>
+<table><thead><tr><th></th><th>Windows</th><th>Mac</th><th>Linux</th></tr></thead><tbody>
+<tr><td>SD2SNES(FXPAK)</td><td>✅</td><td>✅</td><td>✅</td></tr>
+<tr><td>Snes9x-rr-1.55-multitroid2</td><td>✅</td><td>🟡</td><td>🟡</td></tr>
+<tr><td>bsnes-mercury-balanced</td><td>🟡</td><td>🟡</td><td>✅</td></tr>
+</tbody></table>
+<ul>
+<li>✅ Know working</li>
+<li>🟡 Untested</li>
+<li>❌ Know not working</li>
+</ul>
+<h2><a class="header" href="#usage" id="usage">Usage</a></h2>
+<p>To use auto-tracking:</p>
+<ul>
+<li>Make sure you have the usb2snes service set up per the above instructions.</li>
+<li>Load an Free Enterprise rom.</li>
+<li>Click the <code>Start auto tracking</code> button.
+<ul>
+<li><strong><em>NOTE!!! Pollendina will only connect to the first usb2snes devices it sees.</em></strong></li>
+</ul>
+</li>
+<li>If all goes well you should see the <code>Idle</code> status change to <code>Connected</code></li>
+</ul>
+<h1><a class="header" href="#credits" id="credits">Credits</a></h1>
+<p>Much of the design has been heavily inspired by the amazing
+<a href="https://emotracker.net/">EmoTracker</a></p>
+<p>Icons for the Free Enterprise module were created by SchalaKitty</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+
+        
+        
+        
+        <script type="text/javascript">
+            window.playpen_copyable = true;
+        </script>
+        
+
+        
+
+        
+        <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+        
+        <script type="text/javascript">
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+        
+        
+
+    </body>
+</html>
