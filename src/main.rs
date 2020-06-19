@@ -227,7 +227,7 @@ fn get_pkg_path() -> Result<PathBuf, Error> {
 
 #[cfg(target_os = "linux")]
 fn get_pkg_path() -> Result<PathBuf, Error> {
-    Err(format_err!("unsupported"))
+    Ok("/usr/lib/pollendina".into())
 }
 
 fn get_mod_paths() -> Vec<PathBuf> {
