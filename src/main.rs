@@ -231,24 +231,12 @@ fn get_pkg_path() -> Result<PathBuf, Error> {
 }
 
 fn get_mod_paths() -> Vec<PathBuf> {
-    let mut paths = Vec::new();
-    if let Ok(p) = get_dev_path() {
-        paths.push(p);
-    }
-
-    if let Ok(p) = get_pkg_path() {
-        paths.push(p);
-    }
-
-    // Include both the exe directory and CWD as fallbacks.
-    if let Ok(p) = get_exe_dir() {
-        paths.push(p);
-    }
-    if let Ok(p) = std::env::current_dir() {
-        paths.push(p);
-    }
-
-    paths
+    [get_dev_path, get_pkg_path, get_exe_dir, || {
+        std::env::current_dir().map_err(From::from)
+    }]
+    .iter()
+    .filter_map(|f| f().ok())
+    .collect()
 }
 
 fn resolve_module_path<P: AsRef<Path>>(path: P) -> Result<PathBuf, Error> {
