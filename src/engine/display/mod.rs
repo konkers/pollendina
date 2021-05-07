@@ -7,7 +7,7 @@ mod view;
 pub use view::{
     CornerRadius, DisplayChild, DisplayView, DisplayViewCount, DisplayViewData, DisplayViewFlex,
     DisplayViewGrid, DisplayViewMap, DisplayViewSpacer, DisplayViewTabChild, DisplayViewTabs,
-    Inset, LayoutParams, MapInfo, MapObjective, ThemeColor,
+    Inset, LayoutParams, MapInfo, MapNode, ThemeColor,
 };
 
 #[derive(Clone, Data, Lens, PartialEq)]

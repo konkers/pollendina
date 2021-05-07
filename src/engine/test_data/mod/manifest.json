@@ -10,7 +10,7 @@
             "type": "TextBox"
         }
     ],
-    "objectives": [
+    "nodes": [
         {
             "type": "key-items",
             "path": "key-items.json"
@@ -20,7 +20,7 @@
         "main": {
             "type": "Grid",
             "columns": 2,
-            "objectives": [
+            "nodes": [
                 "cave-key",
                 "sword-of-might"
             ]
@@ -28,7 +28,7 @@
         "checks": {
             "type": "Grid",
             "columns": 2,
-            "objectives": "checks"
+            "nodes": "checks"
         }
     }
 }

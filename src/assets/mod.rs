@@ -5,7 +5,7 @@ use std::thread_local;
 
 pub mod image;
 
-pub(crate) use self::image::{add_image_to_cache, add_objective_to_cache, ImageData};
+pub(crate) use self::image::{add_image_to_cache, add_node_to_cache, ImageData};
 
 thread_local! {
     pub(crate) static IMAGES: RefCell<AssetStore<ImageData>> = RefCell::new(AssetStore::new());

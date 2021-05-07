@@ -11,7 +11,7 @@ use super::expression::Expression;
 use super::{CornerRadius, Inset, ThemeColor};
 
 #[derive(Debug, Deserialize, PartialEq)]
-pub struct ObjectiveInfoLoc {
+pub struct NodeInfoLoc {
     #[serde(rename = "type")]
     ty: String,
     path: String,
@@ -40,14 +40,14 @@ pub struct Manifest {
     pub auto_track: Option<String>,
     #[serde(default)]
     pub params: Vec<Param>,
-    pub objectives: Vec<ObjectiveInfoLoc>,
+    pub nodes: Vec<NodeInfoLoc>,
     #[serde(default)]
     pub maps: Vec<MapInfoLoc>,
     pub layouts: HashMap<String, DisplayViewInfo>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
-pub struct ObjectiveCheck {
+pub struct NodeCheck {
     #[serde(default, rename = "type")]
     pub ty: String,
     #[serde(default)]
@@ -61,7 +61,7 @@ pub struct ObjectiveCheck {
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
-pub struct ObjectiveInfo {
+pub struct NodeInfo {
     pub id: String,
     #[serde(default, rename = "type")]
     pub ty: String,
@@ -73,11 +73,11 @@ pub struct ObjectiveInfo {
     #[serde(default, rename = "unlocked-by")]
     pub unlocked_by: Expression,
     #[serde(default)]
-    pub checks: Vec<ObjectiveCheck>,
+    pub checks: Vec<NodeCheck>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
-pub struct MapObjective {
+pub struct MapNode {
     pub id: String,
     pub x: u64,
     pub y: u64,
@@ -89,24 +89,24 @@ pub struct MapInfo {
     pub name: String,
     pub width: u64,
     pub height: u64,
-    #[serde(rename = "objective-radius")]
-    pub objective_radius: f64,
+    #[serde(rename = "node-radius")]
+    pub node_radius: f64,
     #[serde(default)]
-    pub objectives: Vec<MapObjective>,
+    pub nodes: Vec<MapNode>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
-pub enum ObjectiveListSpecial {
+pub enum NodeListSpecial {
     Checks,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(untagged)]
 #[serde(rename_all = "kebab-case")]
-pub enum ObjectiveList {
+pub enum NodeList {
     List(Vec<String>),
-    Special(ObjectiveListSpecial),
+    Special(NodeListSpecial),
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
@@ -114,10 +114,10 @@ pub enum ObjectiveList {
 pub enum DisplayViewInfoView {
     Grid {
         columns: usize,
-        objectives: ObjectiveList,
+        nodes: NodeList,
     },
     Count {
-        objective_type: String,
+        node_type: String,
     },
     Map {
         maps: Vec<String>,
@@ -179,7 +179,7 @@ pub struct AssetInfo {
 
 pub struct Module {
     pub manifest: Manifest,
-    pub objectives: HashMap<String, ObjectiveInfo>,
+    pub nodes: HashMap<String, NodeInfo>,
     pub maps: HashMap<String, MapInfo>,
     pub auto_track: Option<String>,
     pub assets: Vec<AssetInfo>,
@@ -222,13 +222,13 @@ impl Module {
 
         let mut module = Module {
             manifest,
-            objectives: HashMap::new(),
+            nodes: HashMap::new(),
             maps: HashMap::new(),
             auto_track,
             assets: Vec::new(),
         };
 
-        module.import_objectives(&base_path)?;
+        module.import_nods(&base_path)?;
 
         for loc in &module.manifest.maps {
             let map_path = base_path.join(PathBuf::from_slash(&loc.path));
@@ -253,9 +253,9 @@ impl Module {
             // Views with no children require no processing.
             DisplayViewInfoView::Grid {
                 columns: _,
-                objectives: _,
+                nodes: _,
             }
-            | DisplayViewInfoView::Count { objective_type: _ }
+            | DisplayViewInfoView::Count { node_type: _ }
             | DisplayViewInfoView::Map { maps: _ }
             | DisplayViewInfoView::Spacer {} => (),
 
@@ -290,12 +290,12 @@ impl Module {
         Ok(info)
     }
 
-    fn import_objectives(&mut self, base_path: &Path) -> Result<(), Error> {
-        for loc in &self.manifest.objectives {
+    fn import_nods(&mut self, base_path: &Path) -> Result<(), Error> {
+        for loc in &self.manifest.nodes {
             let path = base_path.join(PathBuf::from_slash(&loc.path));
             let obj_str = std::fs::read_to_string(&path)
                 .map_err(|e| format_err!("Failed to open {}: {}", path.display(), e))?;
-            let objs: Vec<ObjectiveInfo> = serde_json::from_str(&obj_str)
+            let objs: Vec<NodeInfo> = serde_json::from_str(&obj_str)
                 .map_err(|e| format_err!("Failed to parse {}: {}", path.display(), e))?;
             for o in objs {
                 let mut obj = o.clone();
@@ -305,9 +305,9 @@ impl Module {
                 let mut checks_enabled_by = Expression::False;
                 let mut checks_unlocked_by = Expression::False;
                 let mut checks_completed_by = Expression::True;
-                // Create objectives for each check.
+                // Create nodes for each check.
                 for (i, check) in obj.checks.iter_mut().enumerate() {
-                    // If an ID is not givin. Assign one of the form `objective_id:index`.
+                    // If an ID is not givin. Assign one of the form `node_id:index`.
                     let id = if check.id == "" {
                         format!("{}:{}", &o.id, i)
                     } else {
@@ -321,20 +321,20 @@ impl Module {
                     let enabled_by = check.enabled_by.clone().eval_default(Expression::True);
                     let unlocked_by = check.unlocked_by.clone().eval_default(Expression::True);
 
-                    // Add check conditions to parent objective.
-                    checks_enabled_by = checks_enabled_by.or(Expression::Objective(id.clone()));
+                    // Add check conditions to parent node.
+                    checks_enabled_by = checks_enabled_by.or(Expression::Node(id.clone()));
                     checks_unlocked_by =
-                        checks_unlocked_by.or(Expression::ObjectiveUnlocked(id.clone()));
+                        checks_unlocked_by.or(Expression::NodeUnlocked(id.clone()));
 
                     // Node is complete if all non-disabled checks are complete.
                     checks_completed_by = checks_completed_by.and(Expression::Or(
-                        Box::new(Expression::ObjectiveComplete(id.clone())),
-                        Box::new(Expression::ObjectiveDisabled(id.clone())),
+                        Box::new(Expression::NodeComplete(id.clone())),
+                        Box::new(Expression::NodeDisabled(id.clone())),
                     ));
 
-                    self.objectives.insert(
+                    self.nodes.insert(
                         id.clone(),
-                        ObjectiveInfo {
+                        NodeInfo {
                             id,
                             ty: check.ty.clone(),
                             name: check.name.clone(),
@@ -347,13 +347,13 @@ impl Module {
                 }
 
                 if o.checks.len() == 0 {
-                    // Objectives with no checks are enabled by default and
+                    // Nodes with no checks are enabled by default and
                     // unlocked manually.
                     obj.enabled_by = obj.enabled_by.eval_default(Expression::True);
                     obj.unlocked_by = obj.unlocked_by.eval_default(Expression::Manual);
                     obj.completed_by = obj.completed_by.eval_default(Expression::Manual);
                 } else {
-                    // Objectives with checks have their enabled_by/unlocked_by
+                    // Nodes with checks have their enabled_by/unlocked_by
                     // ORed with their checks.  The default is False to short circuit
                     // with the checks expression.
                     obj.enabled_by = obj
@@ -369,14 +369,14 @@ impl Module {
                     obj.completed_by = checks_completed_by;
                 }
 
-                self.objectives.insert(obj.id.clone(), obj);
+                self.nodes.insert(obj.id.clone(), obj);
             }
         }
         Ok(())
     }
 
     fn check_for_unique_id(&self, id: &String, path: &Path) -> Result<(), Error> {
-        if self.objectives.contains_key(id) {
+        if self.nodes.contains_key(id) {
             Err(format_err!(
                 "Duplicate id {} found in {}.",
                 id,
@@ -445,17 +445,17 @@ mod tests {
     }
 
     #[test]
-    fn objective_info_encoding() -> Result<(), Error> {
+    fn node_info_encoding() -> Result<(), Error> {
         // Test for type, children, and deps defaults.
         test_json_object(
             r#"{
     "id": "test",
-    "name": "Test Objective"
+    "name": "Test Node"
 }"#,
-            &ObjectiveInfo {
+            &NodeInfo {
                 id: "test".to_string(),
                 ty: "".to_string(),
-                name: "Test Objective".to_string(),
+                name: "Test Node".to_string(),
                 enabled_by: Expression::default(),
                 unlocked_by: Expression::default(),
                 completed_by: Expression::default(),
@@ -469,17 +469,17 @@ mod tests {
             r#"{
     "id": "test",
     "type": "location",
-    "name": "Test Objective",
+    "name": "Test Node",
     "checks": [{"type": "key-item"}]
 }"#,
-            &ObjectiveInfo {
+            &NodeInfo {
                 id: "test".to_string(),
                 ty: "location".to_string(),
-                name: "Test Objective".to_string(),
+                name: "Test Node".to_string(),
                 enabled_by: Expression::default(),
                 unlocked_by: Expression::default(),
                 completed_by: Expression::default(),
-                checks: vec![ObjectiveCheck {
+                checks: vec![NodeCheck {
                     ty: "key-item".to_string(),
                     id: "".to_string(),
                     name: "".to_string(),
@@ -494,18 +494,15 @@ mod tests {
     }
 
     #[test]
-    fn objective_list_encoding() -> Result<(), Error> {
+    fn node_list_encoding() -> Result<(), Error> {
         test_json_object(
             r#"["a", "b"]"#,
-            &ObjectiveList::List(vec!["a".to_string(), "b".to_string()]),
+            &NodeList::List(vec!["a".to_string(), "b".to_string()]),
         )
         .expect("decoding error");
 
-        test_json_object(
-            r#""checks""#,
-            &ObjectiveList::Special(ObjectiveListSpecial::Checks),
-        )
-        .expect("decoding error");
+        test_json_object(r#""checks""#, &NodeList::Special(NodeListSpecial::Checks))
+            .expect("decoding error");
 
         Ok(())
     }

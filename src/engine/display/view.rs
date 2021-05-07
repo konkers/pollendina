@@ -5,8 +5,8 @@ use serde::Deserialize;
 
 use crate::{
     engine::{
-        module::{DisplayViewInfo, DisplayViewInfoView, ObjectiveList, ObjectiveListSpecial},
-        Engine, ObjectiveState,
+        module::{DisplayViewInfo, DisplayViewInfoView, NodeList, NodeListSpecial},
+        Engine, NodeState,
     },
     widget::{
         constellation::{Field, Star},
@@ -20,7 +20,7 @@ use crate::{
 pub struct DisplayChild {
     pub id: String,
     pub ty: String,
-    pub state: ObjectiveState,
+    pub state: NodeState,
 }
 
 // Data for each view type is broken out here so that we can implements
@@ -38,15 +38,15 @@ pub struct DisplayViewCount {
 }
 
 #[derive(Clone, Data, Lens)]
-pub struct MapObjective {
+pub struct MapNode {
     pub id: String,
     pub x: f64,
     pub y: f64,
     pub radius: f64,
-    pub state: ObjectiveState,
+    pub state: NodeState,
 }
 
-impl Star for MapObjective {
+impl Star for MapNode {
     fn pos(&self) -> (f64, f64) {
         (self.x, self.y)
     }
@@ -61,9 +61,7 @@ pub struct MapInfo {
     pub id: String,
     pub width: f64,
     pub height: f64,
-    // depricated
-    pub objective_radius: f64,
-    pub objectives: Arc<Vec<MapObjective>>,
+    pub nodes: Arc<Vec<MapNode>>,
 }
 
 impl Field for MapInfo {
@@ -78,15 +76,15 @@ impl DynFlexItem for MapInfo {
     }
 }
 
-impl ListIter<MapObjective> for MapInfo {
-    fn for_each(&self, cb: impl FnMut(&MapObjective, usize)) {
-        self.objectives.for_each(cb)
+impl ListIter<MapNode> for MapInfo {
+    fn for_each(&self, cb: impl FnMut(&MapNode, usize)) {
+        self.nodes.for_each(cb)
     }
-    fn for_each_mut(&mut self, cb: impl FnMut(&mut MapObjective, usize)) {
-        self.objectives.for_each_mut(cb)
+    fn for_each_mut(&mut self, cb: impl FnMut(&mut MapNode, usize)) {
+        self.nodes.for_each_mut(cb)
     }
     fn data_len(&self) -> usize {
-        self.objectives.data_len()
+        self.nodes.data_len()
     }
 }
 
@@ -252,12 +250,11 @@ impl ContainerParams for DisplayView {
 impl DisplayView {
     pub fn new(engine: &Engine, info: &DisplayViewInfo) -> Self {
         let data = match &info.view {
-            DisplayViewInfoView::Grid {
-                columns,
-                objectives,
-            } => DisplayViewData::Grid(DisplayViewGrid::new(engine, *columns, objectives)),
-            DisplayViewInfoView::Count { objective_type } => {
-                DisplayViewData::Count(DisplayViewCount::new(engine, objective_type))
+            DisplayViewInfoView::Grid { columns, nodes } => {
+                DisplayViewData::Grid(DisplayViewGrid::new(engine, *columns, nodes))
+            }
+            DisplayViewInfoView::Count { node_type } => {
+                DisplayViewData::Count(DisplayViewCount::new(engine, node_type))
             }
             DisplayViewInfoView::Map { maps } => {
                 DisplayViewData::Map(DisplayViewMap::new(engine, maps))
@@ -290,17 +287,14 @@ impl DisplayView {
 
     pub fn update(&mut self, engine: &Engine, info: &DisplayViewInfo) {
         match &info.view {
-            DisplayViewInfoView::Grid {
-                columns,
-                objectives,
-            } => {
+            DisplayViewInfoView::Grid { columns, nodes } => {
                 if let DisplayViewData::Grid(g) = &mut self.data {
-                    g.update(engine, *columns, objectives);
+                    g.update(engine, *columns, nodes);
                 }
             }
-            DisplayViewInfoView::Count { objective_type } => {
+            DisplayViewInfoView::Count { node_type } => {
                 if let DisplayViewData::Count(c) = &mut self.data {
-                    c.update(engine, objective_type);
+                    c.update(engine, node_type);
                 }
             }
             DisplayViewInfoView::Map { maps: _maps } => {
@@ -339,29 +333,29 @@ impl DisplayView {
 }
 
 impl DisplayViewGrid {
-    fn deref_objectives<'a>(engine: &'a Engine, objectives: &'a ObjectiveList) -> &'a Vec<String> {
-        match objectives {
-            ObjectiveList::List(objectives) => objectives,
-            ObjectiveList::Special(ObjectiveListSpecial::Checks) => &engine.checks,
+    fn deref_nodes<'a>(engine: &'a Engine, nodes: &'a NodeList) -> &'a Vec<String> {
+        match nodes {
+            NodeList::List(nodes) => nodes,
+            NodeList::Special(NodeListSpecial::Checks) => &engine.checks,
         }
     }
 
-    fn new(engine: &Engine, columns: usize, objectives: &ObjectiveList) -> Self {
+    fn new(engine: &Engine, columns: usize, nodes: &NodeList) -> Self {
         let mut children = Vec::new();
-        let objectives = Self::deref_objectives(engine, objectives);
-        for objective in objectives {
-            let ty = if let Some(o) = engine.module.objectives.get(objective) {
+        let nodes = Self::deref_nodes(engine, nodes);
+        for node in nodes {
+            let ty = if let Some(o) = engine.module.nodes.get(node) {
                 o.ty.clone()
             } else {
                 "unknown".into()
             };
 
-            // All objectives start in the Locked state.  The normal
+            // All nodes start in the Locked state.  The normal
             // app lifecycle will take care of keeping them up to date.
             children.push(DisplayChild {
-                id: objective.clone(),
+                id: node.clone(),
                 ty: ty,
-                state: ObjectiveState::Locked,
+                state: NodeState::Locked,
             });
         }
         DisplayViewGrid {
@@ -370,10 +364,10 @@ impl DisplayViewGrid {
         }
     }
 
-    fn update(&mut self, engine: &Engine, columns: usize, objectives: &ObjectiveList) {
+    fn update(&mut self, engine: &Engine, columns: usize, nodes: &NodeList) {
         self.columns = columns;
-        let objectives = Self::deref_objectives(engine, objectives);
-        let mut ids = objectives.iter();
+        let nodes = Self::deref_nodes(engine, nodes);
+        let mut ids = nodes.iter();
         let children = Arc::make_mut(&mut self.children);
         for child in children {
             let id = match ids.next() {
@@ -381,7 +375,7 @@ impl DisplayViewGrid {
                 None => return,
             };
 
-            if let Some(state) = engine.objectives.get(id) {
+            if let Some(state) = engine.nodes.get(id) {
                 child.state = *state;
             }
         }
@@ -389,30 +383,30 @@ impl DisplayViewGrid {
 }
 
 impl DisplayViewCount {
-    fn new(_engine: &Engine, _objective_type: &String) -> Self {
+    fn new(_engine: &Engine, _node_type: &String) -> Self {
         DisplayViewCount { found: 0, total: 0 }
     }
 
-    fn update(&mut self, engine: &Engine, objective_type: &String) {
-        // We're filtering the objectives every update.  If this becomes a bottleneck,
+    fn update(&mut self, engine: &Engine, node: &String) {
+        // We're filtering the nodes every update.  If this becomes a bottleneck,
         // we can cache this filtering.
-        let objectives: Vec<String> = engine
+        let nodes: Vec<String> = engine
             .module
-            .objectives
+            .nodes
             .iter()
-            .filter(|(_, o)| o.ty == *objective_type)
+            .filter(|(_, o)| o.ty == *node)
             .map(|(id, _)| id.clone())
             .collect();
-        let total = objectives.len();
+        let total = nodes.len();
         let mut found = 0;
-        for o in objectives {
-            if let Some(state) = engine.objectives.get(&o) {
+        for o in nodes {
+            if let Some(state) = engine.nodes.get(&o) {
                 found += match state {
-                    ObjectiveState::Disabled => 0,
-                    ObjectiveState::Locked => 0,
-                    ObjectiveState::GlitchLocked => 0,
-                    ObjectiveState::Unlocked => 1,
-                    ObjectiveState::Complete => 1,
+                    NodeState::Disabled => 0,
+                    NodeState::Locked => 0,
+                    NodeState::GlitchLocked => 0,
+                    NodeState::Unlocked => 1,
+                    NodeState::Complete => 1,
                 }
             }
         }
@@ -427,15 +421,15 @@ impl DisplayViewMap {
         let mut maps = Vec::new();
         for id in map_ids {
             let obj_info = engine.module.maps.get(id).unwrap();
-            let mut objectives = Vec::new();
+            let mut nodes = Vec::new();
 
-            for info in &obj_info.objectives {
-                objectives.push(MapObjective {
+            for info in &obj_info.nodes {
+                nodes.push(MapNode {
                     id: info.id.clone(),
                     x: info.x as f64,
                     y: info.y as f64,
-                    radius: obj_info.objective_radius,
-                    state: ObjectiveState::Locked,
+                    radius: obj_info.node_radius,
+                    state: NodeState::Locked,
                 });
             }
 
@@ -443,8 +437,7 @@ impl DisplayViewMap {
                 id: id.clone(),
                 width: obj_info.width as f64,
                 height: obj_info.height as f64,
-                objective_radius: obj_info.objective_radius,
-                objectives: Arc::new(objectives),
+                nodes: Arc::new(nodes),
             });
         }
         DisplayViewMap {
@@ -455,9 +448,9 @@ impl DisplayViewMap {
     fn update(&mut self, engine: &Engine) {
         let maps = Arc::make_mut(&mut self.maps);
         for map in maps {
-            let objectives = Arc::make_mut(&mut map.objectives);
-            for mut o in objectives.iter_mut() {
-                if let Some(state) = engine.objectives.get(&o.id) {
+            let nodes = Arc::make_mut(&mut map.nodes);
+            for mut o in nodes.iter_mut() {
+                if let Some(state) = engine.nodes.get(&o.id) {
                     o.state = *state;
                 }
             }

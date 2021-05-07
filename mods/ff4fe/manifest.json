@@ -27,7 +27,7 @@
         }
     ],
     "auto-track": "auto_track.lua",
-    "objectives": [
+    "nodes": [
         {
             "type": "flag",
             "path": "flags.json"

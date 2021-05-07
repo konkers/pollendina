@@ -15,16 +15,16 @@ pub mod module;
 pub use display::{
     CheckBoxParamValue, CornerRadius, DisplayChild, DisplayState, DisplayView, DisplayViewCount,
     DisplayViewData, DisplayViewFlex, DisplayViewGrid, DisplayViewMap, DisplayViewSpacer,
-    DisplayViewTabChild, DisplayViewTabs, Inset, LayoutParams, MapInfo, MapObjective, ModuleParam,
+    DisplayViewTabChild, DisplayViewTabs, Inset, LayoutParams, MapInfo, MapNode, ModuleParam,
     ModuleParamValue, ThemeColor,
 };
 use expression::Expression;
 pub use module::{
-    DisplayViewInfo, DisplayViewInfoView, LayoutParamsInfo, Module, ObjectiveList,
-    ObjectiveListSpecial, Param,
+    DisplayViewInfo, DisplayViewInfoView, LayoutParamsInfo, Module, NodeList, NodeListSpecial,
+    Param,
 };
 
-use crate::assets::{add_image_to_cache, add_objective_to_cache, IMAGES};
+use crate::assets::{add_image_to_cache, add_node_to_cache, IMAGES};
 pub use auto_tracker::AutoTrackerState;
 use auto_tracker::{AutoTracker, AutoTrackerController};
 
@@ -38,7 +38,7 @@ pub trait EventSink {
 }
 
 #[derive(Clone, Copy, Data, Debug, PartialEq)]
-pub enum ObjectiveState {
+pub enum NodeState {
     Disabled,
     Locked,
     GlitchLocked,
@@ -46,7 +46,7 @@ pub enum ObjectiveState {
     Complete,
 }
 
-impl ObjectiveState {
+impl NodeState {
     pub fn at_least(&self, threshold: &Self) -> bool {
         self.ordinal() >= threshold.ordinal()
     }
@@ -57,11 +57,11 @@ impl ObjectiveState {
 
     fn ordinal(&self) -> u32 {
         match self {
-            ObjectiveState::Disabled => 0,
-            ObjectiveState::Locked => 1,
-            ObjectiveState::GlitchLocked => 2,
-            ObjectiveState::Unlocked => 3,
-            ObjectiveState::Complete => 4,
+            NodeState::Disabled => 0,
+            NodeState::Locked => 1,
+            NodeState::GlitchLocked => 2,
+            NodeState::Unlocked => 3,
+            NodeState::Complete => 4,
         }
     }
 }
@@ -70,11 +70,11 @@ pub struct Engine {
     module: Module,
     popup_info: DisplayViewInfo,
     broadcast_info: Option<DisplayViewInfo>,
-    objectives: HashMap<String, ObjectiveState>,
+    nodes: HashMap<String, NodeState>,
     eval_order: Vec<String>,
     auto_tracker: Option<AutoTrackerController>,
 
-    // Active checks.  This will need to be redone for pinned objectives.
+    // Active checks.  This will need to be redone for pinned nodes.
     checks: Vec<String>,
 }
 
@@ -83,9 +83,9 @@ impl Engine {
         module: Module,
         event_sink: T,
     ) -> Result<Engine, Error> {
-        let mut objectives = HashMap::new();
-        for (id, _) in module.objectives.iter() {
-            objectives.insert(id.clone(), ObjectiveState::Disabled);
+        let mut nodes = HashMap::new();
+        for (id, _) in module.nodes.iter() {
+            nodes.insert(id.clone(), NodeState::Disabled);
         }
 
         let auto_tracker = match &module.auto_track {
@@ -103,7 +103,7 @@ impl Engine {
                     // Don't cal
                     add_image_to_cache(&mut store, &asset.id, &data);
                 } else {
-                    add_objective_to_cache(&mut store, &asset.id, &data);
+                    add_node_to_cache(&mut store, &asset.id, &data);
                 }
             }
 
@@ -127,20 +127,20 @@ impl Engine {
             module,
             popup_info: popup_info,
             broadcast_info: broadcast_info,
-            objectives,
+            nodes,
             eval_order,
             auto_tracker,
             checks: Vec::new(),
         };
 
-        engine.eval_objectives()?;
+        engine.eval_nodes()?;
 
         Ok(engine)
     }
 
     pub fn calc_eval_order(module: &Module) -> Result<Vec<String>, Error> {
         // `petgraph` requires indexes to be integers so we first enumerate our
-        // objectives and assign the integer indexes.  We keep maps from
+        // nodes and assign the integer indexes.  We keep maps from
         // id -> index and index -> id so we can create the graph then
         // return the topological sort order by id.
         //
@@ -153,17 +153,17 @@ impl Engine {
         let mut index_map = HashMap::new();
         let mut index = 0;
 
-        for (id, _) in &module.objectives {
+        for (id, _) in &module.nodes {
             id_map.insert(index, id.clone());
             index_map.insert(id.clone(), index);
             index += 1;
         }
 
         // Generate a list of edges a tuples of (node, dependant node).
-        // Dependencies come from the objective unlocked_by and
+        // Dependencies come from the node unlocked_by and
         // enabled_by expressions.
         let mut edges = Vec::new();
-        for (id, info) in &module.objectives {
+        for (id, info) in &module.nodes {
             let idx = index_map.get(id).unwrap();
             let mut deps = info.enabled_by.deps();
             deps.append(&mut info.unlocked_by.deps());
@@ -182,9 +182,9 @@ impl Engine {
         let graph = DiGraph::<u32, ()>::from_edges(&edges);
 
         // A topological sort gives us a static traversal order allowing
-        // os to propagate objective state changes in a single pass.
+        // os to propagate node state changes in a single pass.
         let nodes = toposort(&graph, None)
-            .map_err(|e| format_err!("cycle detected in objective dependencies: {:?}", e))?;
+            .map_err(|e| format_err!("cycle detected in node dependencies: {:?}", e))?;
 
         // Convert the eval_order back into a Vec of String ids.
         let mut eval_order = Vec::new();
@@ -195,61 +195,61 @@ impl Engine {
         Ok(eval_order)
     }
 
-    fn eval_objectives(&mut self) -> Result<(), Error> {
+    fn eval_nodes(&mut self) -> Result<(), Error> {
         for id in &self.eval_order {
             let info = self
                 .module
-                .objectives
+                .nodes
                 .get(id)
-                .ok_or(format_err!("Can't get info for objective '{}'", id))?;
+                .ok_or(format_err!("Can't get info for node '{}'", id))?;
 
             let mut state = *self
-                .objectives
+                .nodes
                 .get(id)
-                .ok_or(format_err!("can't get objective state for '{}`", id))?;
+                .ok_or(format_err!("can't get info state for '{}`", id))?;
 
             if info.enabled_by != Expression::Manual {
-                let enabled = info.enabled_by.evaluate_enabled(&self.objectives)?;
-                if state == ObjectiveState::Disabled && enabled {
-                    state = ObjectiveState::Locked;
+                let enabled = info.enabled_by.evaluate_enabled(&self.nodes)?;
+                if state == NodeState::Disabled && enabled {
+                    state = NodeState::Locked;
                 }
             }
 
             if info.unlocked_by != Expression::Manual {
-                let unlocked = info.unlocked_by.evaluate_unlocked(&self.objectives)?;
-                if state == ObjectiveState::Locked && unlocked {
-                    state = ObjectiveState::Unlocked;
+                let unlocked = info.unlocked_by.evaluate_unlocked(&self.nodes)?;
+                if state == NodeState::Locked && unlocked {
+                    state = NodeState::Unlocked;
                 }
             }
 
             if info.completed_by != Expression::Manual {
-                let completed = info.completed_by.evaluate_unlocked(&self.objectives)?;
+                let completed = info.completed_by.evaluate_unlocked(&self.nodes)?;
                 if completed {
-                    state = ObjectiveState::Complete;
+                    state = NodeState::Complete;
                 }
-                if state == ObjectiveState::Complete && !completed {
-                    state = ObjectiveState::Unlocked;
+                if state == NodeState::Complete && !completed {
+                    state = NodeState::Unlocked;
                 }
             }
 
             if info.unlocked_by != Expression::Manual {
-                let unlocked = info.unlocked_by.evaluate_unlocked(&self.objectives)?;
+                let unlocked = info.unlocked_by.evaluate_unlocked(&self.nodes)?;
                 // Re-lock if a dependencies become locked.
-                if state == ObjectiveState::Unlocked && !unlocked {
-                    state = ObjectiveState::Locked;
+                if state == NodeState::Unlocked && !unlocked {
+                    state = NodeState::Locked;
                 }
             }
 
             if info.enabled_by != Expression::Manual {
-                let enabled = info.enabled_by.evaluate_enabled(&self.objectives)?;
+                let enabled = info.enabled_by.evaluate_enabled(&self.nodes)?;
                 if !enabled {
-                    state = ObjectiveState::Disabled;
+                    state = NodeState::Disabled;
                 }
             }
             *self
-                .objectives
+                .nodes
                 .get_mut(id)
-                .ok_or(format_err!("can't get objective state for '{}`", id))? = state;
+                .ok_or(format_err!("can't get node state for '{}`", id))? = state;
         }
         Ok(())
     }
@@ -316,13 +316,13 @@ impl Engine {
         let params = Arc::make_mut(&mut data.params).iter_mut();
         for p in params {
             if let ModuleParamValue::CheckBox(v) = &mut p.value {
-                let state = match self.objectives.get(&v.id) {
+                let state = match self.nodes.get(&v.id) {
                     Some(state) => state,
                     None => continue,
                 };
 
                 v.value = match state {
-                    ObjectiveState::Disabled => false,
+                    NodeState::Disabled => false,
                     _ => true,
                 }
             }
@@ -333,33 +333,33 @@ impl Engine {
         for p in &*data.params {
             if let ModuleParamValue::CheckBox(v) = &p.value {
                 let new_state = if v.value {
-                    ObjectiveState::Unlocked
+                    NodeState::Unlocked
                 } else {
-                    ObjectiveState::Disabled
+                    NodeState::Disabled
                 };
                 *self
-                    .objectives
+                    .nodes
                     .get_mut(&v.id)
-                    .ok_or(format_err!("objective {} not found", &v.id))? = new_state;
+                    .ok_or(format_err!("node {} not found", &v.id))? = new_state;
             }
         }
-        self.eval_objectives()?;
+        self.eval_nodes()?;
         self.update_display_state(data);
 
         Ok(())
     }
 
     pub fn toggle_state(&mut self, id: &String) -> Result<(), Error> {
-        if let Some(o) = self.objectives.get_mut(id) {
+        if let Some(o) = self.nodes.get_mut(id) {
             let new_state = match *o {
-                ObjectiveState::Disabled => ObjectiveState::Disabled,
-                ObjectiveState::Locked => ObjectiveState::Unlocked,
-                ObjectiveState::GlitchLocked => ObjectiveState::Unlocked,
-                ObjectiveState::Unlocked => ObjectiveState::Complete,
-                ObjectiveState::Complete => ObjectiveState::Locked,
+                NodeState::Disabled => NodeState::Disabled,
+                NodeState::Locked => NodeState::Unlocked,
+                NodeState::GlitchLocked => NodeState::Unlocked,
+                NodeState::Unlocked => NodeState::Complete,
+                NodeState::Complete => NodeState::Locked,
             };
             *o = new_state;
-            self.eval_objectives()?;
+            self.eval_nodes()?;
             Ok(())
         } else {
             Err(format_err!("toggle_state: id {} not found", &id))
@@ -386,10 +386,10 @@ impl Engine {
         }
     }
 
-    pub fn update_state(&mut self, updates: &HashMap<String, ObjectiveState>) -> Result<(), Error> {
+    pub fn update_state(&mut self, updates: &HashMap<String, NodeState>) -> Result<(), Error> {
         for (id, state) in updates {
-            self.objectives.insert(id.clone(), state.clone());
-            self.eval_objectives()?;
+            self.nodes.insert(id.clone(), state.clone());
+            self.eval_nodes()?;
         }
         Ok(())
     }
@@ -397,9 +397,9 @@ impl Engine {
     pub fn build_popup(&mut self, data: &mut DisplayState, id: &String) -> Result<(), Error> {
         let obj = self
             .module
-            .objectives
+            .nodes
             .get(id)
-            .ok_or(format_err!("Can't find objective {}", id))?;
+            .ok_or(format_err!("Can't find node {}", id))?;
 
         let mut checks = Vec::new();
         for check in &obj.checks {
@@ -435,13 +435,13 @@ impl Engine {
         for id in &self.eval_order {
             let obj = self
                 .module
-                .objectives
+                .nodes
                 .get(id)
-                .ok_or(format_err!("Can't find objective {}", id))?;
+                .ok_or(format_err!("Can't find node {}", id))?;
             let state = self
-                .objectives
+                .nodes
                 .get(id)
-                .ok_or(format_err!("Can't find objective state {}", id))?;
+                .ok_or(format_err!("Can't find node state {}", id))?;
 
             println!("{}:", id);
             println!("  state: {:?}", state);
@@ -470,11 +470,11 @@ mod tests {
         }
     }
 
-    fn assert_state(engine: &Engine, id: &str, state: ObjectiveState) {
-        assert_eq!(*engine.objectives.get(id).unwrap(), state);
+    fn assert_state(engine: &Engine, id: &str, state: NodeState) {
+        assert_eq!(*engine.nodes.get(id).unwrap(), state);
     }
 
-    fn update_state(engine: &mut Engine, updates: &[(&str, ObjectiveState)]) -> Result<(), Error> {
+    fn update_state(engine: &mut Engine, updates: &[(&str, NodeState)]) -> Result<(), Error> {
         let updates = updates.iter().map(|x| (x.0.to_string(), x.1)).collect();
 
         engine.update_state(&updates)
@@ -490,98 +490,92 @@ mod tests {
 
         // Make sure assets loaded.
         IMAGES.with(|images| {
-            assert!(images
-                .borrow()
-                .get(&"objective:pan:locked".into())
-                .is_some());
+            assert!(images.borrow().get(&"node:pan:locked".into()).is_some());
         });
 
         // Make sure we have a map.
         assert_ne!(engine.module.maps.len(), 0);
 
-        // Depending on gating, some objectives start out unlocked and
+        // Depending on gating, some nodes start out unlocked and
         // others locked.
-        assert_state(&engine, &"baron", ObjectiveState::Unlocked);
-        assert_state(&engine, &"fabul", ObjectiveState::Unlocked);
-        assert_state(&engine, &"d-castle", ObjectiveState::Locked);
-        assert_state(&engine, &"bahamut-cave", ObjectiveState::Locked);
+        assert_state(&engine, &"baron", NodeState::Unlocked);
+        assert_state(&engine, &"fabul", NodeState::Unlocked);
+        assert_state(&engine, &"d-castle", NodeState::Locked);
+        assert_state(&engine, &"bahamut-cave", NodeState::Locked);
 
         // Dwarf Castle should still be locked if Magma Key is only Unlocked.
-        update_state(&mut engine, &[("magma-key", ObjectiveState::Unlocked)])?;
-        assert_state(&engine, &"d-castle", ObjectiveState::Locked);
+        update_state(&mut engine, &[("magma-key", NodeState::Unlocked)])?;
+        assert_state(&engine, &"d-castle", NodeState::Locked);
 
         // Completing Magma Key now unlocks Dwarf Castle.
-        update_state(&mut engine, &[("magma-key", ObjectiveState::Complete)])?;
-        assert_state(&engine, &"d-castle", ObjectiveState::Unlocked);
+        update_state(&mut engine, &[("magma-key", NodeState::Complete)])?;
+        assert_state(&engine, &"d-castle", NodeState::Unlocked);
 
         // Un-completing the Magma Key should re-locks Dwarf Castle.
-        update_state(&mut engine, &[("magma-key", ObjectiveState::Unlocked)])?;
-        assert_state(&engine, &"d-castle", ObjectiveState::Locked);
+        update_state(&mut engine, &[("magma-key", NodeState::Unlocked)])?;
+        assert_state(&engine, &"d-castle", NodeState::Locked);
 
-        // Unlocking Darkness Crystal is enough to unlock Moon objectives.
-        update_state(
-            &mut engine,
-            &[("darkness-crystal", ObjectiveState::Complete)],
-        )?;
-        assert_state(&engine, &"bahamut-cave", ObjectiveState::Unlocked);
+        // Unlocking Darkness Crystal is enough to unlock Moon nodes.
+        update_state(&mut engine, &[("darkness-crystal", NodeState::Complete)])?;
+        assert_state(&engine, &"bahamut-cave", NodeState::Unlocked);
 
         // Completing D. Mist slot should complete Mist Cave.
-        update_state(&mut engine, &[("mist-cave:0", ObjectiveState::Complete)])?;
-        assert_state(&engine, &"mist-cave", ObjectiveState::Complete);
+        update_state(&mut engine, &[("mist-cave:0", NodeState::Complete)])?;
+        assert_state(&engine, &"mist-cave", NodeState::Complete);
 
         // Completing all non-disabled checks should cause the location to be
         // completed.  We need to turn on Nchars to ensure the char check is
         // disabled.
-        update_state(&mut engine, &[("flag-n-chars", ObjectiveState::Unlocked)])?;
-        assert_state(&engine, &"mt-ordeals:0", ObjectiveState::Disabled);
-        assert_state(&engine, &"mt-ordeals", ObjectiveState::Unlocked);
+        update_state(&mut engine, &[("flag-n-chars", NodeState::Unlocked)])?;
+        assert_state(&engine, &"mt-ordeals:0", NodeState::Disabled);
+        assert_state(&engine, &"mt-ordeals", NodeState::Unlocked);
         update_state(
             &mut engine,
             &[
-                ("mt-ordeals:1", ObjectiveState::Complete),
-                ("mt-ordeals:2", ObjectiveState::Complete),
-                ("mt-ordeals-key-item-check", ObjectiveState::Complete),
-                ("mt-ordeals:4", ObjectiveState::Complete),
+                ("mt-ordeals:1", NodeState::Complete),
+                ("mt-ordeals:2", NodeState::Complete),
+                ("mt-ordeals-key-item-check", NodeState::Complete),
+                ("mt-ordeals:4", NodeState::Complete),
             ],
         )?;
-        assert_state(&engine, &"mt-ordeals", ObjectiveState::Complete);
+        assert_state(&engine, &"mt-ordeals", NodeState::Complete);
 
-        // baron has 5 objectives that are not gated and 2 that are gated by
+        // baron has 5 nodes that are not gated and 2 that are gated by
         // the baron key.  It should:
         // * start Unlocked due to the 5 non-gated checks.
         // * should transition to Locked when those are complete.
         // * should transition to Unlocked when the baron-key is unlocked.
         // * should transition to Complete once the last two checks are complete.
-        assert_state(&engine, &"baron", ObjectiveState::Unlocked);
+        assert_state(&engine, &"baron", NodeState::Unlocked);
         update_state(
             &mut engine,
             &[
-                ("baron:0", ObjectiveState::Complete),
-                ("baron:3", ObjectiveState::Complete),
-                ("baron:4", ObjectiveState::Complete),
-                ("baron:5", ObjectiveState::Complete),
-                ("baron-inn-key-item-check", ObjectiveState::Complete),
+                ("baron:0", NodeState::Complete),
+                ("baron:3", NodeState::Complete),
+                ("baron:4", NodeState::Complete),
+                ("baron:5", NodeState::Complete),
+                ("baron-inn-key-item-check", NodeState::Complete),
             ],
         )?;
-        assert_state(&engine, &"baron", ObjectiveState::Locked);
-        update_state(&mut engine, &[("baron-key", ObjectiveState::Unlocked)])?;
-        assert_state(&engine, &"baron", ObjectiveState::Unlocked);
+        assert_state(&engine, &"baron", NodeState::Locked);
+        update_state(&mut engine, &[("baron-key", NodeState::Unlocked)])?;
+        assert_state(&engine, &"baron", NodeState::Unlocked);
         update_state(
             &mut engine,
             &[
-                ("baron:1", ObjectiveState::Complete),
-                ("baron:2", ObjectiveState::Complete),
+                ("baron:1", NodeState::Complete),
+                ("baron:2", NodeState::Complete),
             ],
         )?;
-        assert_state(&engine, &"baron", ObjectiveState::Complete);
+        assert_state(&engine, &"baron", NodeState::Complete);
 
         // Damncyan's character is gated by !Nchars.
-        update_state(&mut engine, &[("flag-n-chars", ObjectiveState::Disabled)])?;
-        assert_state(&engine, &"damcyan:0", ObjectiveState::Unlocked);
-        assert_state(&engine, &"damcyan", ObjectiveState::Unlocked);
-        update_state(&mut engine, &[("flag-n-chars", ObjectiveState::Unlocked)])?;
-        assert_state(&engine, &"damcyan:0", ObjectiveState::Disabled);
-        assert_state(&engine, &"damcyan", ObjectiveState::Disabled);
+        update_state(&mut engine, &[("flag-n-chars", NodeState::Disabled)])?;
+        assert_state(&engine, &"damcyan:0", NodeState::Unlocked);
+        assert_state(&engine, &"damcyan", NodeState::Unlocked);
+        update_state(&mut engine, &[("flag-n-chars", NodeState::Unlocked)])?;
+        assert_state(&engine, &"damcyan:0", NodeState::Disabled);
+        assert_state(&engine, &"damcyan", NodeState::Disabled);
 
         Ok(())
     }

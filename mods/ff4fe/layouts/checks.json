@@ -4,5 +4,5 @@
     "inset": "small",
     "corner-radius": "small",
     "columns": 3,
-    "objectives": "checks"
+    "nodes": "checks"
 }

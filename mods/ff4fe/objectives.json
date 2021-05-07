@@ -1,0 +1,342 @@
+[
+    {
+        "id": "obj-char-cecil",
+        "name": "Get Cecil"
+    },
+    {
+        "id": "obj-char-kain",
+        "name": "Get Kain"
+    },
+    {
+        "id": "obj-char-rydia",
+        "name": "Get Rydia"
+    },
+    {
+        "id": "obj-char-tellah",
+        "name": "Get Tellah"
+    },
+    {
+        "id": "obj-char-edward",
+        "name": "Get Edward"
+    },
+    {
+        "id": "obj-char-rosa",
+        "name": "Get Rosa"
+    },
+    {
+        "id": "obj-char-yang",
+        "name": "Get Yang"
+    },
+    {
+        "id": "obj-char-palom",
+        "name": "Get Palom"
+    },
+    {
+        "id": "obj-char-porom",
+        "name": "Get Porom"
+    },
+    {
+        "id": "obj-char-cid",
+        "name": "Get Cid"
+    },
+    {
+        "id": "obj-char-edge",
+        "name": "Get Edge"
+    },
+    {
+        "id": "obj-char-fusoya",
+        "name": "Get FuSoYa"
+    },
+    {
+        "id": "obj-boss-dmist",
+        "name": "Defeat D.Mist"
+    },
+    {
+        "id": "obj-boss-officer",
+        "name": "Defeat Officer"
+    },
+    {
+        "id": "obj-boss-octomamm",
+        "name": "Defeat Octomamm"
+    },
+    {
+        "id": "obj-boss-antlion",
+        "name": "Defeat Antlion"
+    },
+    {
+        "id": "obj-boss-waterhag",
+        "name": "Defeat Waterhag (boss version)"
+    },
+    {
+        "id": "obj-boss-mombomb",
+        "name": "Defeat MomBomb"
+    },
+    {
+        "id": "obj-boss-fabulgauntlet",
+        "name": "Defeat Fabul Gauntlet"
+    },
+    {
+        "id": "obj-boss-milon",
+        "name": "Defeat Milon"
+    },
+    {
+        "id": "obj-boss-milonz",
+        "name": "Defeat Milonz"
+    },
+    {
+        "id": "obj-boss-mirrorcecil",
+        "name": "Defeat D.Knight"
+    },
+    {
+        "id": "obj-boss-guard",
+        "name": "Defeat Guards (boss)"
+    },
+    {
+        "id": "obj-boss-karate",
+        "name": "Defeat Karate"
+    },
+    {
+        "id": "obj-boss-baigan",
+        "name": "Defeat Baigan"
+    },
+    {
+        "id": "obj-boss-kainazzo",
+        "name": "Defeat Kainazzo"
+    },
+    {
+        "id": "obj-boss-darkelf",
+        "name": "Defeat Dark Elf (dragon form)"
+    },
+    {
+        "id": "obj-boss-magus",
+        "name": "Defeat Magus Sisters"
+    },
+    {
+        "id": "obj-boss-valvalis",
+        "name": "Defeat Valvalis"
+    },
+    {
+        "id": "obj-boss-calbrena",
+        "name": "Defeat Calbrena"
+    },
+    {
+        "id": "obj-boss-golbez",
+        "name": "Defeat Golbez"
+    },
+    {
+        "id": "obj-boss-darkimp",
+        "name": "Defeat Dark Imps (boss)"
+    },
+    {
+        "id": "obj-boss-kingqueen",
+        "name": "Defeat K.Eblan and Q.Eblan"
+    },
+    {
+        "id": "obj-boss-rubicant",
+        "name": "Defeat Rubicant"
+    },
+    {
+        "id": "obj-boss-evilwall",
+        "name": "Defeat EvilWall"
+    },
+    {
+        "id": "obj-boss-asura",
+        "name": "Defeat Asura"
+    },
+    {
+        "id": "obj-boss-leviatan",
+        "name": "Defeat Leviatan"
+    },
+    {
+        "id": "obj-boss-odin",
+        "name": "Defeat Odin"
+    },
+    {
+        "id": "obj-boss-bahamut",
+        "name": "Defeat Bahamut"
+    },
+    {
+        "id": "obj-boss-elements",
+        "name": "Defeat Elements"
+    },
+    {
+        "id": "obj-boss-cpu",
+        "name": "Defeat CPU"
+    },
+    {
+        "id": "obj-boss-paledim",
+        "name": "Defeat Pale Dim"
+    },
+    {
+        "id": "obj-boss-dlunar",
+        "name": "Defeat D.Lunars"
+    },
+    {
+        "id": "obj-boss-wyvern",
+        "name": "Defeat Wyvern"
+    },
+    {
+        "id": "obj-boss-plague",
+        "name": "Defeat Plague"
+    },
+    {
+        "id": "obj-boss-ogopogo",
+        "name": "Defeat Ogopogo"
+    },
+    {
+        "id": "obj-quest-mistcave",
+        "name": "Defeat the boss of the Mist Cave"
+    },
+    {
+        "id": "obj-quest-waterfall",
+        "name": "Defeat the boss of the Waterfall"
+    },
+    {
+        "id": "obj-quest-antlionnest",
+        "name": "Complete the Antlion Nest"
+    },
+    {
+        "id": "obj-quest-hobs",
+        "name": "Rescue the hostage on Mt. Hobs"
+    },
+    {
+        "id": "obj-quest-fabul",
+        "name": "Defend Fabul"
+    },
+    {
+        "id": "obj-quest-ordeals",
+        "name": "Complete Mt. Ordeals"
+    },
+    {
+        "id": "obj-quest-baroninn",
+        "name": "Defeat the bosses of Baron Inn"
+    },
+    {
+        "id": "obj-quest-baroncastle",
+        "name": "Liberate Baron Castle"
+    },
+    {
+        "id": "obj-quest-magnes",
+        "name": "Complete Cave Magnes"
+    },
+    {
+        "id": "obj-quest-zot",
+        "name": "Complete the Tower of Zot"
+    },
+    {
+        "id": "obj-quest-dwarfcastle",
+        "name": "Defeat the bosses of Dwarf Castle"
+    },
+    {
+        "id": "obj-quest-lowerbabil",
+        "name": "Defeat the boss of Lower Bab-il"
+    },
+    {
+        "id": "obj-quest-falcon",
+        "name": "Launch the Falcon"
+    },
+    {
+        "id": "obj-quest-sealedcave",
+        "name": "Complete the Sealed Cave"
+    },
+    {
+        "id": "obj-quest-mosterqueen",
+        "name": "Defeat the queen at the Town of Monsters"
+    },
+    {
+        "id": "obj-quest-mosterking",
+        "name": "Defeat the king at the Town of Monsters"
+    },
+    {
+        "id": "obj-quest-baronbasement",
+        "name": "Defeat the Baron Castle basement throne"
+    },
+    {
+        "id": "obj-quest-giant",
+        "name": "Complete the Giant of Bab-il"
+    },
+    {
+        "id": "obj-quest-cavebahamut",
+        "name": "Complete Cave Bahamut"
+    },
+    {
+        "id": "obj-quest-murasamealtar",
+        "name": "Conquer the vanilla Murasame altar"
+    },
+    {
+        "id": "obj-quest-crystalaltar",
+        "name": "Conquer the vanilla Crystal Sword altar"
+    },
+    {
+        "id": "obj-quest-whitealtar",
+        "name": "Conquer the vanilla White Spear altar"
+    },
+    {
+        "id": "obj-quest-ribbonaltar",
+        "name": "Conquer the vanilla Ribbon room"
+    },
+    {
+        "id": "obj-quest-masamunealtar",
+        "name": "Conquer the vanilla Masamune altar"
+    },
+    {
+        "id": "obj-quest-burnmist",
+        "name": "Burn village Mist with the Package"
+    },
+    {
+        "id": "obj-quest-curefever",
+        "name": "Cure the fever with the SandRuby"
+    },
+    {
+        "id": "obj-quest-unlocksewer",
+        "name": "Unlock the sewer with the Baron Key"
+    },
+    {
+        "id": "obj-quest-music",
+        "name": "Break the Dark Elf's spell with the TwinHarp"
+    },
+    {
+        "id": "obj-quest-toroiatreasury",
+        "name": "Open the Toroia treasury with the Earth Crystal"
+    },
+    {
+        "id": "obj-quest-magma",
+        "name": "Drop the Magma Key into the Agart well"
+    },
+    {
+        "id": "obj-quest-supercannon",
+        "name": "Destroy the Super Cannon"
+    },
+    {
+        "id": "obj-quest-unlocksealedcave",
+        "name": "Unlock the sealed Cave"
+    },
+    {
+        "id": "obj-quest-bigwhale",
+        "name": "Raise the Big Whale"
+    },
+    {
+        "id": "obj-quest-traderat",
+        "name": "Trade away the Rat Tail"
+    },
+    {
+        "id": "obj-quest-forge",
+        "name": "Have Kokkol forge the Legend Sword with Adamant"
+    },
+    {
+        "id": "obj-quest-wakeyang",
+        "name": "Wake Yang with the Pan"
+    },
+    {
+        "id": "obj-quest-tradepan",
+        "name": "Return the Pan to Yang's wife"
+    },
+    {
+        "id": "obj-quest-tradepink",
+        "name": "Trade away the Pink Tail"
+    },
+    {
+        "id": "obj-quest-pass",
+        "name": "Unlock the Pass door in Toroia"
+    }
+]

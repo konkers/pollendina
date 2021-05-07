@@ -2,7 +2,7 @@
     "type": "Grid",
     "inset": "large",
     "columns": 4,
-    "objectives": [
+    "nodes": [
         "crystal",
         "pass",
         "hook",

@@ -3,8 +3,8 @@
     "name": "Underground",
     "width": 1024,
     "height": 1024,
-    "objective-radius": 20.0,
-    "objectives": [
+    "node-radius": 20.0,
+    "nodes": [
         {
             "id": "d-castle",
             "x": 798,

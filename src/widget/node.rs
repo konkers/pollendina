@@ -20,38 +20,38 @@ use druid::{
 };
 
 use crate::assets::{image::ImageData, IMAGES};
-use crate::engine::{DisplayChild, ObjectiveState};
+use crate::engine::{DisplayChild, NodeState};
 
 /// A widget that renders an Image
-pub struct Objective {
+pub struct Node {
     image: Option<Arc<ImageData>>,
 }
 
-impl Objective {
+impl Node {
     /// Create an image drawing widget from `ImageData`.
     ///
     /// The Image will scale to fit its box constraints.
     pub fn new() -> Self {
-        Objective { image: None }
+        Node { image: None }
     }
 
     fn update_image(&mut self, data: &DisplayChild) {
         let postfix = match data.state {
-            ObjectiveState::Unlocked => "",
-            ObjectiveState::Complete => ":completed",
-            ObjectiveState::Locked => ":locked",
+            NodeState::Unlocked => "",
+            NodeState::Complete => ":completed",
+            NodeState::Locked => ":locked",
             _ => {
                 self.image = None;
                 return;
             }
         };
 
-        let obj_id = format!("objective:{}{}", &data.id, &postfix);
+        let obj_id = format!("node:{}{}", &data.id, &postfix);
         let ty_id = format!("type:{}{}", &data.ty, &postfix);
 
         IMAGES.with(|images| {
             self.image = images.borrow().get(&obj_id);
-            // If there is no objective specific image, fall back on a type
+            // If there is no node specific image, fall back on a type
             // specific one.
             if self.image.is_none() {
                 self.image = images.borrow().get(&ty_id);
@@ -60,7 +60,7 @@ impl Objective {
     }
 }
 
-impl Widget<DisplayChild> for Objective {
+impl Widget<DisplayChild> for Node {
     fn event(&mut self, _ctx: &mut EventCtx, _event: &Event, _data: &mut DisplayChild, _env: &Env) {
     }
 

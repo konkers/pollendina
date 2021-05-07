@@ -3,8 +3,8 @@
     "name": "Overworld",
     "width": 1012,
     "height": 932,
-    "objective-radius": 16.0,
-    "objectives": [
+    "node-radius": 16.0,
+    "nodes": [
         {
             "id": "baron",
             "x": 407,

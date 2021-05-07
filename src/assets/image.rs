@@ -57,7 +57,7 @@ pub(crate) fn add_image_to_cache(store: &mut AssetStore<ImageData>, id: &str, da
     store.add(&id.to_string(), ImageData::from_dynamic_image(image));
 }
 
-pub(crate) fn add_objective_to_cache(store: &mut AssetStore<ImageData>, id: &str, data: &[u8]) {
+pub(crate) fn add_node_to_cache(store: &mut AssetStore<ImageData>, id: &str, data: &[u8]) {
     let image = image::load_from_memory(data).unwrap();
     let locked_image = make_locked_image(&image);
     let completed_image = make_completed_image(&image);

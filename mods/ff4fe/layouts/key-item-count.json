@@ -1,4 +1,4 @@
 {
     "type": "Count",
-    "objective_type": "key-item"
+    "node_type": "key-item"
 }

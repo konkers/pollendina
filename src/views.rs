@@ -15,7 +15,7 @@ use crate::{
     },
     widget::{
         dyn_flex::CrossAxisAlignment, Asset, ClickExt, Constellation, Container, DynFlex, Grid,
-        MapObjective, Objective, Stack,
+        MapNode, Node, Stack,
     },
     ENGINE_TOGGLE_STATE, UI_OPEN_POPUP,
 };
@@ -24,7 +24,7 @@ fn grid_widget() -> impl Widget<DisplayViewGrid> {
     Grid::new(|| {
         Padding::new(
             2.0,
-            Objective::new().on_click(|ctx, data: &mut DisplayChild, _env| {
+            Node::new().on_click(|ctx, data: &mut DisplayChild, _env| {
                 let cmd = Command::new(ENGINE_TOGGLE_STATE, data.id.clone(), Target::Auto);
                 ctx.submit_command(cmd);
             }),
@@ -46,24 +46,22 @@ fn map_widget() -> impl Widget<DisplayViewMap> {
                         .lens(MapInfo::id.map(|id| format!("map:{}", id), |_id, _new_id| {})),
                 )
                 .with_child(Constellation::new(|| {
-                    MapObjective::new()
-                        .lens(engine::MapObjective::state)
-                        .on_left_click(
-                            |ctx, event: &MouseEvent, data: &mut engine::MapObjective, _env| {
-                                // We're sending window based position here and the
-                                // modal host uses widget local coordinates.  This
-                                // works out only because it's placed at the window
-                                // origin.
-                                let id = data.id.clone();
-                                /*let cmd = ModalHost::make_modal_command(event.window_pos, || {
-                                    modal_builder(id)
-                                });
-                                */
-                                let pos = event.window_pos;
-                                let cmd = UI_OPEN_POPUP.with(((pos.x, pos.y), id));
-                                ctx.submit_command(cmd);
-                            },
-                        )
+                    MapNode::new().lens(engine::MapNode::state).on_left_click(
+                        |ctx, event: &MouseEvent, data: &mut engine::MapNode, _env| {
+                            // We're sending window based position here and the
+                            // modal host uses widget local coordinates.  This
+                            // works out only because it's placed at the window
+                            // origin.
+                            let id = data.id.clone();
+                            /*let cmd = ModalHost::make_modal_command(event.window_pos, || {
+                                modal_builder(id)
+                            });
+                            */
+                            let pos = event.window_pos;
+                            let cmd = UI_OPEN_POPUP.with(((pos.x, pos.y), id));
+                            ctx.submit_command(cmd);
+                        },
+                    )
                 })),
         )
     })

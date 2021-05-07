@@ -4,44 +4,31 @@ use druid::{
     PaintCtx, RenderContext, UpdateCtx, Widget,
 };
 
-use crate::engine::ObjectiveState;
+use crate::engine::NodeState;
 
-pub struct MapObjective {
+pub struct MapNode {
     radius: f64,
 }
 
-impl MapObjective {
-    pub fn new() -> MapObjective {
-        MapObjective { radius: 0. }
+impl MapNode {
+    pub fn new() -> MapNode {
+        MapNode { radius: 0. }
     }
 }
 
-impl Widget<ObjectiveState> for MapObjective {
-    fn event(
-        &mut self,
-        _ctx: &mut EventCtx,
-        _event: &Event,
-        _data: &mut ObjectiveState,
-        _env: &Env,
-    ) {
-    }
+impl Widget<NodeState> for MapNode {
+    fn event(&mut self, _ctx: &mut EventCtx, _event: &Event, _data: &mut NodeState, _env: &Env) {}
 
     fn lifecycle(
         &mut self,
         _ctx: &mut LifeCycleCtx,
         _event: &LifeCycle,
-        _data: &ObjectiveState,
+        _data: &NodeState,
         _env: &Env,
     ) {
     }
 
-    fn update(
-        &mut self,
-        ctx: &mut UpdateCtx,
-        old_data: &ObjectiveState,
-        data: &ObjectiveState,
-        _env: &Env,
-    ) {
+    fn update(&mut self, ctx: &mut UpdateCtx, old_data: &NodeState, data: &NodeState, _env: &Env) {
         if !old_data.same(data) {
             ctx.children_changed();
         }
@@ -51,7 +38,7 @@ impl Widget<ObjectiveState> for MapObjective {
         &mut self,
         _ctx: &mut LayoutCtx,
         bc: &BoxConstraints,
-        _data: &ObjectiveState,
+        _data: &NodeState,
         _env: &Env,
     ) -> Size {
         // Set our radius to the maximum circle that will fit in our constraints.
@@ -64,7 +51,7 @@ impl Widget<ObjectiveState> for MapObjective {
         bc.constrain((d, d))
     }
 
-    fn paint(&mut self, ctx: &mut PaintCtx, data: &ObjectiveState, _env: &Env) {
+    fn paint(&mut self, ctx: &mut PaintCtx, data: &NodeState, _env: &Env) {
         let bg_color = Color::rgb8(0x00, 0x00, 0x00);
         let outline_color = Color::rgb8(0xff, 0xff, 0xff);
 
@@ -81,11 +68,11 @@ impl Widget<ObjectiveState> for MapObjective {
         let inner_radius = r * 0.6;
 
         let inner_color = match data {
-            ObjectiveState::Disabled => return,
-            ObjectiveState::Complete => &complete_color,
-            ObjectiveState::Locked => &locked_color,
-            ObjectiveState::GlitchLocked => &glitch_locked_color,
-            ObjectiveState::Unlocked => &unlocked_color,
+            NodeState::Disabled => return,
+            NodeState::Complete => &complete_color,
+            NodeState::Locked => &locked_color,
+            NodeState::GlitchLocked => &glitch_locked_color,
+            NodeState::Unlocked => &unlocked_color,
         };
 
         let pos = (r, r);

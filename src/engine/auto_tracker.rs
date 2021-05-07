@@ -10,14 +10,14 @@ use rlua::{self, Function, Lua, Table, UserData, UserDataMethods};
 use usb2snes::Connection;
 
 use crate::{
-    engine::{EventSink, ObjectiveState},
+    engine::{EventSink, NodeState},
     ENGINE_UPDATE_AUTO_TRACKER_STATE, ENGINE_UPDATE_STATE,
 };
 
 #[derive(Clone, Debug)]
-struct ObjectiveStateData(ObjectiveState);
+struct NodeStateData(NodeState);
 
-impl UserData for ObjectiveStateData {
+impl UserData for NodeStateData {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(_methods: &mut M) {}
 }
 
@@ -126,22 +126,10 @@ impl AutoTracker {
         lua.context(|ctx| -> Result<(), Error> {
             let globals = ctx.globals();
 
-            globals.set(
-                "OBJECTIVE_LOCKED",
-                ObjectiveStateData(ObjectiveState::Locked),
-            )?;
-            globals.set(
-                "OBJECTIVE_GLITCH_LOCKED",
-                ObjectiveStateData(ObjectiveState::GlitchLocked),
-            )?;
-            globals.set(
-                "OBJECTIVE_UNLOCKED",
-                ObjectiveStateData(ObjectiveState::Unlocked),
-            )?;
-            globals.set(
-                "OBJECTIVE_COMPLETE",
-                ObjectiveStateData(ObjectiveState::Complete),
-            )?;
+            globals.set("NODE_LOCKED", NodeStateData(NodeState::Locked))?;
+            globals.set("NODE_GLITCH_LOCKED", NodeStateData(NodeState::GlitchLocked))?;
+            globals.set("NODE_UNLOCKED", NodeStateData(NodeState::Unlocked))?;
+            globals.set("NODE_COMPLETE", NodeStateData(NodeState::Complete))?;
 
             let mem_watch = ctx.create_table()?;
             globals.set("__mem_watch", mem_watch)?;
@@ -216,13 +204,11 @@ impl AutoTracker {
                 // updates is protected by this scope.
                 ctx.scope(|scope| -> Result<(), Error> {
                     ctx.globals().set(
-                        "set_objective_state",
-                        scope.create_function_mut(
-                            |_, (id, state): (String, ObjectiveStateData)| {
-                                updates.insert(id, state.0);
-                                Ok(())
-                            },
-                        )?,
+                        "set_node_state",
+                        scope.create_function_mut(|_, (id, state): (String, NodeStateData)| {
+                            updates.insert(id, state.0);
+                            Ok(())
+                        })?,
                     )?;
 
                     for (i, watch) in watches.iter().enumerate() {

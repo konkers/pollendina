@@ -24,7 +24,7 @@ mod widget;
 
 use engine::{
     AutoTrackerState, CheckBoxParamValue, DisplayState, Engine, EventSink, Module, ModuleParam,
-    ModuleParamValue, ObjectiveState,
+    ModuleParamValue, NodeState,
 };
 use views::display_widget;
 use widget::ModalHost;
@@ -37,7 +37,7 @@ const UI_OPEN_POPUP: Selector<((f64, f64), String)> = Selector::new("ui:open_pop
 pub(crate) const UI_OPEN_BROADCAST: Selector<()> = Selector::new("ui:open_broadcast");
 
 pub(crate) const ENGINE_TOGGLE_STATE: Selector<String> = Selector::new("engine:toggle_state");
-pub(crate) const ENGINE_UPDATE_STATE: Selector<HashMap<String, ObjectiveState>> =
+pub(crate) const ENGINE_UPDATE_STATE: Selector<HashMap<String, NodeState>> =
     Selector::new("engine:update_state");
 pub(crate) const ENGINE_DUMP_STATE: Selector<()> = Selector::new("engine:dump_state");
 

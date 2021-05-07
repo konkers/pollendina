@@ -1,13 +1,13 @@
 function handle_key_item_state(id, bit, found_key_items, used_key_items) 
-    local state = OBJECTIVE_LOCKED
+    local state = NODE_LOCKED
     local mask = 1 << bit
     if (used_key_items & mask) ~= 0 then
-        state = OBJECTIVE_COMPLETE
+        state = NODE_COMPLETE
     elseif (found_key_items & mask) ~= 0 then
-        state = OBJECTIVE_UNLOCKED
+        state = NODE_UNLOCKED
     end
 
-    set_objective_state(id, state)
+    set_node_state(id, state)
 end
 
 function key_item_watcher(data)
@@ -35,7 +35,7 @@ end
 
 function handle_loc_state(id, bit, bit_field)
     if (bit_field & (1 << bit)) ~= 0 then
-        set_objective_state(id .. "-key-item-check", OBJECTIVE_COMPLETE)
+        set_node_state(id .. "-key-item-check", NODE_COMPLETE)
     end
 end
 

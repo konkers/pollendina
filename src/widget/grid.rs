@@ -21,7 +21,7 @@ use druid::{
 };
 
 use super::list_iter::ListIter;
-use crate::engine::{DisplayChild, DisplayViewGrid, ObjectiveState};
+use crate::engine::{DisplayChild, DisplayViewGrid, NodeState};
 
 /// A list widget for a variable-size collection of items.
 pub struct Grid {
@@ -136,7 +136,7 @@ impl Widget<DisplayViewGrid> for Grid {
             };
 
             // Skip disabled children.
-            if child_data.state == ObjectiveState::Disabled {
+            if child_data.state == NodeState::Disabled {
                 skipped_children += 1;
                 return;
             }

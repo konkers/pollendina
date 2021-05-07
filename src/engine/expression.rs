@@ -11,7 +11,7 @@ use nom::{
 };
 use serde::{de, Deserialize, Deserializer};
 
-use super::ObjectiveState;
+use super::NodeState;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expression {
@@ -19,10 +19,10 @@ pub enum Expression {
     Manual,
     True,
     False,
-    Objective(String),
-    ObjectiveComplete(String),
-    ObjectiveDisabled(String),
-    ObjectiveUnlocked(String),
+    Node(String),
+    NodeComplete(String),
+    NodeDisabled(String),
+    NodeUnlocked(String),
     And(Box<Expression>, Box<Expression>),
     Or(Box<Expression>, Box<Expression>),
     Not(Box<Expression>),
@@ -47,37 +47,37 @@ fn whitespace(input: &str) -> IResult<&str, &str> {
     take_while(move |c| chars.contains(c))(input)
 }
 
-// Recognizes the first part of an objective id.
+// Recognizes the first part of a node id.
 //   Matches regexp `[a-z][a-z0-9]*`
-fn objective_first_part(input: &str) -> IResult<&str, &str> {
+fn node_first_part(input: &str) -> IResult<&str, &str> {
     recognize(pair(
         take_while_m_n(1, 1, is_lower_alpha),
         opt(take_while(is_lower_alphanum)),
     ))(input)
 }
 
-// Recognizes objectice id parts following the first.
+// Recognizes node id parts following the first.
 //   Matches regexp `-[a-z0-9]+`
-fn objective_part(input: &str) -> IResult<&str, &str> {
+fn node_part(input: &str) -> IResult<&str, &str> {
     recognize(pair(tag("-"), take_while(is_lower_alphanum)))(input)
 }
 
-fn objective_id(input: &str) -> IResult<&str, &str> {
+fn node_id(input: &str) -> IResult<&str, &str> {
     preceded(
         whitespace,
-        recognize(pair(objective_first_part, many0(objective_part))),
+        recognize(pair(node_first_part, many0(node_part))),
     )(input)
 }
 
-fn objective(input: &str) -> IResult<&str, Expression> {
-    map(objective_id, |s: &str| Expression::Objective(s.into()))(input)
+fn node(input: &str) -> IResult<&str, Expression> {
+    map(node_id, |s: &str| Expression::Node(s.into()))(input)
 }
 
-fn objective_complete(input: &str) -> IResult<&str, Expression> {
+fn node_complete(input: &str) -> IResult<&str, Expression> {
     let (input, _) = preceded(whitespace, tag("complete"))(input)?;
     let (input, _) = preceded(whitespace, tag("("))(input)?;
-    let (input, expr) = map(preceded(whitespace, objective_id), |s: &str| {
-        Expression::ObjectiveComplete(s.into())
+    let (input, expr) = map(preceded(whitespace, node_id), |s: &str| {
+        Expression::NodeComplete(s.into())
     })(input)?;
     let (input, _) = preceded(whitespace, tag(")"))(input)?;
 
@@ -99,7 +99,7 @@ fn not(input: &str) -> IResult<&str, Expression> {
 }
 
 fn operand(input: &str) -> IResult<&str, Expression> {
-    alt((parenthetical, not, objective_complete, objective))(input)
+    alt((parenthetical, not, node_complete, node))(input)
 }
 
 fn and_expr(input: &str) -> IResult<&str, Expression> {
@@ -126,8 +126,8 @@ fn or(input: &str) -> IResult<&str, Expression> {
     alt((or_expr, and))(input)
 }
 
-// Param is a special case for parameter objectives.  It is way of making
-// an objective enabled manually instead of defaulting to true.
+// Param is a special case for parameter nodes.  It is way of making
+// a node enabled manually instead of defaulting to true.
 fn param(input: &str) -> IResult<&str, Expression> {
     let (input, _) = tag("param")(input)?;
     Ok((input, Expression::Manual))
@@ -178,16 +178,16 @@ impl Expression {
         }
     }
 
-    // Return a `Vec` of objective ids upon which this expression depends.
+    // Return a `Vec` of node ids upon which this expression depends.
     pub fn deps(&self) -> Vec<String> {
         match self {
             Expression::Default | Expression::Manual | Expression::False | Expression::True => {
                 vec![]
             }
-            Expression::Objective(id)
-            | Expression::ObjectiveComplete(id)
-            | Expression::ObjectiveDisabled(id)
-            | Expression::ObjectiveUnlocked(id) => vec![id.clone()],
+            Expression::Node(id)
+            | Expression::NodeComplete(id)
+            | Expression::NodeDisabled(id)
+            | Expression::NodeUnlocked(id) => vec![id.clone()],
             Expression::Not(obj) => obj.deps(),
             Expression::And(a, b) => {
                 let mut d = a.deps();
@@ -204,31 +204,31 @@ impl Expression {
 
     fn find_state<'a>(
         id: &String,
-        state: &'a HashMap<String, ObjectiveState>,
-    ) -> Result<&'a ObjectiveState, Error> {
+        state: &'a HashMap<String, NodeState>,
+    ) -> Result<&'a NodeState, Error> {
         state.get(id).ok_or(format_err!("can't find id {}", id))
     }
 
     // Evaluate this expression based on `state`.
     pub fn evaluate_by(
         &self,
-        state: &HashMap<String, ObjectiveState>,
-        threshold: &ObjectiveState,
+        state: &HashMap<String, NodeState>,
+        threshold: &NodeState,
     ) -> Result<bool, Error> {
         match self {
             Expression::Default => Err(format_err!("evaluate called on default expression")),
             Expression::Manual => Err(format_err!("evaluate called on manual expression")),
             Expression::False => Ok(false),
             Expression::True => Ok(true),
-            Expression::Objective(id) => Self::find_state(id, state).map(|o| o.at_least(threshold)),
-            Expression::ObjectiveComplete(id) => {
-                Self::find_state(id, state).map(|o| o.is(&ObjectiveState::Complete))
+            Expression::Node(id) => Self::find_state(id, state).map(|o| o.at_least(threshold)),
+            Expression::NodeComplete(id) => {
+                Self::find_state(id, state).map(|o| o.is(&NodeState::Complete))
             }
-            Expression::ObjectiveDisabled(id) => {
-                Self::find_state(id, state).map(|o| o.is(&ObjectiveState::Disabled))
+            Expression::NodeDisabled(id) => {
+                Self::find_state(id, state).map(|o| o.is(&NodeState::Disabled))
             }
-            Expression::ObjectiveUnlocked(id) => {
-                Self::find_state(id, state).map(|o| o.is(&ObjectiveState::Unlocked))
+            Expression::NodeUnlocked(id) => {
+                Self::find_state(id, state).map(|o| o.is(&NodeState::Unlocked))
             }
             Expression::Not(obj) => obj.evaluate_by(state, threshold).map(|v| !v),
             Expression::And(a, b) => {
@@ -240,15 +240,12 @@ impl Expression {
         }
     }
 
-    pub fn evaluate_unlocked(
-        &self,
-        state: &HashMap<String, ObjectiveState>,
-    ) -> Result<bool, Error> {
-        self.evaluate_by(state, &ObjectiveState::Unlocked)
+    pub fn evaluate_unlocked(&self, state: &HashMap<String, NodeState>) -> Result<bool, Error> {
+        self.evaluate_by(state, &NodeState::Unlocked)
     }
 
-    pub fn evaluate_enabled(&self, state: &HashMap<String, ObjectiveState>) -> Result<bool, Error> {
-        self.evaluate_by(state, &ObjectiveState::Locked)
+    pub fn evaluate_enabled(&self, state: &HashMap<String, NodeState>) -> Result<bool, Error> {
+        self.evaluate_by(state, &NodeState::Locked)
     }
 }
 
@@ -279,13 +276,13 @@ mod tests {
     }
 
     #[test]
-    fn objective_names() {
-        test_expression("a", Expression::Objective("a".into()));
-        test_expression("aa", Expression::Objective("aa".into()));
-        test_expression("a0", Expression::Objective("a0".into()));
-        test_expression("a0-b1-2", Expression::Objective("a0-b1-2".into()));
-        test_expression("a0-b1-c2", Expression::Objective("a0-b1-c2".into()));
-        test_expression(" a0-b1-c2", Expression::Objective("a0-b1-c2".into()));
+    fn node_names() {
+        test_expression("a", Expression::Node("a".into()));
+        test_expression("aa", Expression::Node("aa".into()));
+        test_expression("a0", Expression::Node("a0".into()));
+        test_expression("a0-b1-2", Expression::Node("a0-b1-2".into()));
+        test_expression("a0-b1-c2", Expression::Node("a0-b1-c2".into()));
+        test_expression(" a0-b1-c2", Expression::Node("a0-b1-c2".into()));
 
         assert_eq!(
             parse_expression("0"),
@@ -321,7 +318,7 @@ mod tests {
 
         test_expressions(
             &vec!["complete(tower-key)", " complete ( tower-key )"],
-            Expression::ObjectiveComplete("tower-key".into()),
+            Expression::NodeComplete("tower-key".into()),
         );
         test_expressions(
             &vec![
@@ -332,7 +329,7 @@ mod tests {
                 "( ! tower-key)",
                 "!(tower-key)",
             ],
-            Expression::Not(Box::new(Expression::Objective("tower-key".into()))),
+            Expression::Not(Box::new(Expression::Node("tower-key".into()))),
         );
 
         test_expressions(
@@ -342,8 +339,8 @@ mod tests {
                 "(tower-key) && (luca-key)",
             ],
             Expression::And(
-                Box::new(Expression::Objective("tower-key".into())),
-                Box::new(Expression::Objective("luca-key".into())),
+                Box::new(Expression::Node("tower-key".into())),
+                Box::new(Expression::Node("luca-key".into())),
             ),
         );
 
@@ -354,8 +351,8 @@ mod tests {
                 "(tower-key) && !(luca-key)",
             ],
             Expression::And(
-                Box::new(Expression::Objective("tower-key".into())),
-                Box::new(Expression::Not(Box::new(Expression::Objective(
+                Box::new(Expression::Node("tower-key".into())),
+                Box::new(Expression::Not(Box::new(Expression::Node(
                     "luca-key".into(),
                 )))),
             ),
@@ -368,18 +365,18 @@ mod tests {
                 "(tower-key) || (luca-key)",
             ],
             Expression::Or(
-                Box::new(Expression::Objective("tower-key".into())),
-                Box::new(Expression::Objective("luca-key".into())),
+                Box::new(Expression::Node("tower-key".into())),
+                Box::new(Expression::Node("luca-key".into())),
             ),
         );
 
         test_expressions(
             &vec!["tower-key && magma-key && luca-key"],
             Expression::And(
-                Box::new(Expression::Objective("tower-key".into())),
+                Box::new(Expression::Node("tower-key".into())),
                 Box::new(Expression::And(
-                    Box::new(Expression::Objective("magma-key".into())),
-                    Box::new(Expression::Objective("luca-key".into())),
+                    Box::new(Expression::Node("magma-key".into())),
+                    Box::new(Expression::Node("luca-key".into())),
                 )),
             ),
         );
@@ -388,18 +385,18 @@ mod tests {
             &vec!["tower-key && magma-key || luca-key"],
             Expression::Or(
                 Box::new(Expression::And(
-                    Box::new(Expression::Objective("tower-key".into())),
-                    Box::new(Expression::Objective("magma-key".into())),
+                    Box::new(Expression::Node("tower-key".into())),
+                    Box::new(Expression::Node("magma-key".into())),
                 )),
-                Box::new(Expression::Objective("luca-key".into())),
+                Box::new(Expression::Node("luca-key".into())),
             ),
         );
 
         test_expressions(
             &vec!["complete(hook) || complete(magma-key)"],
             Expression::Or(
-                Box::new(Expression::ObjectiveComplete("hook".into())),
-                Box::new(Expression::ObjectiveComplete("magma-key".into())),
+                Box::new(Expression::NodeComplete("hook".into())),
+                Box::new(Expression::NodeComplete("magma-key".into())),
             ),
         );
     }
