@@ -32,7 +32,7 @@ where
     }
 }
 fn make_locked_image(src: &DynamicImage) -> DynamicImage {
-    let mut img = src.clone().to_rgba();
+    let mut img = src.clone().to_rgba8();
     map_image_hsv(&mut img, |hsv| {
         hsv.saturation = 0.0;
         hsv.value *= 0.1;
@@ -42,7 +42,7 @@ fn make_locked_image(src: &DynamicImage) -> DynamicImage {
 }
 
 fn make_completed_image(src: &DynamicImage) -> DynamicImage {
-    let mut img = src.clone().to_rgba();
+    let mut img = src.clone().to_rgba8();
     map_image_hsv(&mut img, |hsv| {
         hsv.hue = RgbHue::from_degrees(120.0);
         hsv.saturation = 1.0;
@@ -103,7 +103,7 @@ impl ImageData {
 
     /// Load an image from a DynamicImage with alpha
     pub fn from_dynamic_image_with_alpha(image_data: image::DynamicImage) -> ImageData {
-        let rgba_image = image_data.to_rgba();
+        let rgba_image = image_data.to_rgba8();
         let sizeofimage = rgba_image.dimensions();
         ImageData {
             pixels: rgba_image.to_vec(),
@@ -115,7 +115,7 @@ impl ImageData {
 
     /// Load an image from a DynamicImage without alpha
     pub fn from_dynamic_image_without_alpha(image_data: image::DynamicImage) -> ImageData {
-        let rgb_image = image_data.to_rgb();
+        let rgb_image = image_data.to_rgb8();
         let sizeofimage = rgb_image.dimensions();
         ImageData {
             pixels: rgb_image.to_vec(),
