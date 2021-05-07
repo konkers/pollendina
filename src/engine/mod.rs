@@ -33,7 +33,7 @@ pub trait EventSink {
         &self,
         sel: Selector<T>,
         obj: impl Into<Box<T>>,
-        target: impl Into<Option<Target>>,
+        target: impl Into<Target>,
     ) -> Result<(), ExtEventError>;
 }
 
@@ -464,7 +464,7 @@ mod tests {
             &self,
             _sel: Selector<T>,
             _obj: impl Into<Box<T>>,
-            _target: impl Into<Option<Target>>,
+            _target: impl Into<Target>,
         ) -> Result<(), ExtEventError> {
             Ok(())
         }

@@ -8,7 +8,7 @@ edition = "2018"
 members = ["match-derive", "match-macro"]
 
 [dependencies]
-druid = {version = "0.6.0", features = ["image"] }
+druid = {version = "0.7.0", features = ["image"] }
 
 [dependencies.match-derive]
 path = "match-derive"

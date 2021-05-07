@@ -1,7 +1,10 @@
 use std::sync::Arc;
 
-use druid::widget::{Button, Flex, Label, Padding, ViewSwitcher};
 use druid::{lens, Command, LensExt, MouseEvent, Widget, WidgetExt};
+use druid::{
+    widget::{Button, Flex, Label, Padding, ViewSwitcher},
+    Target,
+};
 
 use match_macro::match_widget;
 
@@ -22,8 +25,8 @@ fn grid_widget() -> impl Widget<DisplayViewGrid> {
         Padding::new(
             2.0,
             Objective::new().on_click(|ctx, data: &mut DisplayChild, _env| {
-                let cmd = Command::new(ENGINE_TOGGLE_STATE, data.id.clone());
-                ctx.submit_command(cmd, None);
+                let cmd = Command::new(ENGINE_TOGGLE_STATE, data.id.clone(), Target::Auto);
+                ctx.submit_command(cmd);
             }),
         )
     })
@@ -58,7 +61,7 @@ fn map_widget() -> impl Widget<DisplayViewMap> {
                                 */
                                 let pos = event.window_pos;
                                 let cmd = UI_OPEN_POPUP.with(((pos.x, pos.y), id));
-                                ctx.submit_command(cmd, None);
+                                ctx.submit_command(cmd);
                             },
                         )
                 })),
@@ -88,7 +91,7 @@ fn tabs_widget() -> impl Widget<DisplayViewTabs> {
                     },
                 )
         })
-        .lens(lens::Id.map(
+        .lens(lens::Identity.map(
             // This mapping allows display the tab buttons to change the parent `current_tab`.
             |t: &DisplayViewTabs| (t.current_tab, t.tabs.clone()),
             |t: &mut DisplayViewTabs, data: (usize, Arc<Vec<DisplayViewTabChild>>)| {
@@ -103,7 +106,7 @@ fn tabs_widget() -> impl Widget<DisplayViewTabs> {
                 Box::new(
                     display_widget()
                         .lens(DisplayViewTabChild::view)
-                        .lens(lens::Id.index(*selector).in_arc())
+                        .lens(lens::Identity.index(*selector).in_arc())
                         .lens(DisplayViewTabs::tabs),
                 )
             },

@@ -5,11 +5,14 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use druid::widget::{Button, Checkbox, Flex, Label, List, Padding, TextBox};
 use druid::{
     platform_menus, AppDelegate, AppLauncher, Command, Data, DelegateCtx, Env, ExtEventError,
     ExtEventSink, LocalizedString, MenuDesc, Point, Selector, Target, Widget, WidgetExt,
     WindowDesc, WindowId,
+};
+use druid::{
+    widget::{Button, Checkbox, Flex, Label, List, Padding, TextBox},
+    Handled,
 };
 use failure::{format_err, Error};
 use match_macro::match_widget;
@@ -53,7 +56,7 @@ impl EventSink for ExtEventSinkProxy {
         &self,
         sel: Selector<T>,
         obj: impl Into<Box<T>>,
-        target: impl Into<Option<Target>>,
+        target: impl Into<Target>,
     ) -> Result<(), ExtEventError> {
         self.0.submit_command(sel, obj, target)
     }
@@ -67,8 +70,8 @@ impl Delegate {
     fn close_config_window(&self, data: &mut DisplayState, ctx: &mut DelegateCtx) {
         match *data.config_win {
             Some(id) => {
-                let command = Command::new(druid::commands::CLOSE_WINDOW, ());
-                ctx.submit_command(command, id);
+                let command = Command::new(druid::commands::CLOSE_WINDOW, (), id);
+                ctx.submit_command(command);
             }
             None => println!("tried closing config window when not open"),
         }
@@ -83,12 +86,12 @@ impl AppDelegate<DisplayState> for Delegate {
         cmd: &Command,
         data: &mut DisplayState,
         _env: &Env,
-    ) -> bool {
+    ) -> Handled {
         if cmd.is(UI_OPEN_BROADCAST) {
             match *data.broadcast_win {
                 Some(id) => {
-                    let command = Command::new(druid::commands::SHOW_WINDOW, ());
-                    ctx.submit_command(command, id);
+                    let command = Command::new(druid::commands::SHOW_WINDOW, (), id);
+                    ctx.submit_command(command);
                 }
                 None => {
                     self.engine.update_param_state(data);
@@ -102,12 +105,12 @@ impl AppDelegate<DisplayState> for Delegate {
                     *Arc::make_mut(&mut data.broadcast_win) = Some(win_id);
                 }
             };
-            false
+            Handled::No
         } else if cmd.is(UI_OPEN_CONFIG) {
             match *data.config_win {
                 Some(id) => {
-                    let command = Command::new(druid::commands::SHOW_WINDOW, ());
-                    ctx.submit_command(command, id);
+                    let command = Command::new(druid::commands::SHOW_WINDOW, (), id);
+                    ctx.submit_command(command);
                 }
                 None => {
                     self.engine.update_param_state(data);
@@ -117,61 +120,61 @@ impl AppDelegate<DisplayState> for Delegate {
                     *Arc::make_mut(&mut data.config_win) = Some(win_id);
                 }
             };
-            false
+            Handled::No
         } else if cmd.is(UI_CANCEL_CONFIG) {
             println!("canceling config changes");
             self.close_config_window(data, ctx);
-            false
+            Handled::No
         } else if cmd.is(UI_APPLY_CONFIG) {
             println!("applying config changes");
             if let Err(e) = self.engine.save_param_state(data) {
                 println!("error saving config changes: {}", e);
             }
             self.close_config_window(data, ctx);
-            false
+            Handled::No
         } else if let Some(payload) = cmd.get(UI_OPEN_POPUP) {
             if let Err(e) = self.engine.build_popup(data, &payload.1) {
                 println!("error building popup: {}", e);
             } else {
                 let pos = Point::new((payload.0).0, (payload.0).1);
                 let cmd = ModalHost::make_modal_command(pos, modal_builder);
-                ctx.submit_command(cmd, None);
+                ctx.submit_command(cmd);
             }
-            false
+            Handled::No
         } else if let Some(id) = cmd.get(ENGINE_TOGGLE_STATE) {
             if let Err(e) = self.engine.toggle_state(&id) {
                 println!("error toggling state: {}", e);
             } else {
                 self.engine.update_display_state(data);
             }
-            true
+            Handled::Yes
         } else if cmd.is(ENGINE_START_AUTO_TRACKING) {
             if let Err(e) = self.engine.start_auto_tracking() {
                 println!("error starting auto tracking: {}", e);
             }
-            true
+            Handled::Yes
         } else if cmd.is(ENGINE_STOP_AUTO_TRACKING) {
             if let Err(e) = self.engine.stop_auto_tracking() {
                 println!("error stopping auto tracking: {}", e);
             }
-            true
+            Handled::Yes
         } else if let Some(state) = cmd.get(ENGINE_UPDATE_AUTO_TRACKER_STATE) {
             data.auto_tracker_state = state.clone();
-            true
+            Handled::Yes
         } else if let Some(updates) = cmd.get(ENGINE_UPDATE_STATE) {
             if let Err(e) = self.engine.update_state(updates) {
                 println!("error updating state: {}", e);
             } else {
                 self.engine.update_display_state(data);
             }
-            true
+            Handled::Yes
         } else if cmd.is(ENGINE_DUMP_STATE) {
             if let Err(e) = self.engine.dump_state() {
                 println!("Error dumping state: {}", e);
             }
-            true
+            Handled::Yes
         } else {
-            true
+            Handled::No
         }
     }
     fn window_removed(
@@ -312,11 +315,11 @@ fn ui_builder() -> impl Widget<DisplayState> {
         })
         .on_click(|ctx, data: &mut AutoTrackerState, _env| {
             let cmd = if *data == AutoTrackerState::Idle {
-                Command::new(ENGINE_START_AUTO_TRACKING, ())
+                Command::new(ENGINE_START_AUTO_TRACKING, (), Target::Auto)
             } else {
-                Command::new(ENGINE_STOP_AUTO_TRACKING, ())
+                Command::new(ENGINE_STOP_AUTO_TRACKING, (), Target::Auto)
             };
-            ctx.submit_command(cmd, None);
+            ctx.submit_command(cmd);
         })
         .lens(DisplayState::auto_tracker_state),
     );
@@ -326,13 +329,13 @@ fn ui_builder() -> impl Widget<DisplayState> {
     );
     top.add_flex_spacer(1.0);
     top.add_child(Button::new("Dump").on_click(|ctx, _data, _env| {
-        ctx.submit_command(Command::new(ENGINE_DUMP_STATE, ()), None);
+        ctx.submit_command(Command::new(ENGINE_DUMP_STATE, (), Target::Auto));
     }));
     top.add_child(Button::new("Broadcast View").on_click(|ctx, _data, _env| {
-        ctx.submit_command(Command::new(UI_OPEN_BROADCAST, ()), None);
+        ctx.submit_command(Command::new(UI_OPEN_BROADCAST, (), Target::Auto));
     }));
     top.add_child(Button::new("Config").on_click(|ctx, _data, _env| {
-        ctx.submit_command(Command::new(UI_OPEN_CONFIG, ()), None);
+        ctx.submit_command(Command::new(UI_OPEN_CONFIG, (), Target::Auto));
     }));
     root.add_child(Padding::new(8.0, top));
 
@@ -372,14 +375,14 @@ fn config_ui_builder() -> impl Widget<DisplayState> {
             .with_flex_spacer(1.0)
             .with_child(
                 Button::new("Ok").on_click(|ctx, _data: &mut DisplayState, _env| {
-                    let cmd = Command::new(UI_APPLY_CONFIG, ());
-                    ctx.submit_command(cmd, None);
+                    let cmd = Command::new(UI_APPLY_CONFIG, (), Target::Auto);
+                    ctx.submit_command(cmd);
                 }),
             )
             .with_child(
                 Button::new("Cancel").on_click(|ctx, _data: &mut DisplayState, _env| {
-                    let cmd = Command::new(UI_CANCEL_CONFIG, ());
-                    ctx.submit_command(cmd, None);
+                    let cmd = Command::new(UI_CANCEL_CONFIG, (), Target::Auto);
+                    ctx.submit_command(cmd);
                 }),
             ),
     );

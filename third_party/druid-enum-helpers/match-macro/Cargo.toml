@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 proc-macro-hack = "0.5.15"
-druid = {version = "0.6.0", features = ["image"] }
+druid = {version = "0.7.0", features = ["image"] }
 
 [dependencies.match-macro-impl]
 path = "../match-macro-impl"

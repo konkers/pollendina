@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::{io::Cursor, thread, time::Duration};
 
 use byteorder::{LittleEndian, ReadBytesExt};
-use druid::Data;
+use druid::{Data, Target};
 use failure::{format_err, Error};
 use rlua::{self, Function, Lua, Table, UserData, UserDataMethods};
 use usb2snes::Connection;
@@ -236,7 +236,7 @@ impl AutoTracker {
                 Ok(())
             })?;
 
-            sink.submit_command(ENGINE_UPDATE_STATE, updates, None)
+            sink.submit_command(ENGINE_UPDATE_STATE, updates, Target::Auto)
                 .map_err(|e| format_err!("Failed to send command: {}", e))
         } else {
             Ok(())
@@ -250,8 +250,12 @@ impl AutoTracker {
     ) -> Result<(), Error> {
         self.state = state;
 
-        sink.submit_command(ENGINE_UPDATE_AUTO_TRACKER_STATE, self.state.clone(), None)
-            .map_err(|e| format_err!("Failed to send state: {}", e))
+        sink.submit_command(
+            ENGINE_UPDATE_AUTO_TRACKER_STATE,
+            self.state.clone(),
+            Target::Auto,
+        )
+        .map_err(|e| format_err!("Failed to send state: {}", e))
     }
 
     async fn connect_internal<T: EventSink>(&mut self, sink: &T) -> Result<(), Error> {
